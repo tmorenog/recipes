@@ -1,7 +1,7 @@
 // Meal plans. Same rules as the save_meal_plan MCP tool.
 //
 //   GET  /api/meal-plans?group=&limit=   anyone can read
-//   POST /api/meal-plans                 save a plan (group key required)
+//   POST /api/meal-plans                 save a plan (class key + X-Group required)
 import { savePlan, listPlans } from '../lib/plans.js';
 import { json, guarded, requireGroup } from '../lib/http.js';
 

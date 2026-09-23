@@ -1,13 +1,14 @@
 // MCP endpoint (Streamable HTTP, stateless) at /api/mcp.
-// Agents send their group key: Authorization: Bearer <group key>
+// Agents send the class key and their group name:
+//   Authorization: Bearer <class key>
+//   X-Group: <group name>
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 import { createMcpServer } from '../lib/mcp.js';
-import { groupFromRequest, unauthorized } from '../lib/groups.js';
+import { checkCaller } from '../lib/auth.js';
 
 export async function handle(request) {
-  const group = groupFromRequest(request);
-  if (!group) {
-    const { status, error } = unauthorized();
+  const { group, status, error } = checkCaller(request);
+  if (error) {
     return new Response(JSON.stringify({ jsonrpc: '2.0', error: { code: -32001, message: error }, id: null }), {
       status,
       headers: { 'content-type': 'application/json' },

@@ -1,19 +1,17 @@
 // Setup check used by the site footer and the Database page: is a database connected, do the tables
-// exist, are group keys set? Shows setting names and group names, never values.
+// exist, is the class key set? Shows setting names, never values.
 import { getStore, configuredBackend } from '../lib/store/index.js';
 import { TABLES_MISSING_SUPABASE, TABLES_MISSING_POSTGRES } from '../lib/store/errors.js';
 import { databaseSettingNames } from '../lib/env.js';
-import { parseGroupKeys } from '../lib/groups.js';
+import { classKeySet } from '../lib/auth.js';
 import { json } from '../lib/http.js';
 import { krogerConfigured } from '../lib/kroger.js';
 
 export async function GET() {
   const problems = [];
-  const { groups, problems: keyProblems } = parseGroupKeys();
-  if (!groups.length) {
-    problems.push('GROUP_KEYS is not set: add it in Vercel (Settings → Environment Variables), then redeploy. Changes only take effect in new deployments.');
+  if (!classKeySet()) {
+    problems.push('CLASS_KEY is not set: add it in Vercel (Settings → Environment Variables), then redeploy. Changes only take effect in new deployments.');
   }
-  problems.push(...keyProblems.map((p) => `GROUP_KEYS: ${p}`));
 
   const seen = databaseSettingNames();
   const backend = configuredBackend();
@@ -50,7 +48,7 @@ export async function GET() {
     backend,
     database,
     database_settings_seen: seen,
-    groups: groups.map((g) => g.name),
+    class_key: classKeySet(),
     problems,
   });
 }

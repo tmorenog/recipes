@@ -65,7 +65,7 @@
   </ol>
 
   <h2 id="api">The coordinator’s tools</h2>
-  <p>Your backend calls these with your group key in the header <code>Authorization: Bearer &lt;your group key&gt;</code>. The Kroger lookups use the coordinator’s own Kroger account, so you don’t need one.</p>
+  <p>Your backend calls these with the headers <code>Authorization: Bearer &lt;class key&gt;</code> and <code>X-Group: {{GROUP}}</code>. The Kroger lookups use the coordinator’s own Kroger account, so you don’t need one.</p>
   <div class="table-wrap"><table>
     <tr><th>What</th><th>Call</th><th>Returns</th></tr>
     <tr><td>New recipes</td><td><code>GET {{SITE}}/api/recipes?status=new&amp;limit=50</code><br><span class="small muted">optional: <code>&amp;theme=…</code> or <code>&amp;group=…</code></span></td><td>Recipes in the <a href="/scout#format">Scout’s format</a>, plus <code>id</code>, <code>group</code>, <code>status</code></td></tr>
@@ -121,7 +121,14 @@
   <p class="small muted">The coordinator rejects a plan whose numbers don’t add up (to within 5 cents), that repeats a day or a recipe, or that uses a recipe id it doesn’t know. Going over budget is allowed but flagged.</p>
 
   <h2 id="build">Build it in Lovable</h2>
-  <p>Paste these <strong>one at a time</strong>, and test after each. As with the Scout, the app uses Lovable Cloud and Lovable’s built-in AI, and your group key is stored as a secret, never typed into a prompt.</p>
+  <p>Paste these <strong>one at a time</strong>, and test after each. As with the Scout, the app uses Lovable Cloud and Lovable’s built-in AI, and the class key is stored as a secret, never typed into a prompt.</p>
+  <div class="panel group-box">
+    <label for="group-planner"><strong>Your group name</strong></label>
+    <p class="small muted" style="margin:4px 0 10px">Pick one name for your group and use it for both agents, e.g. <code>team-3</code>. It labels everything your agents save.</p>
+    <input class="group-input" id="group-planner" type="text" placeholder="e.g. team-3" autocomplete="off" spellcheck="false">
+    <p class="group-note small" aria-live="polite"></p>
+  </div>
+
 
   <section class="prompt planner">
     <div class="prompt-head">
@@ -132,7 +139,9 @@
 
 Enable Lovable Cloud so the app has a backend.
 
-Add a secret named COORDINATOR_KEY and ask me to enter its value. It is my group's key. Only backend functions may use it: never put it in the page, the browser, or the code.
+Add a secret named COORDINATOR_KEY and ask me to enter its value. It is our class key. Only backend functions may use it: never put it in the page, the browser, or the code.
+
+Our group name is {{GROUP}}. Every call to the coordinator must send the header "X-Group: {{GROUP}}".
 
 Build one page with:
 - inputs: ZIP code (default 45202), budget in US dollars (default 60), people per meal (default 4)
@@ -145,7 +154,7 @@ Build one page with:
       <p class="prompt-title"><span class="where">Prompt 2 of 5</span>Add the coordinator and Kroger tools</p>
       <button class="btn" type="button" data-copy="q2">Copy</button>
     </div>
-    <div class="prompt-body" id="q2">Create backend tools the agent will use. Plain code only, no AI yet. Each returns JSON. Every call to the coordinator sends the header "Authorization: Bearer " + the COORDINATOR_KEY secret.
+    <div class="prompt-body" id="q2">Create backend tools the agent will use. Plain code only, no AI yet. Each returns JSON. Every call to the coordinator sends the headers "Authorization: Bearer " + the COORDINATOR_KEY secret, and "X-Group: {{GROUP}}".
 
 1. list_recipes(theme optional, group optional) -> GET {{SITE}}/api/recipes?status=new&limit=50, adding &theme= or &group= when given. Returns { count, recipes }.
 2. find_kroger_stores(zip) -> GET {{SITE}}/api/kroger/stores?zip=ZIP. Returns { stores: [{ store_id, name, address }] }.
@@ -186,7 +195,7 @@ Test price_ingredient with: 2 tbsp olive oil from a "16.9 fl oz" bottle at 7.99 
       <p class="prompt-title"><span class="where">Prompt 4 of 5</span>Add saving and the agent loop</p>
       <button class="btn" type="button" data-copy="q4">Copy</button>
     </div>
-    <div class="prompt-body" id="q4">Add two more coordinator tools (same Authorization header):
+    <div class="prompt-body" id="q4">Add two more coordinator tools (same two headers):
 6. save_meal_plan(plan) -> POST {{SITE}}/api/meal-plans with the plan as JSON. Return the status and the reply. A 400 reply has an "errors" list: pass it back to the agent.
 7. mark_processed(recipe_id) -> POST {{SITE}}/api/recipes/RECIPE_ID/processed.
 
@@ -226,7 +235,7 @@ Instructions for the model:
   <p>The coordinator is also an MCP server with every tool your Planner needs, so an agent can discover and use them directly instead of calling each REST address.</p>
   <div class="table-wrap"><table>
     <tr><th>MCP server</th><td><code>{{SITE}}/api/mcp</code> (Streamable HTTP)</td></tr>
-    <tr><th>Header</th><td><code>Authorization: Bearer &lt;your group key&gt;</code></td></tr>
+    <tr><th>Headers</th><td><code>Authorization: Bearer &lt;class key&gt;</code> and <code>X-Group: {{GROUP}}</code></td></tr>
     <tr><th>Tools for the Planner</th><td><code>list_recipes</code>, <code>find_kroger_stores</code>, <code>search_kroger_products</code>, <code>save_meal_plan</code>, <code>mark_processed</code></td></tr>
   </table></div>
   <section class="prompt optional">
@@ -237,7 +246,7 @@ Instructions for the model:
     <div class="prompt-body" id="q-mcp">Change how the agent talks to the coordinator: instead of calling its REST addresses, connect to its MCP server from the backend.
 
 - Use the official MCP TypeScript SDK (@modelcontextprotocol/sdk) with the Streamable HTTP client transport.
-- Server address: {{SITE}}/api/mcp. Send the header "Authorization: Bearer " + the COORDINATOR_KEY secret.
+- Server address: {{SITE}}/api/mcp. Send the headers "Authorization: Bearer " + the COORDINATOR_KEY secret, and "X-Group: {{GROUP}}".
 - List the server's tools and give these to the model, using the input schemas the server provides: list_recipes, find_kroger_stores, search_kroger_products, save_meal_plan, mark_processed. Remove our own REST versions of those tools.
 - Keep price_ingredient and plan_totals as they are.
 - When an MCP tool result has isError: true, pass its text back to the model so it can fix the problem.
@@ -273,7 +282,7 @@ Show "via MCP" on those tool calls in the trace.</div>
     <tr><td>“no recipe has the id …”</td><td>The agent invented or mistyped an id. Ask Lovable to use only ids returned by list_recipes.</td></tr>
     <tr><td>“Kroger is limiting requests”</td><td>The class has used a lot of searches. Wait a minute, and check the agent reuses earlier search results.</td></tr>
     <tr><td>“Kroger prices are not set up yet”</td><td>Tell your instructor: the coordinator needs its Kroger credentials.</td></tr>
-    <tr><td><code>401</code> or a CORS error</td><td>Same fixes as the Scout: check your key on the <a href="/#key">Welcome page</a>, and make sure calls happen in a backend function.</td></tr>
+    <tr><td><code>401</code>, <code>400</code> about <code>X-Group</code>, or a CORS error</td><td>Same fixes as the Scout: check the class key on the <a href="/#key">Welcome page</a>, send <code>X-Group: {{GROUP}}</code>, and make sure calls happen in a backend function.</td></tr>
   </table></div>
   <p><a class="btn primary" href="/database">Go to the Database</a></p>
 </main>

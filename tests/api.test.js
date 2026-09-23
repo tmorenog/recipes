@@ -9,7 +9,7 @@ import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/
 import { handle } from '../api/mcp.js';
 import * as rest from '../api/recipes.js';
 import { GET as health } from '../api/health.js';
-import { BACKENDS, KEYS, recipe, mealPlan, closeDatabase } from './helpers.js';
+import { BACKENDS, CLASS_KEY, as, recipe, mealPlan, closeDatabase } from './helpers.js';
 import * as plansApi from '../api/meal-plans.js';
 import { GET as activityApi } from '../api/activity.js';
 import { GET as whoami } from '../api/whoami.js';
@@ -17,7 +17,7 @@ import { GET as whoami } from '../api/whoami.js';
 async function mcp(group = 'team-1') {
   const transport = new StreamableHTTPClientTransport(new URL('http://test.local/api/mcp'), {
     fetch: (url, init) => handle(new Request(url, init)),
-    requestInit: { headers: { authorization: `Bearer ${KEYS[group]}` } },
+    requestInit: { headers: as(group) },
   });
   const client = new Client({ name: 'test', version: '1.0.0' });
   await client.connect(transport);
@@ -27,7 +27,7 @@ const out = (res) => JSON.parse(res.content[0].text);
 
 function call(method, path, { group, body } = {}) {
   const headers = { 'content-type': 'application/json' };
-  if (group) headers.authorization = `Bearer ${KEYS[group]}`;
+  if (group) Object.assign(headers, as(group));
   // Mirror vercel.json's rewrite for the "processed" route.
   const m = path.match(/^\/api\/recipes\/([^/]+)\/processed$/);
   const url = m ? `http://x/api/recipes?id=${m[1]}&action=processed` : `http://x${path}`;
@@ -149,8 +149,8 @@ for (const backend of BACKENDS) {
       const text = await res.text();
       assert.equal(res.status, 200, text);
       const body = JSON.parse(text);
-      assert.deepEqual([body.ok, body.backend, body.database, body.groups], [true, backend.name, 'ready', ['team-1', 'team-2']]);
-      assert.doesNotMatch(text, /key-for/);
+      assert.deepEqual([body.ok, body.backend, body.database, body.class_key], [true, backend.name, 'ready', true]);
+      assert.doesNotMatch(text, /class-key-for/);
 
       await db.dropRecipes();
       const missing = await (await health()).json();
@@ -194,7 +194,7 @@ for (const backend of BACKENDS) {
 
       // REST: same rules, public reading.
       const post = (body, group = 'team-2') =>
-        plansApi.POST(new Request('http://x/api/meal-plans', { method: 'POST', headers: { authorization: `Bearer ${KEYS[group]}`, 'content-type': 'application/json' }, body: JSON.stringify(body) }));
+        plansApi.POST(new Request('http://x/api/meal-plans', { method: 'POST', headers: { ...as(group), 'content-type': 'application/json' }, body: JSON.stringify(body) }));
       const restBad = await post({ ...mealPlan(ids), meals: [] });
       assert.equal(restBad.status, 400);
       assert.deepEqual((await restBad.json()).errors, ['meals needs exactly 5 items']);
@@ -208,10 +208,22 @@ for (const backend of BACKENDS) {
       assert.equal((await activityApi(new Request('http://x/api/activity?result=maybe'))).status, 400);
     });
 
-    test('whoami names the group for a key', async () => {
-      const ok = await whoami(new Request('http://x/api/whoami', { headers: { authorization: `Bearer ${KEYS['team-2']}` } }));
-      assert.deepEqual([ok.status, await ok.json()], [200, { group: 'team-2' }]);
-      assert.equal((await whoami(new Request('http://x/api/whoami', { headers: { authorization: 'Bearer wrong-key-123' } }))).status, 401);
+    test('whoami checks the class key, with or without a group name', async () => {
+      const ask = (headers) => whoami(new Request('http://x/api/whoami', { headers }));
+      const ok = await ask({ authorization: `Bearer ${CLASS_KEY}` });
+      assert.deepEqual([ok.status, await ok.json()], [200, { ok: true, group: null }]);
+      assert.deepEqual(await (await ask({ ...as('Team 3') })).json(), { ok: true, group: 'team-3' });
+      assert.equal((await ask({ authorization: 'Bearer wrong-key-123' })).status, 401);
+    });
+
+    test('writes need the group name, and names are normalised', async () => {
+      const noGroup = await rest.POST(new Request('http://x/api/recipes', { method: 'POST', headers: { authorization: `Bearer ${CLASS_KEY}`, 'content-type': 'application/json' }, body: JSON.stringify(recipe()) }));
+      assert.equal(noGroup.status, 400);
+      assert.match((await noGroup.json()).errors[0], /X-Group/);
+      const bad = await rest.POST(new Request('http://x/api/recipes', { method: 'POST', headers: { ...as('team 3 / drop table'), 'content-type': 'application/json' }, body: JSON.stringify(recipe()) }));
+      assert.equal(bad.status, 400);
+      const good = await call('POST', '/api/recipes', { group: '  Team 3 ', body: recipe() });
+      assert.equal(good.body.recipe.group, 'team-3');
     });
 
     if (backend.name === 'postgres') {

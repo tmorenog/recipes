@@ -1,7 +1,7 @@
 // Tests that need no database.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseGroupKeys, groupFromRequest } from '../lib/groups.js';
+import { checkCaller, normalizeGroup } from '../lib/auth.js';
 import { recipeSchema, reasons } from '../lib/recipes.js';
 import { poolConfig } from '../lib/db.js';
 import { recipe } from './helpers.js';
@@ -10,19 +10,22 @@ import { POST } from '../api/recipes.js';
 
 const why = (input) => reasons(recipeSchema.safeParse(input).error, input);
 
-test('GROUP_KEYS parsing accepts commas or new lines and reports mistakes', () => {
-  const { groups, problems } = parseGroupKeys(' team-1:aaaaaaaa ,\nteam-2 : bbbbbbbb,broken,team-3:short,team-1:cccccccc,team-4:aaaaaaaa');
-  assert.deepEqual(groups, [{ name: 'team-1', key: 'aaaaaaaa' }, { name: 'team-2', key: 'bbbbbbbb' }]);
-  assert.equal(problems.length, 4);
-  assert.match(problems.join('|'), /group-name:key.*shorter than 8.*listed twice.*same key/);
-});
+test('callers need the class key; the group comes from X-Group', () => {
+  const req = (headers) => new Request('http://x', { headers });
+  const key = { authorization: 'Bearer class-key-for-tests' };
+  assert.deepEqual(checkCaller(req({ ...key, 'x-group': 'team-2' })), { group: 'team-2' });
+  assert.deepEqual(checkCaller(req({ authorization: 'bearer class-key-for-tests', 'x-group': 'Blue Team' })), { group: 'blue-team' });
+  assert.equal(checkCaller(req({ ...key })).status, 400);
+  assert.deepEqual(checkCaller(req({ ...key }), { needGroup: false }), { group: null });
+  assert.equal(checkCaller(req({ authorization: 'Bearer nope', 'x-group': 'team-2' })).status, 401);
+  assert.equal(checkCaller(req({ 'x-group': 'team-2' })).status, 401);
+  assert.equal(normalizeGroup('a'.repeat(41)), null);
+  assert.equal(normalizeGroup('<script>'), null);
 
-test('a request is matched to its group by key', () => {
-  const req = (auth) => new Request('http://x', { headers: auth ? { authorization: auth } : {} });
-  assert.equal(groupFromRequest(req('Bearer key-for-team-two')), 'team-2');
-  assert.equal(groupFromRequest(req('bearer key-for-team-one')), 'team-1');
-  assert.equal(groupFromRequest(req('Bearer key-for-team-three')), null);
-  assert.equal(groupFromRequest(req()), null);
+  const saved = process.env.CLASS_KEY;
+  delete process.env.CLASS_KEY;
+  assert.equal(checkCaller(req({ ...key, 'x-group': 'team-2' })).status, 503);
+  process.env.CLASS_KEY = saved;
 });
 
 test('rejection reasons are readable', () => {
@@ -54,13 +57,13 @@ test('hosted databases get TLS without certificate checks; local ones get none',
   assert.equal(poolConfig('postgres://postgres@localhost:5432/db').ssl, false);
 });
 
-test('writes without a valid group key are refused before touching the database', async () => {
+test('writes without the class key are refused before touching the database', async () => {
   const body = JSON.stringify(recipe());
   const headers = { 'content-type': 'application/json', accept: 'application/json, text/event-stream' };
   assert.equal((await POST(new Request('http://x/api/recipes', { method: 'POST', headers, body }))).status, 401);
-  const mcp = await handle(new Request('http://x/api/mcp', { method: 'POST', headers: { ...headers, authorization: 'Bearer nope-nope-nope' }, body: '{}' }));
+  const mcp = await handle(new Request('http://x/api/mcp', { method: 'POST', headers: { ...headers, authorization: 'Bearer nope-nope-nope', 'x-group': 'team-1' }, body: '{}' }));
   assert.equal(mcp.status, 401);
-  assert.match((await mcp.json()).error.message, /group key/);
+  assert.match((await mcp.json()).error.message, /class key/);
 });
 
 test('settings are found with or without a prefix, preferring exact names', async () => {

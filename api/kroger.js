@@ -1,4 +1,4 @@
-// Kroger lookups through the coordinator's credentials (group key required).
+// Kroger lookups through the coordinator's credentials (class key and group name required).
 //
 //   GET /api/kroger/stores?zip=45202
 //   GET /api/kroger/products?term=yellow%20onions&store_id=01400943&limit=5

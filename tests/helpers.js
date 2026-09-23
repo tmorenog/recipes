@@ -14,8 +14,10 @@ import { fakeSupabase } from './fake-supabase.js';
 
 export const TEST_DB = process.env.TEST_DATABASE_URL;
 
-export const KEYS = { 'team-1': 'key-for-team-one', 'team-2': 'key-for-team-two' };
-process.env.GROUP_KEYS = Object.entries(KEYS).map(([g, k]) => `${g}:${k}`).join(',');
+export const CLASS_KEY = 'class-key-for-tests';
+process.env.CLASS_KEY = CLASS_KEY;
+// Headers a group's agent sends.
+export const as = (group) => ({ authorization: `Bearer ${CLASS_KEY}`, 'x-group': group });
 
 const schema = () => readFile(new URL('../schema.sql', import.meta.url), 'utf8');
 let pool;

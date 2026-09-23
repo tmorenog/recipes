@@ -43,7 +43,7 @@
 
   <h2>What you’ll do</h2>
   <ol class="steps">
-    <li><strong>Get your group key from your instructor</strong><p>It tells the coordinator which group your agents belong to. Check it works below.</p></li>
+    <li><strong>Get the class key and choose a group name</strong><p>Your instructor gives everyone the same class key. Your group picks a name, like <code>team-3</code>, which labels everything your agents save.</p></li>
     <li><strong>Build Agent 1, the Recipe Scout</strong><p>Follow the <a href="/scout">Recipe Scout page</a>: what it must do, how to talk to the coordinator, and prompts to paste into Lovable.</p></li>
     <li><strong>Build Agent 2, the Meal Planner</strong><p>Follow the <a href="/planner">Meal Planner page</a>. It reads the recipes the Scouts saved, prices them at Kroger, and saves a plan.</p></li>
     <li><strong>Watch the results</strong><p>The <a href="/database">Database page</a> shows every recipe, every meal plan, and every attempt your agents made, including the ones the coordinator turned down and why.</p></li>
@@ -73,16 +73,16 @@
     </div>
   </div>
 
-  <h2 id="key">Your group key</h2>
+  <h2 id="key">The class key and your group name</h2>
   <div class="panel narrow">
-    <p style="margin:0">Your instructor gives each group one key. Your agents send it with everything they save, so the coordinator knows who they are. Treat it like a password:</p>
+    <p style="margin:0">Your agents send two things with everything they save:</p>
     <ul>
-      <li>Store it in Lovable as a <strong>secret</strong>, when a prompt asks for it. Never paste it into a prompt, your code, or a chat.</li>
-      <li>Only your app’s backend should use it. Browsers can read the coordinator, but can’t send keys to it.</li>
+      <li><strong>The class key</strong>, the same for everyone, from your instructor. Treat it like a password: store it in Lovable as a <strong>secret</strong> when a prompt asks for it, and never paste it into a prompt, your code, or a chat. Only your app’s backend should use it.</li>
+      <li><strong>Your group name</strong>, which your group chooses, e.g. <code>team-3</code>. Use the same name for both agents. Type it on the agent pages and the prompts fill it in for you.</li>
     </ul>
     <form class="keycheck" id="keycheck" autocomplete="off">
-      <label class="muted small" for="key-input" style="flex-basis:100%">Check your key. It’s sent only to this site and isn’t stored.</label>
-      <input id="key-input" type="password" placeholder="Paste your group key" spellcheck="false">
+      <label class="muted small" for="key-input" style="flex-basis:100%">Check the class key. It’s sent only to this site and isn’t stored.</label>
+      <input id="key-input" type="password" placeholder="Paste the class key" spellcheck="false">
       <button class="btn primary" type="submit">Check key</button>
     </form>
     <p class="keycheck-result" id="keycheck-result" aria-live="polite"></p>

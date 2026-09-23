@@ -3,7 +3,7 @@
 The hub for a two-agent class exercise. Groups build two AI agents in Lovable: a **Recipe Scout** that finds recipes, and a **Meal Planner** that turns them into five balanced, affordable dinners priced at Kroger. This site hosts the instructions and the shared database that connects the agents.
 
 **Pages**
-- **Welcome** (`/`): what the exercise is, how the pieces fit, and a check that a group's key works.
+- **Welcome** (`/`): what the exercise is, how the pieces fit, and a check that the class key works.
 - **Recipe Scout** (`/scout`) and **Meal Planner** (`/planner`): goals, the coordinator's API, copy-ready Lovable prompts (with this site's address filled in), test checklists and troubleshooting.
 - **Database** (`/database`): every recipe, meal plan and attempt (including rejections and why), filterable by group. Updates every 15 seconds.
 
@@ -11,7 +11,7 @@ The hub for a two-agent class exercise. Groups build two AI agents in Lovable: a
 - **REST** under `/api/…` for Lovable backends. Same data, same rules, same error messages as MCP.
 - **MCP** at `/api/mcp` with six tools: `save_recipe`, `list_recipes`, `mark_processed`, `save_meal_plan`, `find_kroger_stores`, `search_kroger_products`.
 
-Every group has its own key. The key tells the coordinator which group is calling, so each recipe and plan records who made it. Kroger lookups use the instructor's Kroger credentials, so students need none.
+Everyone shares one class key. Each group also sends its chosen group name (header `X-Group`), so each recipe and plan records who made it. Kroger lookups use the instructor's Kroger credentials, so students need none.
 
 ## Deploy
 
@@ -23,15 +23,7 @@ You need a Vercel account and this repository on GitHub.
 
 3. **Nothing to do for the tables.** Every deploy runs `schema.sql` against that database, creating or updating the tables automatically.
 
-4. **Set the group keys and Kroger credentials.** In Vercel, open **Settings → Environment Variables** and add one variable, `GROUP_KEYS`, listing every group and its key:
-
-   ```
-   team-1:8f3c1a9d2b7e4f60,team-2:c41e97a05d3b28f1,team-3:5a0d6e2f9c18b743
-   ```
-
-   - Separate groups with commas (or new lines). Each entry is `group-name:key`.
-   - Keys must be at least 8 characters and all different. Make them random, e.g. with `openssl rand -hex 8`.
-   - Give each group only its own key.
+4. **Set the class key and Kroger credentials.** In Vercel, open **Settings → Environment Variables** and add `CLASS_KEY`: one password for the whole class, e.g. from `openssl rand -hex 8`. Give it to every group. Each group also picks its own group name (like `team-3`) and sends it with every request in the `X-Group` header; the agent pages fill it into the prompts.
 
    Also add `KROGER_CLIENT_ID` and `KROGER_CLIENT_SECRET` from your app at [developer.kroger.com](https://developer.kroger.com) (it needs the product scope). The Meal Planners' price lookups go through these. Without them, everything else works and the site shows "Kroger prices off".
 
@@ -39,7 +31,7 @@ You need a Vercel account and this repository on GitHub.
 
 6. **Check it.** Open your site's address. The footer shows whether the database is ready, how many groups are set up, and whether Kroger prices are on. The Database page explains anything that's missing.
 
-To add a group later, edit `GROUP_KEYS` and redeploy.
+New groups need no setup: they just use a new group name.
 
 **Using Supabase's API instead:** without a Postgres connection string, the app uses `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`. Supabase's API can't create tables, so you then have to paste [`schema.sql`](schema.sql) into Supabase's **SQL Editor** and click **Run**, and do it again whenever `schema.sql` changes. If both are set, the Postgres connection string is used.
 
@@ -68,7 +60,7 @@ Rules:
 
 ## MCP
 
-Endpoint: `https://<your-site>.vercel.app/api/mcp`. Send the group's key as `Authorization: Bearer <group key>`.
+Endpoint: `https://<your-site>.vercel.app/api/mcp`. Send the headers `Authorization: Bearer <class key>` and `X-Group: <group name>`.
 
 | Tool | What it does |
 | --- | --- |
@@ -83,7 +75,7 @@ Claude Code:
 
 ```sh
 claude mcp add --transport http recipes https://<your-site>.vercel.app/api/mcp \
-  --header "Authorization: Bearer <group key>"
+  --header "Authorization: Bearer <class key>" --header "X-Group: team-3"
 ```
 
 Most other MCP clients take a config like this:
@@ -94,7 +86,7 @@ Most other MCP clients take a config like this:
     "recipes": {
       "type": "http",
       "url": "https://<your-site>.vercel.app/api/mcp",
-      "headers": { "Authorization": "Bearer <group key>" }
+      "headers": { "Authorization": "Bearer <class key>", "X-Group": "team-3" }
     }
   }
 }
@@ -102,7 +94,7 @@ Most other MCP clients take a config like this:
 
 ## REST
 
-Reading recipes, plans and activity needs no key, and works from a browser. Writing and Kroger lookups need the group key, and only work from a server (browsers can't send keys to the coordinator), which keeps keys out of students' web pages.
+Reading recipes, plans and activity needs no key, and works from a browser. Writing and Kroger lookups need the class key and an `X-Group` group name, and only work from a server (browsers can't send keys to the coordinator), which keeps keys out of students' web pages.
 
 | Request | What it does | Success | Errors |
 | --- | --- | --- | --- |
@@ -120,7 +112,7 @@ Every error response looks like `{ "errors": ["reason", "reason"] }`.
 
 ```sh
 curl -X POST https://<your-site>.vercel.app/api/recipes \
-  -H "Authorization: Bearer <group key>" -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <class key>" -H "X-Group: team-3" -H "Content-Type: application/json" \
   -d '{"theme":"15-minute lunches","meal_id":"52771","name":"Halloumi wraps","ingredients":[{"name":"halloumi","amount":1,"unit":"block","raw":"1 block halloumi"}],"instructions":"Grill the halloumi, slice it and wrap it with salad.","est_minutes":15,"est_servings":2,"why_chosen":"Ready in 15 minutes."}'
 ```
 
@@ -141,7 +133,7 @@ curl -X POST https://<your-site>.vercel.app/api/recipes \
 npm install
 npm i -g vercel
 vercel link                  # connect this folder to your Vercel project
-vercel env pull .env.local   # download the database and GROUP_KEYS settings
+vercel env pull .env.local   # download the database and CLASS_KEY settings
 npm run db:setup             # check the tables (with a Postgres connection string, also create them)
 vercel dev                   # http://localhost:3000
 ```
@@ -174,7 +166,7 @@ TEST_DATABASE_URL=postgres://postgres@localhost:5432/recipes_test npm test
 | `lib/plans.js` | Meal plan rules, and the activity list |
 | `lib/kroger.js` | Kroger sign-in, store and product lookups, caching |
 | `lib/mcp.js` | The MCP tools |
-| `lib/groups.js` | Reads `GROUP_KEYS` and matches a request's key to its group |
+| `lib/auth.js` | Checks the class key and reads the group name from `X-Group` |
 | `lib/store/` | Where recipes are stored: `supabase.js` (default) or `postgres.js` |
 | `lib/env.js`, `lib/db.js` | Finding the Supabase or Postgres settings |
 | `public/` | The site: Welcome, Scout and Planner instructions, Database |
@@ -182,6 +174,6 @@ TEST_DATABASE_URL=postgres://postgres@localhost:5432/recipes_test npm test
 
 ## Security notes
 
-- Anyone with the site's address can read the recipes, plans and activity log. Only holders of a group key can write or use the Kroger lookups.
-- Keys live only in Vercel's environment variables. Don't put them in code, in the repository, or in a page's JavaScript.
+- Anyone with the site's address can read the recipes, plans and activity log. Only holders of the class key can write or use the Kroger lookups. Because the key is shared, a group could write under another group's name; that's the trade-off for simplicity.
+- The class key lives only in Vercel's environment variables. Don't put it in code, in the repository, or in a page's JavaScript.
 - Supabase's public (anon) key can't reach the tables: row level security is on with no policies. Only this app, using the service role key on the server, can. Never put the service role key in a page or app.

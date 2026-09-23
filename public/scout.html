@@ -70,9 +70,10 @@
     </div>
     <div class="panel">
       <h3 style="margin-top:0">Saving recipes: the coordinator</h3>
-      <p class="small">Your app’s backend sends each recipe here, with your group key:</p>
+      <p class="small">Your app’s backend sends each recipe here, with the class key and your group name:</p>
       <pre class="code">POST {{SITE}}/api/recipes
-Authorization: Bearer &lt;your group key&gt;
+Authorization: Bearer &lt;class key&gt;
+X-Group: {{GROUP}}
 Content-Type: application/json
 
 { …the recipe… }</pre>
@@ -81,7 +82,7 @@ Content-Type: application/json
         <tr><td><code>201</code></td><td>Saved. The reply includes the stored recipe.</td></tr>
         <tr><td><code>400</code></td><td>Something’s missing or wrong. <code>errors</code> lists every problem.</td></tr>
         <tr><td><code>409</code></td><td>Your group already saved this recipe for this theme.</td></tr>
-        <tr><td><code>401</code></td><td>Missing or wrong group key.</td></tr>
+        <tr><td><code>401</code></td><td>Missing or wrong class key. (<code>400</code> if <code>X-Group</code> is missing.)</td></tr>
       </table></div>
     </div>
   </div>
@@ -126,8 +127,15 @@ Content-Type: application/json
   </details>
 
   <h2 id="build">Build it in Lovable</h2>
-  <p>Paste these prompts into Lovable <strong>one at a time</strong>. After each one, check the result before moving on. Your app uses Lovable Cloud for its backend and Lovable’s built-in AI for the agent, so you don’t need any API keys except your group key.</p>
-  <div class="callout warn"><p><strong>Your group key never goes in a prompt.</strong> Prompt 1 asks Lovable to create a secret. Lovable then shows a secure box where you paste the key.</p></div>
+  <p>Paste these prompts into Lovable <strong>one at a time</strong>. After each one, check the result before moving on. Your app uses Lovable Cloud for its backend and Lovable’s built-in AI for the agent, so you don’t need any API keys except the class key.</p>
+  <div class="callout warn"><p><strong>The class key never goes in a prompt.</strong> Prompt 1 asks Lovable to create a secret. Lovable then shows a secure box where you paste the key.</p></div>
+  <div class="panel group-box">
+    <label for="group-scout"><strong>Your group name</strong></label>
+    <p class="small muted" style="margin:4px 0 10px">Pick one name for your group and use it for both agents, e.g. <code>team-3</code>. It labels everything your agents save.</p>
+    <input class="group-input" id="group-scout" type="text" placeholder="e.g. team-3" autocomplete="off" spellcheck="false">
+    <p class="group-note small" aria-live="polite"></p>
+  </div>
+
 
   <section class="prompt scout">
     <div class="prompt-head">
@@ -138,7 +146,9 @@ Content-Type: application/json
 
 Enable Lovable Cloud so the app has a backend.
 
-Add a secret named COORDINATOR_KEY and ask me to enter its value. It is my group's key. Only backend functions may use it: never put it in the page, the browser, or the code.
+Add a secret named COORDINATOR_KEY and ask me to enter its value. It is our class key. Only backend functions may use it: never put it in the page, the browser, or the code.
+
+Our group name is {{GROUP}}. Every call to the coordinator must send the header "X-Group: {{GROUP}}".
 
 For now, build one page with:
 - a text box for the theme, with the examples "cheap weeknight vegetarian dinners", "comfort food for a rainy day" and "15-minute lunches" as clickable chips
@@ -162,7 +172,7 @@ TheMealDB (free, no key). Base address https://www.themealdb.com/api/json/v1/1/
 Return an empty list (not an error) when TheMealDB finds nothing ("meals": null).
 
 The coordinator:
-6. save_recipe(recipe) -> POST {{SITE}}/api/recipes with the headers "Authorization: Bearer " + the COORDINATOR_KEY secret, and "Content-Type: application/json", and the recipe as the JSON body. Return the HTTP status and the coordinator's reply exactly as received. When the status is 400 or 409, the reply has an "errors" list saying what to fix. Don't treat that as a crash: pass it back so the agent can fix the recipe and try again.
+6. save_recipe(recipe) -> POST {{SITE}}/api/recipes with the headers "Authorization: Bearer " + the COORDINATOR_KEY secret, "X-Group: {{GROUP}}", and "Content-Type: application/json", and the recipe as the JSON body. Return the HTTP status and the coordinator's reply exactly as received. When the status is 400 or 409, the reply has an "errors" list saying what to fix. Don't treat that as a crash: pass it back so the agent can fix the recipe and try again.
 
 Test tools 1 to 5 once each with a sample input and show me the results. Don't call save_recipe yet.</div>
   </section>
@@ -211,7 +221,7 @@ Instructions for the model:
   <p>MCP (Model Context Protocol) is a standard way for AI agents to discover and use tools. The coordinator is also an MCP server, so an agent can use its tools directly instead of calling the REST address. Try this once your Scout works over REST.</p>
   <div class="table-wrap"><table>
     <tr><th>MCP server</th><td><code>{{SITE}}/api/mcp</code> (Streamable HTTP)</td></tr>
-    <tr><th>Header</th><td><code>Authorization: Bearer &lt;your group key&gt;</code></td></tr>
+    <tr><th>Headers</th><td><code>Authorization: Bearer &lt;class key&gt;</code> and <code>X-Group: {{GROUP}}</code></td></tr>
     <tr><th>Tools for the Scout</th><td><code>save_recipe</code> (same format and checks as above), <code>list_recipes</code></td></tr>
   </table></div>
   <section class="prompt optional">
@@ -222,7 +232,7 @@ Instructions for the model:
     <div class="prompt-body" id="p-mcp">Change how the agent saves recipes: instead of calling the REST address, connect to the coordinator's MCP server from the backend.
 
 - Use the official MCP TypeScript SDK (@modelcontextprotocol/sdk) with the Streamable HTTP client transport.
-- Server address: {{SITE}}/api/mcp. Send the header "Authorization: Bearer " + the COORDINATOR_KEY secret.
+- Server address: {{SITE}}/api/mcp. Send the headers "Authorization: Bearer " + the COORDINATOR_KEY secret, and "X-Group: {{GROUP}}".
 - List the server's tools and give the save_recipe tool to the model, using the input schema the server provides.
 - When the tool result has isError: true, pass its text back to the model so it can fix the recipe and try again.
 Keep the TheMealDB tools as they are. Show "via MCP" on tool calls in the trace.</div>
@@ -253,7 +263,8 @@ Keep the TheMealDB tools as they are. Show "via MCP" on tool calls in the trace.
   <h2 id="help">When things go wrong</h2>
   <div class="table-wrap"><table>
     <tr><th>You see</th><th>Try</th></tr>
-    <tr><td><code>401</code> “Missing or wrong group key”</td><td>Check your key on the <a href="/#key">Welcome page</a>. Then ask Lovable: “Check that save_recipe sends the header Authorization: Bearer followed by the COORDINATOR_KEY secret.”</td></tr>
+    <tr><td><code>401</code> “Missing or wrong class key”</td><td>Check the key on the <a href="/#key">Welcome page</a>. Then ask Lovable: “Check that save_recipe sends the header Authorization: Bearer followed by the COORDINATOR_KEY secret.”</td></tr>
+    <tr><td><code>400</code> about <code>X-Group</code></td><td>Ask Lovable: “Send the header X-Group: {{GROUP}} on every call to the coordinator.”</td></tr>
     <tr><td>A <code>400</code> with reasons</td><td>That’s the coordinator doing its job. If the agent keeps making the same mistake, paste the reason into Lovable: “The coordinator rejects our recipes with: … Update the instructions for the model so it gets this right.”</td></tr>
     <tr><td>“unknown field: …”</td><td>The agent added a field that isn’t in the format. Ask Lovable to send only the fields listed on this page.</td></tr>
     <tr><td>A CORS error in the browser console</td><td>The page is calling the coordinator directly. Saving must happen in a backend function: “Move the save_recipe call into a backend function.”</td></tr>

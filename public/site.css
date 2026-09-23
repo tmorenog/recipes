@@ -289,3 +289,9 @@ details summary { cursor: pointer; font-weight: 600; font-size: 14px; color: var
 .agent-cards .agent-tag { justify-self: start; margin-bottom: 0; }
 .activity table { min-width: 760px; }
 .activity td:last-child { min-width: 260px; }
+.group-box { margin: 18px 0; max-width: 760px; }
+.group-box input {
+  width: 100%; max-width: 22rem; padding: 9px 12px; font: 16px var(--mono);
+  background: var(--ground); color: var(--ink); border: 1px solid var(--line); border-radius: 8px;
+}
+.group-note { margin: 8px 0 0; color: var(--muted); }

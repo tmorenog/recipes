@@ -1,8 +1,8 @@
 // REST API for apps that don't speak MCP. Same data and rules as the MCP tools.
 //
 //   GET  /api/recipes?status=new|processed|all&theme=&group=&limit=   anyone can read
-//   POST /api/recipes                    save a recipe         (group key required)
-//   POST /api/recipes/{id}/processed     mark it processed     (group key required)
+//   POST /api/recipes                    save a recipe         (class key + X-Group required)
+//   POST /api/recipes/{id}/processed     mark it processed     (class key + X-Group required)
 import { saveRecipe, listRecipes, markProcessed } from '../lib/recipes.js';
 import { json, guarded, requireGroup } from '../lib/http.js';
 
