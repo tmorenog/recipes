@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Meal Planner · Recipe Coordinator</title>
+<meta name="description" content="Instructions and Lovable prompts for Agent 2, the Meal Planner.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=JetBrains+Mono:wght@400;500&family=Source+Sans+3:wght@400;600&display=swap">
+<link rel="stylesheet" href="/site.css">
+</head>
+<body>
+<header class="site-head">
+  <div class="wrap">
+    <a class="brand" href="/"><span class="brand-mark" aria-hidden="true">RC</span>Recipe Coordinator</a>
+    <nav aria-label="Sections">
+      <ul class="tabs">
+        <li><a href="/">Welcome</a></li>
+        <li><a href="/scout"><span class="num">1</span>Recipe Scout</a></li>
+        <li><a href="/planner" aria-current="page"><span class="num">2</span>Meal Planner</a></li>
+        <li><a href="/database">Database</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="page-head">
+    <span class="agent-tag planner">Agent 2</span>
+    <h1>Build the Meal Planner</h1>
+    <p class="lede">An agent that takes the recipes the Scouts saved, prices every ingredient at a real Kroger store, and plans five dinners that are balanced and within budget, with a shopping list.</p>
+    <ul class="toc">
+      <li><a href="#goal">The goal</a></li>
+      <li><a href="#how">How it works</a></li>
+      <li><a href="#api">The coordinator’s tools</a></li>
+      <li><a href="#cost">Costing a recipe</a></li>
+      <li><a href="#rules">What “balanced” means</a></li>
+      <li><a href="#format">The meal plan format</a></li>
+      <li><a href="#build">Build it in Lovable</a></li>
+      <li><a href="#mcp">Optional: MCP</a></li>
+      <li><a href="#test">Test it</a></li>
+    </ul>
+  </div>
+
+  <h2 id="goal">The goal</h2>
+  <div class="panel narrow">
+    <p style="margin-top:0"><strong>Your Planner is done when:</strong> you enter a ZIP code, a budget and a number of people, press a button, and a five-dinner plan with a Kroger shopping list appears on the <a href="/database">Database page</a> under your group. The five recipes it used are marked as processed.</p>
+    <ul class="checklist">
+      <li>Prices come from a real Kroger store near the ZIP code</li>
+      <li>The maths is done by code, not guessed by the AI</li>
+      <li>The plan follows your balance rules and says which ones passed</li>
+      <li>You can see every step: what it read, what it priced, why it chose each meal</li>
+    </ul>
+  </div>
+
+  <h2 id="how">How it works</h2>
+  <ol class="steps">
+    <li><strong>Read the new recipes</strong><p>Ask the coordinator for recipes nobody has used yet. Recipes from every group are shared: once a Planner marks a recipe processed, it disappears from everyone’s “new” list.</p></li>
+    <li><strong>Pick a store</strong><p>Kroger prices depend on the store, so find one near the ZIP code and use it for every search.</p></li>
+    <li><strong>Price the ingredients</strong><p>For each ingredient, search Kroger, choose the product that matches, and let code work out what the recipe’s share of it costs.</p></li>
+    <li><strong>Estimate nutrition</strong><p>The AI estimates calories, protein, fibre and sodium per serving from the ingredients. These are estimates, and the plan says so.</p></li>
+    <li><strong>Choose five dinners</strong><p>Balanced by your rules, within budget. Recipes that share ingredients make the shopping list cheaper.</p></li>
+    <li><strong>Save and hand back</strong><p>Save the plan to the coordinator, fix anything it rejects, then mark the five recipes as processed.</p></li>
+  </ol>
+
+  <h2 id="api">The coordinator’s tools</h2>
+  <p>Your backend calls these with your group key in the header <code>Authorization: Bearer &lt;your group key&gt;</code>. The Kroger lookups use the coordinator’s own Kroger account, so you don’t need one.</p>
+  <div class="table-wrap"><table>
+    <tr><th>What</th><th>Call</th><th>Returns</th></tr>
+    <tr><td>New recipes</td><td><code>GET {{SITE}}/api/recipes?status=new&amp;limit=50</code><br><span class="small muted">optional: <code>&amp;theme=…</code> or <code>&amp;group=…</code></span></td><td>Recipes in the <a href="/scout#format">Scout’s format</a>, plus <code>id</code>, <code>group</code>, <code>status</code></td></tr>
+    <tr><td>Kroger stores</td><td><code>GET {{SITE}}/api/kroger/stores?zip=45202</code></td><td>Up to 5 stores: <code>store_id</code>, name, address</td></tr>
+    <tr><td>Kroger products</td><td><code>GET {{SITE}}/api/kroger/products?term=yellow%20onions&amp;store_id=…&amp;limit=5</code></td><td><code>product_id</code>, description, brand, <code>size</code> (e.g. “3 lb”), <code>price_usd</code>, <code>promo_price_usd</code></td></tr>
+    <tr><td>Save the plan</td><td><code>POST {{SITE}}/api/meal-plans</code></td><td><code>201</code> saved, or <code>400</code> with every problem listed</td></tr>
+    <tr><td>Mark a recipe used</td><td><code>POST {{SITE}}/api/recipes/&lt;id&gt;/processed</code></td><td><code>200</code>, or <code>404</code> if there’s no such recipe</td></tr>
+  </table></div>
+  <div class="callout"><p>Kroger allows a limited number of searches per day for the whole class. Search once per ingredient and reuse the answer: the same search at the same store gives the same prices.</p></div>
+
+  <h2 id="cost">Costing a recipe</h2>
+  <p>A recipe needs “2 tbsp olive oil”. Kroger sells a 16.9 fl oz bottle for $7.99. What does the recipe cost? There are two honest answers, and your plan uses both:</p>
+  <div class="grid-2">
+    <div class="panel"><h3 style="margin-top:0">Cost used</h3><p class="small" style="margin:0">The share of the package the meal uses: 2 tbsp is 1 fl oz, 1/16.9 of the bottle, about <strong>$0.47</strong>. This is the meal’s real food cost. It goes in <code>cost_used_usd</code>.</p></div>
+    <div class="panel"><h3 style="margin-top:0">Cost to buy</h3><p class="small" style="margin:0">What you pay at the till: the whole bottle, <strong>$7.99</strong>. The shopping list uses this. Its total is <code>total_cost_usd</code>, which is what your budget is about.</p></div>
+  </div>
+  <p>Unit conversion (tablespoons to fluid ounces, grams to pounds) is exactly the kind of arithmetic AI models get wrong. The prompts below give your agent a small calculator tool, so the model decides <em>which</em> product to use and code works out <em>how much</em> it costs.</p>
+
+  <h2 id="rules">What “balanced” means</h2>
+  <p>Your agent needs rules it can check, not just “make it healthy”. Start with these, then discuss as a group whether you’d change them. These are classroom rules, not dietary advice.</p>
+  <div class="grid-2">
+    <div class="panel">
+      <h3 style="margin-top:0">Each dinner, per serving</h3>
+      <ul class="small" style="margin:0">
+        <li>400 to 800 calories</li>
+        <li>At least 20 g protein</li>
+        <li>At least 5 g fibre</li>
+        <li>Under 1,500 mg sodium</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h3 style="margin-top:0">Across the five dinners</h3>
+      <ul class="small" style="margin:0">
+        <li>No main protein more than twice</li>
+        <li>At least 3 different cuisines, when the recipes allow</li>
+        <li>At least one vegetable-forward dinner</li>
+        <li>The shopping list total is within the budget</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2 id="format">The meal plan format</h2>
+  <div class="table-wrap"><table>
+    <tr><th>Field</th><th>What goes in it</th></tr>
+    <tr><td><code>summary</code></td><td>Why these five meals: balance, cost, trade-offs, anything estimated</td></tr>
+    <tr><td><code>budget_usd</code></td><td>The budget you were given (optional)</td></tr>
+    <tr><td><code>store_id</code></td><td>The Kroger store the prices came from</td></tr>
+    <tr><td><code>total_cost_usd</code></td><td>The shopping list total: the sum of <code>quantity × unit_price_usd</code></td></tr>
+    <tr><td><code>meals</code></td><td>Exactly 5, each with <code>day</code> (1 to 5, all different), <code>recipe_id</code> (from the coordinator; all different), <code>servings</code>, <code>cost_used_usd</code>, <code>cost_per_serving_usd</code> (= cost used ÷ servings), <code>nutrition_per_serving</code> with <code>calories</code>, <code>protein_g</code>, <code>fiber_g</code>, <code>sodium_mg</code></td></tr>
+    <tr><td><code>shopping_list</code></td><td>One line per Kroger product: <code>item</code>, <code>kroger_product_id</code>, <code>description</code>, <code>size</code>, <code>quantity</code> (packages), <code>unit_price_usd</code>, <code>recipe_ids</code> (which of the 5 meals use it)</td></tr>
+    <tr><td><code>rule_checks</code></td><td>Each rule you checked: <code>rule</code>, <code>passed</code> (true/false), <code>detail</code></td></tr>
+  </table></div>
+  <p class="small muted">The coordinator rejects a plan whose numbers don’t add up (to within 5 cents), that repeats a day or a recipe, or that uses a recipe id it doesn’t know. Going over budget is allowed but flagged.</p>
+
+  <h2 id="build">Build it in Lovable</h2>
+  <p>Paste these <strong>one at a time</strong>, and test after each. As with the Scout, the app uses Lovable Cloud and Lovable’s built-in AI, and your group key is stored as a secret, never typed into a prompt.</p>
+
+  <section class="prompt planner">
+    <div class="prompt-head">
+      <p class="prompt-title"><span class="where">Prompt 1 of 5</span>Create the app and store your key</p>
+      <button class="btn" type="button" data-copy="q1">Copy</button>
+    </div>
+    <div class="prompt-body" id="q1">Build a web app called "Meal Planner" for a class exercise. It's an AI agent that plans 5 dinners from recipes stored in our class coordinator at {{SITE}}, priced at a real Kroger store.
+
+Enable Lovable Cloud so the app has a backend.
+
+Add a secret named COORDINATOR_KEY and ask me to enter its value. It is my group's key. Only backend functions may use it: never put it in the page, the browser, or the code.
+
+Build one page with:
+- inputs: ZIP code (default 45202), budget in US dollars (default 60), people per meal (default 4)
+- a "Plan my week" button
+- two empty panels: "What the agent is doing" and "The plan"</div>
+  </section>
+
+  <section class="prompt planner">
+    <div class="prompt-head">
+      <p class="prompt-title"><span class="where">Prompt 2 of 5</span>Add the coordinator and Kroger tools</p>
+      <button class="btn" type="button" data-copy="q2">Copy</button>
+    </div>
+    <div class="prompt-body" id="q2">Create backend tools the agent will use. Plain code only, no AI yet. Each returns JSON. Every call to the coordinator sends the header "Authorization: Bearer " + the COORDINATOR_KEY secret.
+
+1. list_recipes(theme optional, group optional) -> GET {{SITE}}/api/recipes?status=new&limit=50, adding &theme= or &group= when given. Returns { count, recipes }.
+2. find_kroger_stores(zip) -> GET {{SITE}}/api/kroger/stores?zip=ZIP. Returns { stores: [{ store_id, name, address }] }.
+3. search_kroger_products(term, store_id) -> GET {{SITE}}/api/kroger/products?term=TERM&store_id=STORE_ID&limit=5. Returns { products: [{ product_id, description, brand, size, price_usd, promo_price_usd }] }. Remember results during a run: if the agent searches the same term at the same store again, return the saved answer without calling the coordinator.
+
+For every tool: when the coordinator answers with an error status, return the status and its "errors" list so the agent can read what went wrong, instead of crashing.
+
+Test each tool once: list the recipes, find stores for ZIP 45202, and search "yellow onions" at the first store. Show me the results.</div>
+  </section>
+
+  <section class="prompt planner">
+    <div class="prompt-head">
+      <p class="prompt-title"><span class="where">Prompt 3 of 5</span>Add the calculator tools</p>
+      <button class="btn" type="button" data-copy="q3">Copy</button>
+    </div>
+    <div class="prompt-body" id="q3">Add two calculator tools in plain code, so the AI never does arithmetic itself.
+
+4. price_ingredient(amount, unit, package_size, package_price_usd)
+Works out what a recipe's quantity of an ingredient costs.
+- Parse package_size text like "16.9 fl oz", "3 lb", "12 ct", "each".
+- Convert between units in the same family. Weight: g, kg, oz, lb. Volume: ml, l, tsp, tbsp, cup, fl oz, pint, quart, gallon (1 tbsp = 3 tsp = 0.5 fl oz; 1 cup = 8 fl oz). Count: each, ct.
+- If the recipe uses volume and the package is sold by weight (or the other way round), assume 1 ml weighs 1 g, and say so in "note".
+- If amount is null ("to taste"), return cost_used_usd 0 and note "to taste".
+- If the unit is null (e.g. "2 eggs"), treat the amount as a count.
+- If the units can't be converted, don't guess: return an error saying why.
+Return { fraction_of_package, cost_used_usd, packages_to_buy, cost_to_buy_usd, note }. Round money to cents.
+
+5. plan_totals(meals, shopping_list)
+- For each meal set cost_per_serving_usd = cost_used_usd ÷ servings, rounded to cents.
+- Set total_cost_usd = the sum of quantity × unit_price_usd over the shopping list, rounded to cents.
+Return the updated meals and total_cost_usd.
+
+Test price_ingredient with: 2 tbsp olive oil from a "16.9 fl oz" bottle at 7.99 (expect about 0.47 used, 7.99 to buy), and 300 g onions from a "3 lb" bag at 3.49.</div>
+  </section>
+
+  <section class="prompt planner">
+    <div class="prompt-head">
+      <p class="prompt-title"><span class="where">Prompt 4 of 5</span>Add saving and the agent loop</p>
+      <button class="btn" type="button" data-copy="q4">Copy</button>
+    </div>
+    <div class="prompt-body" id="q4">Add two more coordinator tools (same Authorization header):
+6. save_meal_plan(plan) -> POST {{SITE}}/api/meal-plans with the plan as JSON. Return the status and the reply. A 400 reply has an "errors" list: pass it back to the agent.
+7. mark_processed(recipe_id) -> POST {{SITE}}/api/recipes/RECIPE_ID/processed.
+
+Then add the agent: a backend function run-planner that uses Lovable AI with tool calling and all seven tools. It takes the ZIP code, budget and people per meal from the page.
+- Loop: send the instructions below and the tool definitions, run each tool the model asks for, send back the result, repeat.
+- Stop when the model calls finish(summary), or after 80 tool calls, or after 5 minutes. Record why it stopped.
+- Save every step to a table agent_steps (run_id, step number, kind: thought / tool_call / tool_result / error / final, tool name, input, output, time) as it happens.
+
+Instructions for the model:
+"You are Meal Planner. Plan 5 dinners, one per day for days 1 to 5, for PEOPLE people, from the coordinator's new recipes, priced at a Kroger store near ZIP, within a budget of BUDGET US dollars.
+1. Call list_recipes. If there are fewer than 5 recipes, say so and finish.
+2. Call find_kroger_stores and use the first store for every search.
+3. For each promising recipe, price its ingredients. Scale quantities from the recipe's est_servings to PEOPLE. Skip pantry staples (salt, pepper, water, cooking oil, dried herbs and spices): assume they're at home and cost 0, and mention them in the summary. For everything else, search Kroger, choose the product that matches the ingredient's form (garlic, not garlic powder) and a sensible size, and call price_ingredient. Use the promo price when there is one. If nothing matches, try a simpler search term. If still nothing, choose another recipe.
+4. Estimate each recipe's nutrition per serving: calories, protein_g, fiber_g, sodium_mg. Say in the summary that these are estimates.
+5. Choose 5 recipes that follow these rules: per serving 400 to 800 calories, at least 20 g protein, at least 5 g fibre, under 1,500 mg sodium; across the week no main protein more than twice, at least 3 cuisines when possible, at least one vegetable-forward dinner; shopping list within budget. Prefer recipes that share ingredients. If no set passes every rule, pick the best one and say which rules failed.
+6. Build the shopping list: one line per Kroger product, with the total number of packages needed across all meals and the recipe_ids that use it.
+7. Call plan_totals, then save_meal_plan with: summary, budget_usd, store_id, total_cost_usd, meals (day, recipe_id, servings = PEOPLE, cost_used_usd, cost_per_serving_usd, nutrition_per_serving), shopping_list (item, kroger_product_id, description, size, quantity, unit_price_usd, recipe_ids), and rule_checks (one per rule: rule, passed, detail).
+8. If save_meal_plan returns errors, fix every one and save again.
+9. Once saved, call mark_processed for each of the 5 recipes, then finish with a short summary."</div>
+  </section>
+
+  <section class="prompt planner">
+    <div class="prompt-head">
+      <p class="prompt-title"><span class="where">Prompt 5 of 5</span>Show the plan and the agent working</p>
+      <button class="btn" type="button" data-copy="q5">Copy</button>
+    </div>
+    <div class="prompt-body" id="q5">Connect the page to run-planner.
+
+- "Plan my week" starts a run and disables itself until the run ends.
+- "What the agent is doing" shows the steps live, one card per step: thoughts, tool calls with inputs, results collapsed by default, errors and coordinator rejections in red, and a counter like "34 / 80 tool calls".
+- "The plan" shows, once saved: five day cards (recipe photo and name, cost per serving, calories and protein), the shopping list as a table with a total compared to the budget, the rule checks as passed/failed badges, and the summary.
+- Add a link "See it on the class database" to {{SITE}}/database
+- Keep a list of past runs so I can reopen any earlier trace and plan.</div>
+  </section>
+
+  <h2 id="mcp">Optional: connect over MCP instead</h2>
+  <p>The coordinator is also an MCP server with every tool your Planner needs, so an agent can discover and use them directly instead of calling each REST address.</p>
+  <div class="table-wrap"><table>
+    <tr><th>MCP server</th><td><code>{{SITE}}/api/mcp</code> (Streamable HTTP)</td></tr>
+    <tr><th>Header</th><td><code>Authorization: Bearer &lt;your group key&gt;</code></td></tr>
+    <tr><th>Tools for the Planner</th><td><code>list_recipes</code>, <code>find_kroger_stores</code>, <code>search_kroger_products</code>, <code>save_meal_plan</code>, <code>mark_processed</code></td></tr>
+  </table></div>
+  <section class="prompt optional">
+    <div class="prompt-head">
+      <p class="prompt-title"><span class="where">Optional prompt</span>Switch the coordinator tools to MCP</p>
+      <button class="btn" type="button" data-copy="q-mcp">Copy</button>
+    </div>
+    <div class="prompt-body" id="q-mcp">Change how the agent talks to the coordinator: instead of calling its REST addresses, connect to its MCP server from the backend.
+
+- Use the official MCP TypeScript SDK (@modelcontextprotocol/sdk) with the Streamable HTTP client transport.
+- Server address: {{SITE}}/api/mcp. Send the header "Authorization: Bearer " + the COORDINATOR_KEY secret.
+- List the server's tools and give these to the model, using the input schemas the server provides: list_recipes, find_kroger_stores, search_kroger_products, save_meal_plan, mark_processed. Remove our own REST versions of those tools.
+- Keep price_ingredient and plan_totals as they are.
+- When an MCP tool result has isError: true, pass its text back to the model so it can fix the problem.
+Show "via MCP" on those tool calls in the trace.</div>
+  </section>
+
+  <h2 id="test">Test it</h2>
+  <div class="grid-2">
+    <div class="panel">
+      <h3 style="margin-top:0">It works when…</h3>
+      <ul class="checklist">
+        <li>A run with ZIP 45202, $60 and 4 people saves a plan</li>
+        <li>The plan appears on the <a href="/database">Database page</a> under Meal plans, with a shopping list</li>
+        <li>The five recipes now show as processed, by your group</li>
+        <li>Every price in the trace came from a Kroger search</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h3 style="margin-top:0">Now try to break it</h3>
+      <ul>
+        <li><strong>A tiny budget:</strong> $15 for 4 people. Does it swap meals, or say it can’t be done?</li>
+        <li><strong>Not enough recipes:</strong> what happens when fewer than 5 are new?</li>
+        <li><strong>An odd ingredient</strong> Kroger doesn’t sell. Does it try another search, or make up a price?</li>
+        <li><strong>Two costs:</strong> compare the plan’s total with the sum of cost used. Why are they different?</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>When things go wrong</h3>
+  <div class="table-wrap"><table>
+    <tr><th>You see</th><th>Try</th></tr>
+    <tr><td>“total_cost_usd is …, but the shopping list adds up to …”</td><td>The agent did the maths itself. Ask Lovable: “Make sure the agent always calls plan_totals before save_meal_plan and uses its numbers.”</td></tr>
+    <tr><td>“no recipe has the id …”</td><td>The agent invented or mistyped an id. Ask Lovable to use only ids returned by list_recipes.</td></tr>
+    <tr><td>“Kroger is limiting requests”</td><td>The class has used a lot of searches. Wait a minute, and check the agent reuses earlier search results.</td></tr>
+    <tr><td>“Kroger prices are not set up yet”</td><td>Tell your instructor: the coordinator needs its Kroger credentials.</td></tr>
+    <tr><td><code>401</code> or a CORS error</td><td>Same fixes as the Scout: check your key on the <a href="/#key">Welcome page</a>, and make sure calls happen in a backend function.</td></tr>
+  </table></div>
+  <p><a class="btn primary" href="/database">Go to the Database</a></p>
+</main>
+
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="status-strip" id="status-strip" aria-live="polite"></div>
+  </div>
+</footer>
+<script src="/site.js"></script>
+</body>
+</html>

@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Database · Recipe Coordinator</title>
+<meta name="description" content="Every recipe, meal plan and attempt the class's agents have made.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=JetBrains+Mono:wght@400;500&family=Source+Sans+3:wght@400;600&display=swap">
+<link rel="stylesheet" href="/site.css">
+</head>
+<body>
+<header class="site-head">
+  <div class="wrap">
+    <a class="brand" href="/"><span class="brand-mark" aria-hidden="true">RC</span>Recipe Coordinator</a>
+    <nav aria-label="Sections">
+      <ul class="tabs">
+        <li><a href="/">Welcome</a></li>
+        <li><a href="/scout"><span class="num">1</span>Recipe Scout</a></li>
+        <li><a href="/planner"><span class="num">2</span>Meal Planner</a></li>
+        <li><a href="/database" aria-current="page">Database</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <h1>Database</h1>
+  <p class="lede" style="margin-top:10px">Everything the class’s agents have saved, and every attempt the coordinator turned down. Updates itself every 15 seconds.</p>
+
+  <section class="notice" id="notice" hidden></section>
+
+  <div class="db-tabs" role="tablist" aria-label="Views">
+    <button role="tab" id="tab-recipes" aria-controls="view-recipes" aria-selected="true" data-view="recipes">Recipes<span class="count" id="n-recipes"></span></button>
+    <button role="tab" id="tab-plans" aria-controls="view-plans" aria-selected="false" data-view="plans">Meal plans<span class="count" id="n-plans"></span></button>
+    <button role="tab" id="tab-activity" aria-controls="view-activity" aria-selected="false" data-view="activity">Activity<span class="count" id="n-activity"></span></button>
+  </div>
+
+  <div class="filters">
+    <label class="field"><span>Group</span><select id="f-group"><option value="">All groups</option></select></label>
+    <label class="field" data-for="recipes"><span>Theme</span><select id="f-theme"><option value="">All themes</option></select></label>
+    <fieldset class="field seg-field" data-for="recipes">
+      <legend>Status</legend>
+      <div class="seg">
+        <label><input type="radio" name="status" value="" checked><span>All</span></label>
+        <label><input type="radio" name="status" value="new"><span>New</span></label>
+        <label><input type="radio" name="status" value="processed"><span>Processed</span></label>
+      </div>
+    </fieldset>
+    <fieldset class="field seg-field" data-for="activity" hidden>
+      <legend>Result</legend>
+      <div class="seg">
+        <label><input type="radio" name="result" value="" checked><span>All</span></label>
+        <label><input type="radio" name="result" value="accepted"><span>Accepted</span></label>
+        <label><input type="radio" name="result" value="rejected"><span>Rejected</span></label>
+      </div>
+    </fieldset>
+    <p class="db-meta"><span id="shown"></span><br><span id="stamp"></span></p>
+  </div>
+
+  <section id="view-recipes" role="tabpanel" aria-labelledby="tab-recipes">
+    <ul class="cards" id="recipes"></ul>
+  </section>
+  <section id="view-plans" role="tabpanel" aria-labelledby="tab-plans" hidden>
+    <div class="plans" id="plans"></div>
+  </section>
+  <section id="view-activity" role="tabpanel" aria-labelledby="tab-activity" hidden>
+    <div class="table-wrap activity">
+      <table>
+        <thead><tr><th>When</th><th>Group</th><th>What</th><th>Result</th><th>Details</th></tr></thead>
+        <tbody id="activity"></tbody>
+      </table>
+    </div>
+  </section>
+  <p class="empty" id="empty" hidden></p>
+</main>
+
+<template id="recipe-card">
+  <li class="card">
+    <div class="photo"><img alt="" loading="lazy"><span class="pill"></span></div>
+    <div class="body">
+      <p class="tags"><span class="chip"></span><span class="theme"></span></p>
+      <h2 class="name"><a target="_blank" rel="noopener"></a></h2>
+      <p class="meta"></p>
+      <p class="why"></p>
+      <details class="ingredients"><summary></summary><ul></ul></details>
+      <p class="processed-note"></p>
+    </div>
+  </li>
+</template>
+
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="status-strip" id="status-strip" aria-live="polite"></div>
+  </div>
+</footer>
+<script src="/site.js"></script>
+<script src="/database.js"></script>
+</body>
+</html>

@@ -1,5 +1,7 @@
 {
+  "cleanUrls": true,
   "rewrites": [
-    { "source": "/api/recipes/:id/processed", "destination": "/api/recipes?id=:id&action=processed" }
+    { "source": "/api/recipes/:id/processed", "destination": "/api/recipes?id=:id&action=processed" },
+    { "source": "/api/kroger/:what", "destination": "/api/kroger?what=:what" }
   ]
 }

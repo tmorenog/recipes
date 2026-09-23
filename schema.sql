@@ -51,11 +51,28 @@ create table if not exists activity (
 );
 create index if not exists activity_at_idx on activity (at desc);
 
+-- Meal plans saved by the Meal Planner agents. Meals and the shopping list
+-- are stored with the plan, so saving a plan is a single write.
+create table if not exists plans (
+  id              uuid primary key default gen_random_uuid(),
+  group_name      text not null,
+  summary         text not null,
+  budget_usd      numeric(10,2),
+  total_cost_usd  numeric(10,2) not null check (total_cost_usd >= 0),
+  store_id        text,                       -- Kroger store the prices came from
+  meals           jsonb not null check (jsonb_typeof(meals) = 'array'),
+  shopping_list   jsonb not null check (jsonb_typeof(shopping_list) = 'array'),
+  rule_checks     jsonb not null default '[]'::jsonb,
+  created_at      timestamptz not null default now()
+);
+create index if not exists plans_created_idx on plans (created_at desc);
+
 -- Row level security with no policies: Supabase's public (anon) key can't read
 -- or write anything. This app uses the service role key (or connects as the
 -- tables' owner), which RLS doesn't restrict.
 alter table recipes  enable row level security;
 alter table activity enable row level security;
+alter table plans    enable row level security;
 
 -- On Supabase, make sure the service role can use the tables through the API,
 -- and tell the API to pick up the new tables right away.
@@ -64,6 +81,7 @@ begin
   if exists (select 1 from pg_roles where rolname = 'service_role') then
     grant select, insert, update on recipes to service_role;
     grant select, insert on activity to service_role;
+    grant select, insert on plans to service_role;
     grant usage, select on sequence activity_id_seq to service_role;
   end if;
 end $$;

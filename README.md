@@ -1,12 +1,17 @@
-# Recipes API
+# Recipe Coordinator
 
-A shared recipe database for a class building AI agents. Each group's agent saves recipes it finds; another agent reads them and marks the ones it uses. Everyone can watch the results on a live board.
+The hub for a two-agent class exercise. Groups build two AI agents in Lovable: a **Recipe Scout** that finds recipes, and a **Meal Planner** that turns them into five balanced, affordable dinners priced at Kroger. This site hosts the instructions and the shared database that connects the agents.
 
-- **MCP server** at `/api/mcp`, with three tools: `save_recipe`, `list_recipes` and `mark_processed`.
-- **REST API** at `/api/recipes` for apps that don't speak MCP. Same data, same rules, same error messages.
-- **Recipe Board** at the site root: photos, ingredients, group and status, filterable by theme, group and status. It updates itself every 15 seconds.
+**Pages**
+- **Welcome** (`/`): what the exercise is, how the pieces fit, and a check that a group's key works.
+- **Recipe Scout** (`/scout`) and **Meal Planner** (`/planner`): goals, the coordinator's API, copy-ready Lovable prompts (with this site's address filled in), test checklists and troubleshooting.
+- **Database** (`/database`): every recipe, meal plan and attempt (including rejections and why), filterable by group. Updates every 15 seconds.
 
-Every group has its own key. The key tells the API which group is calling, so each recipe records which group saved it, and which group processed it.
+**API** (used by the students' agents)
+- **REST** under `/api/…` for Lovable backends. Same data, same rules, same error messages as MCP.
+- **MCP** at `/api/mcp` with six tools: `save_recipe`, `list_recipes`, `mark_processed`, `save_meal_plan`, `find_kroger_stores`, `search_kroger_products`.
+
+Every group has its own key. The key tells the coordinator which group is calling, so each recipe and plan records who made it. Kroger lookups use the instructor's Kroger credentials, so students need none.
 
 ## Deploy
 
@@ -16,9 +21,9 @@ You need a Vercel account, a Supabase database, and this repository on GitHub.
 
 2. **Connect Supabase.** In the project, open the **Storage** tab and create or connect a Supabase database for this project. Vercel adds `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` to the project's environment variables. (Adding those two yourself also works: copy them from Supabase's **Project Settings → API**.)
 
-3. **Create the tables, once.** Open the project in Supabase (**Open in Supabase** in Vercel's Storage tab), go to **SQL Editor**, paste the whole of [`schema.sql`](schema.sql), and click **Run**. It's safe to run again. This step is manual because Supabase's API can't create tables.
+3. **Create the tables.** Open the project in Supabase (**Open in Supabase** in Vercel's Storage tab), go to **SQL Editor**, paste the whole of [`schema.sql`](schema.sql), and click **Run**. It's safe to run again, and you should run it again whenever `schema.sql` changes (this version added the `plans` table for meal plans). This step is manual because Supabase's API can't create tables.
 
-4. **Set the group keys.** In Vercel, open **Settings → Environment Variables** and add one variable, `GROUP_KEYS`, listing every group and its key:
+4. **Set the group keys and Kroger credentials.** In Vercel, open **Settings → Environment Variables** and add one variable, `GROUP_KEYS`, listing every group and its key:
 
    ```
    team-1:8f3c1a9d2b7e4f60,team-2:c41e97a05d3b28f1,team-3:5a0d6e2f9c18b743
@@ -28,9 +33,11 @@ You need a Vercel account, a Supabase database, and this repository on GitHub.
    - Keys must be at least 8 characters and all different. Make them random, e.g. with `openssl rand -hex 8`.
    - Give each group only its own key.
 
+   Also add `KROGER_CLIENT_ID` and `KROGER_CLIENT_SECRET` from your app at [developer.kroger.com](https://developer.kroger.com) (it needs the product scope). The Meal Planners' price lookups go through these. Without them, everything else works and the site shows "Kroger prices off".
+
 5. **Redeploy.** Go to **Deployments**, open the ⋯ menu on the latest one and click **Redeploy**. Settings only take effect in new deployments. The build log shows `✓ Supabase is connected and the tables exist`.
 
-6. **Check it.** Open your site's address. You should see the Recipe Board (empty at first). If something is missing, a notice at the top says exactly what.
+6. **Check it.** Open your site's address. The footer shows whether the database is ready, how many groups are set up, and whether Kroger prices are on. The Database page explains anything that's missing.
 
 To add a group later, edit `GROUP_KEYS` and redeploy.
 
@@ -68,6 +75,9 @@ Endpoint: `https://<your-site>.vercel.app/api/mcp`. Send the group's key as `Aut
 | `save_recipe` | Saves one recipe under your group. |
 | `list_recipes` | Recipes from every group, newest first. Options: `status` (`new`, the default; `processed`; or `all`), `theme`, `group`, `limit` (default 50, max 500). |
 | `mark_processed` | Takes one `recipe_id`. Marks that recipe as used by your group, so it drops out of the `new` list. Marking it again changes nothing. |
+| `save_meal_plan` | Saves a 5-meal plan with costs, nutrition and a shopping list. See the checks below. |
+| `find_kroger_stores` | Kroger stores near a US ZIP code, each with a `store_id`. |
+| `search_kroger_products` | Products at one store: description, size, price and promo price. Results are cached for an hour. |
 
 Claude Code:
 
@@ -92,13 +102,19 @@ Most other MCP clients take a config like this:
 
 ## REST
 
-Reading needs no key. Writing needs the group key, sent the same way.
+Reading recipes, plans and activity needs no key, and works from a browser. Writing and Kroger lookups need the group key, and only work from a server (browsers can't send keys to the coordinator), which keeps keys out of students' web pages.
 
 | Request | What it does | Success | Errors |
 | --- | --- | --- | --- |
 | `GET /api/recipes?status=&theme=&group=&limit=` | List recipes (same options as `list_recipes`) | `200` `{ count, recipes }` | `400` bad option |
 | `POST /api/recipes` with the recipe as JSON | Save a recipe | `201` `{ saved, recipe }` | `400` incomplete, `401` wrong key, `409` duplicate |
 | `POST /api/recipes/{id}/processed` | Mark it processed | `200` `{ processed, already, recipe }` | `401` wrong key, `404` no such recipe |
+| `GET /api/meal-plans?group=&limit=` | List meal plans | `200` `{ count, plans }` | |
+| `POST /api/meal-plans` | Save a meal plan | `201` `{ saved, plan, warnings, next_step }` | `400` with every problem, `401` |
+| `GET /api/kroger/stores?zip=` | Kroger stores (key required) | `200` `{ stores }` | `400`, `429` Kroger busy, `503` not set up |
+| `GET /api/kroger/products?term=&store_id=&limit=` | Kroger products with prices (key required) | `200` `{ products }` | same |
+| `GET /api/activity?group=&result=all\|accepted\|rejected` | Every save and mark attempt | `200` `{ activity }` | |
+| `GET /api/whoami` | Which group a key belongs to | `200` `{ group }` | `401` |
 
 Every error response looks like `{ "errors": ["reason", "reason"] }`.
 
@@ -108,9 +124,16 @@ curl -X POST https://<your-site>.vercel.app/api/recipes \
   -d '{"theme":"15-minute lunches","meal_id":"52771","name":"Halloumi wraps","ingredients":[{"name":"halloumi","amount":1,"unit":"block","raw":"1 block halloumi"}],"instructions":"Grill the halloumi, slice it and wrap it with salad.","est_minutes":15,"est_servings":2,"why_chosen":"Ready in 15 minutes."}'
 ```
 
+### Meal plan checks
+- Exactly 5 meals, on different days, with no recipe repeated, and every `recipe_id` must exist.
+- For each meal, `cost_per_serving_usd` = `cost_used_usd ÷ servings`, to within 5 cents.
+- `total_cost_usd` = the sum of `quantity × unit_price_usd` over the shopping list, to within 5 cents.
+- Each shopping list line's `recipe_ids` must be meals in this plan.
+- Going over `budget_usd` is allowed but returns a warning.
+
 ## Checking the setup
 
-`/api/health` reports whether a database is connected, whether the tables exist, and which groups are configured. It shows group names, never keys. The Recipe Board uses it to explain what's missing.
+`/api/health` reports whether a database is connected, whether the tables exist, and which groups are configured. It shows group names, never keys. The site footer and the Database page use it to explain what’s missing.
 
 ## Run it locally
 
@@ -145,17 +168,20 @@ TEST_DATABASE_URL=postgres://postgres@localhost:5432/recipes_test npm test
 | `scripts/setup-db.js` | `npm run db:setup`, also run on every deploy: checks the tables, and creates them when it has a Postgres connection string |
 | `api/mcp.js` | MCP endpoint |
 | `api/recipes.js` | REST endpoint |
+| `api/meal-plans.js`, `api/kroger.js`, `api/activity.js`, `api/whoami.js` | The other REST endpoints |
 | `api/health.js` | Setup check |
 | `lib/recipes.js` | The recipe rules and database operations shared by MCP and REST |
-| `lib/mcp.js` | The three MCP tools |
+| `lib/plans.js` | Meal plan rules, and the activity list |
+| `lib/kroger.js` | Kroger sign-in, store and product lookups, caching |
+| `lib/mcp.js` | The MCP tools |
 | `lib/groups.js` | Reads `GROUP_KEYS` and matches a request's key to its group |
 | `lib/store/` | Where recipes are stored: `supabase.js` (default) or `postgres.js` |
 | `lib/env.js`, `lib/db.js` | Finding the Supabase or Postgres settings |
-| `public/` | The Recipe Board |
+| `public/` | The site: Welcome, Scout and Planner instructions, Database |
 | `tests/` | Tests |
 
 ## Security notes
 
-- Anyone with the site's address can read the recipes. Only holders of a group key can write.
+- Anyone with the site's address can read the recipes, plans and activity log. Only holders of a group key can write or use the Kroger lookups.
 - Keys live only in Vercel's environment variables. Don't put them in code, in the repository, or in a page's JavaScript.
 - Supabase's public (anon) key can't reach the tables: row level security is on with no policies. Only this app, using the service role key on the server, can. Never put the service role key in a page or app.

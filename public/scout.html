@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Recipe Scout · Recipe Coordinator</title>
+<meta name="description" content="Instructions and Lovable prompts for Agent 1, the Recipe Scout.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=JetBrains+Mono:wght@400;500&family=Source+Sans+3:wght@400;600&display=swap">
+<link rel="stylesheet" href="/site.css">
+</head>
+<body>
+<header class="site-head">
+  <div class="wrap">
+    <a class="brand" href="/"><span class="brand-mark" aria-hidden="true">RC</span>Recipe Coordinator</a>
+    <nav aria-label="Sections">
+      <ul class="tabs">
+        <li><a href="/">Welcome</a></li>
+        <li><a href="/scout" aria-current="page"><span class="num">1</span>Recipe Scout</a></li>
+        <li><a href="/planner"><span class="num">2</span>Meal Planner</a></li>
+        <li><a href="/database">Database</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="page-head">
+    <span class="agent-tag scout">Agent 1</span>
+    <h1>Build the Recipe Scout</h1>
+    <p class="lede">An agent that takes a theme, searches a real recipe database, chooses five recipes that fit, and saves them to the coordinator for the Meal Planners to use.</p>
+    <ul class="toc">
+      <li><a href="#goal">The goal</a></li>
+      <li><a href="#how">How it works</a></li>
+      <li><a href="#format">The recipe format</a></li>
+      <li><a href="#build">Build it in Lovable</a></li>
+      <li><a href="#mcp">Optional: MCP</a></li>
+      <li><a href="#test">Test it</a></li>
+      <li><a href="#help">When things go wrong</a></li>
+    </ul>
+  </div>
+
+  <h2 id="goal">The goal</h2>
+  <div class="panel narrow">
+    <p style="margin-top:0"><strong>Your Scout is done when:</strong> you type a theme, press a button, watch it work step by step, and five recipes that fit the theme appear on the <a href="/database">Database page</a> under your group.</p>
+    <ul class="checklist">
+      <li>It only saves real recipes it looked up. It never invents one.</li>
+      <li>Each saved recipe passes the coordinator’s checks. When one is rejected, the agent fixes it and retries.</li>
+      <li>The five recipes are varied: not five pasta dishes.</li>
+      <li>You can see every step it took: what it searched, what it read, what it saved.</li>
+    </ul>
+  </div>
+
+  <h2 id="how">How it works</h2>
+  <p>An agent is a loop. The AI model decides which tool to use next, your code runs that tool, and the result goes back to the model, until the job is done. The Scout has two kinds of tools:</p>
+  <div class="grid-2">
+    <div class="panel">
+      <h3 style="margin-top:0">Finding recipes: TheMealDB</h3>
+      <p class="small">A free recipe database, no key needed. Base address <code>https://www.themealdb.com/api/json/v1/1/</code></p>
+      <div class="table-wrap"><table>
+        <tr><th>Tool</th><th>Calls</th></tr>
+        <tr><td>Search by name</td><td><code>search.php?s=curry</code></td></tr>
+        <tr><td>Filter by ingredient</td><td><code>filter.php?i=chickpeas</code></td></tr>
+        <tr><td>Filter by category</td><td><code>filter.php?c=Vegetarian</code></td></tr>
+        <tr><td>Filter by cuisine</td><td><code>filter.php?a=Italian</code></td></tr>
+        <tr><td>Get a full recipe</td><td><code>lookup.php?i=52772</code></td></tr>
+      </table></div>
+      <p class="small muted" style="margin:0">Filters return only id, name and photo. Use “get a full recipe” before saving.</p>
+    </div>
+    <div class="panel">
+      <h3 style="margin-top:0">Saving recipes: the coordinator</h3>
+      <p class="small">Your app’s backend sends each recipe here, with your group key:</p>
+      <pre class="code">POST {{SITE}}/api/recipes
+Authorization: Bearer &lt;your group key&gt;
+Content-Type: application/json
+
+{ …the recipe… }</pre>
+      <div class="table-wrap"><table>
+        <tr><th>Answer</th><th>Means</th></tr>
+        <tr><td><code>201</code></td><td>Saved. The reply includes the stored recipe.</td></tr>
+        <tr><td><code>400</code></td><td>Something’s missing or wrong. <code>errors</code> lists every problem.</td></tr>
+        <tr><td><code>409</code></td><td>Your group already saved this recipe for this theme.</td></tr>
+        <tr><td><code>401</code></td><td>Missing or wrong group key.</td></tr>
+      </table></div>
+    </div>
+  </div>
+
+  <h2 id="format">The recipe format</h2>
+  <p>This is the contract between your Scout and every Meal Planner in the class. The coordinator rejects anything that doesn’t match, including fields that aren’t listed here.</p>
+  <div class="table-wrap"><table>
+    <tr><th>Field</th><th>Required</th><th>What goes in it</th></tr>
+    <tr><td><code>theme</code></td><td>yes</td><td>The theme you searched for, exactly as typed</td></tr>
+    <tr><td><code>meal_id</code></td><td>yes</td><td>TheMealDB’s <code>idMeal</code>, e.g. <code>"52772"</code></td></tr>
+    <tr><td><code>name</code></td><td>yes</td><td><code>strMeal</code></td></tr>
+    <tr><td><code>category</code>, <code>cuisine</code></td><td>no</td><td><code>strCategory</code>, <code>strArea</code></td></tr>
+    <tr><td><code>ingredients</code></td><td>yes</td><td>A list built from <code>strIngredient1…20</code> and <code>strMeasure1…20</code>. Each item: <code>name</code>, <code>amount</code> (a positive number, or <code>null</code> for “to taste”), <code>unit</code> (or <code>null</code> for things you count, like eggs), <code>raw</code> (the original measure text)</td></tr>
+    <tr><td><code>instructions</code></td><td>yes</td><td><code>strInstructions</code> (at least 20 characters)</td></tr>
+    <tr><td><code>est_minutes</code></td><td>yes</td><td>Your agent’s estimate of the total time: a whole number</td></tr>
+    <tr><td><code>est_servings</code></td><td>yes</td><td>Your agent’s estimate of the servings: a whole number</td></tr>
+    <tr><td><code>image_url</code>, <code>source_url</code></td><td>no</td><td><code>strMealThumb</code>, <code>strSource</code> (must start with http:// or https://)</td></tr>
+    <tr><td><code>why_chosen</code></td><td>yes</td><td>One sentence: why this recipe fits the theme</td></tr>
+  </table></div>
+  <details class="panel">
+    <summary><strong>Example of a valid recipe</strong></summary>
+    <pre class="code" id="example-recipe">{
+  "theme": "cheap weeknight vegetarian dinners",
+  "meal_id": "52870",
+  "name": "Chickpea Fajitas",
+  "category": "Vegetarian",
+  "cuisine": "Mexican",
+  "ingredients": [
+    { "name": "chickpeas", "amount": 400, "unit": "g", "raw": "400g can" },
+    { "name": "red pepper", "amount": 1, "unit": null, "raw": "1 sliced" },
+    { "name": "smoked paprika", "amount": 1, "unit": "tsp", "raw": "1 tsp" },
+    { "name": "salt", "amount": null, "unit": null, "raw": "to taste" }
+  ],
+  "instructions": "Heat the oven to 200C. Toss the chickpeas and pepper with the spices and roast for 20 minutes…",
+  "est_minutes": 30,
+  "est_servings": 4,
+  "image_url": "https://www.themealdb.com/images/media/meals/example.jpg",
+  "source_url": null,
+  "why_chosen": "Cheap tinned chickpeas, one tray, ready in 30 minutes."
+}</pre>
+    <p class="small muted">A rejected recipe gets every problem at once, for example: <code>est_servings must be at least 1</code>, <code>why_chosen is empty</code>, <code>unknown field: calories</code>.</p>
+  </details>
+
+  <h2 id="build">Build it in Lovable</h2>
+  <p>Paste these prompts into Lovable <strong>one at a time</strong>. After each one, check the result before moving on. Your app uses Lovable Cloud for its backend and Lovable’s built-in AI for the agent, so you don’t need any API keys except your group key.</p>
+  <div class="callout warn"><p><strong>Your group key never goes in a prompt.</strong> Prompt 1 asks Lovable to create a secret. Lovable then shows a secure box where you paste the key.</p></div>
+
+  <section class="prompt scout">
+    <div class="prompt-head">
+      <p class="prompt-title"><span class="where">Prompt 1 of 4</span>Create the app and store your key</p>
+      <button class="btn" type="button" data-copy="p1">Copy</button>
+    </div>
+    <div class="prompt-body" id="p1">Build a web app called "Recipe Scout" for a class exercise. It's an AI agent that finds real recipes for a theme and saves them to our class coordinator at {{SITE}}.
+
+Enable Lovable Cloud so the app has a backend.
+
+Add a secret named COORDINATOR_KEY and ask me to enter its value. It is my group's key. Only backend functions may use it: never put it in the page, the browser, or the code.
+
+For now, build one page with:
+- a text box for the theme, with the examples "cheap weeknight vegetarian dinners", "comfort food for a rainy day" and "15-minute lunches" as clickable chips
+- a "Run Recipe Scout" button
+- two empty panels side by side: "What the agent is doing" and "Saved recipes"</div>
+  </section>
+
+  <section class="prompt scout">
+    <div class="prompt-head">
+      <p class="prompt-title"><span class="where">Prompt 2 of 4</span>Add the tools</p>
+      <button class="btn" type="button" data-copy="p2">Copy</button>
+    </div>
+    <div class="prompt-body" id="p2">Create backend tools the agent will use. Plain code only, no AI yet. Each returns JSON.
+
+TheMealDB (free, no key). Base address https://www.themealdb.com/api/json/v1/1/
+1. search_by_name(query) -> search.php?s=QUERY
+2. filter_by_ingredient(ingredient) -> filter.php?i=INGREDIENT
+3. filter_by_category(category) -> filter.php?c=CATEGORY. Valid categories: list.php?c=list
+4. filter_by_cuisine(area) -> filter.php?a=AREA. Valid cuisines: list.php?a=list
+5. get_recipe(meal_id) -> lookup.php?i=MEAL_ID. Returns the full recipe. The filter tools only return id, name and photo.
+Return an empty list (not an error) when TheMealDB finds nothing ("meals": null).
+
+The coordinator:
+6. save_recipe(recipe) -> POST {{SITE}}/api/recipes with the headers "Authorization: Bearer " + the COORDINATOR_KEY secret, and "Content-Type: application/json", and the recipe as the JSON body. Return the HTTP status and the coordinator's reply exactly as received. When the status is 400 or 409, the reply has an "errors" list saying what to fix. Don't treat that as a crash: pass it back so the agent can fix the recipe and try again.
+
+Test tools 1 to 5 once each with a sample input and show me the results. Don't call save_recipe yet.</div>
+  </section>
+
+  <section class="prompt scout">
+    <div class="prompt-head">
+      <p class="prompt-title"><span class="where">Prompt 3 of 4</span>Add the agent loop</p>
+      <button class="btn" type="button" data-copy="p3">Copy</button>
+    </div>
+    <div class="prompt-body" id="p3">Now add the agent: a backend function run-scout that uses Lovable AI with tool calling and the six tools.
+
+How it runs:
+- Create a run record with the theme. Send the model the instructions below, the theme, and the tool definitions.
+- When the model asks for a tool, run it and send back the result. Repeat.
+- Stop when the model calls finish(summary), or after 25 tool calls, or after 2 minutes. If it stops because of a limit, record why.
+- Save every step to a table agent_steps (run_id, step number, kind: thought / tool_call / tool_result / error / final, tool name, input, output, time) as it happens, so the page can show them live.
+
+Instructions for the model:
+"You are Recipe Scout. Find 5 real recipes on TheMealDB that fit the theme, and save each one with save_recipe.
+- Search in several ways (by name, ingredient, category, cuisine). If a search finds nothing, try another one.
+- Always call get_recipe before saving. Never invent a recipe, an ingredient, or a quantity.
+- Build the recipe in exactly this format, with no other fields: theme (exactly as given), meal_id (idMeal), name (strMeal), category (strCategory), cuisine (strArea), ingredients, instructions (strInstructions), est_minutes, est_servings, image_url (strMealThumb), source_url (strSource, or null if empty), why_chosen.
+- ingredients: one item per non-empty strIngredientN, with name (the ingredient, lowercase), amount (the number from strMeasureN, or null if there isn't one), unit (like g, tbsp, cup, or null for countable things like eggs), raw (strMeasureN exactly as written).
+- est_minutes and est_servings: whole numbers, estimated from the instructions and quantities.
+- why_chosen: one sentence explaining why it fits the theme.
+- Choose variety: different main ingredients and cuisines where the theme allows.
+- If save_recipe returns errors, read every one, fix the recipe, and save again. If it says the recipe is already saved, pick a different one.
+- When 5 recipes are saved, call finish with a short summary. If the theme contradicts itself or can't be met, explain why and finish early."</div>
+  </section>
+
+  <section class="prompt scout">
+    <div class="prompt-head">
+      <p class="prompt-title"><span class="where">Prompt 4 of 4</span>Show the agent working</p>
+      <button class="btn" type="button" data-copy="p4">Copy</button>
+    </div>
+    <div class="prompt-body" id="p4">Connect the page to run-scout.
+
+- "Run Recipe Scout" starts a run with the theme and disables itself until the run ends.
+- "What the agent is doing" shows the steps live, one card per step: thoughts in plain text, tool calls with the tool name and inputs, results collapsed by default (click to see the JSON), errors and coordinator rejections in red. Show a counter like "12 / 25 tool calls".
+- "Saved recipes" shows each recipe the coordinator accepted: photo, name, cuisine, estimated time and why_chosen.
+- Add a link "See it on the class database" to {{SITE}}/database
+- Keep a list of past runs so I can reopen any earlier trace.</div>
+  </section>
+
+  <h2 id="mcp">Optional: connect over MCP instead</h2>
+  <p>MCP (Model Context Protocol) is a standard way for AI agents to discover and use tools. The coordinator is also an MCP server, so an agent can use its tools directly instead of calling the REST address. Try this once your Scout works over REST.</p>
+  <div class="table-wrap"><table>
+    <tr><th>MCP server</th><td><code>{{SITE}}/api/mcp</code> (Streamable HTTP)</td></tr>
+    <tr><th>Header</th><td><code>Authorization: Bearer &lt;your group key&gt;</code></td></tr>
+    <tr><th>Tools for the Scout</th><td><code>save_recipe</code> (same format and checks as above), <code>list_recipes</code></td></tr>
+  </table></div>
+  <section class="prompt optional">
+    <div class="prompt-head">
+      <p class="prompt-title"><span class="where">Optional prompt</span>Switch save_recipe to MCP</p>
+      <button class="btn" type="button" data-copy="p-mcp">Copy</button>
+    </div>
+    <div class="prompt-body" id="p-mcp">Change how the agent saves recipes: instead of calling the REST address, connect to the coordinator's MCP server from the backend.
+
+- Use the official MCP TypeScript SDK (@modelcontextprotocol/sdk) with the Streamable HTTP client transport.
+- Server address: {{SITE}}/api/mcp. Send the header "Authorization: Bearer " + the COORDINATOR_KEY secret.
+- List the server's tools and give the save_recipe tool to the model, using the input schema the server provides.
+- When the tool result has isError: true, pass its text back to the model so it can fix the recipe and try again.
+Keep the TheMealDB tools as they are. Show "via MCP" on tool calls in the trace.</div>
+  </section>
+
+  <h2 id="test">Test it</h2>
+  <div class="grid-2">
+    <div class="panel">
+      <h3 style="margin-top:0">It works when…</h3>
+      <ul class="checklist">
+        <li>A run with “cheap weeknight vegetarian dinners” saves 5 recipes</li>
+        <li>They appear on the <a href="/database">Database page</a> under your group, with photos</li>
+        <li>The trace shows each search, look-up and save</li>
+        <li>The Database page’s Activity tab shows your saves as accepted</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h3 style="margin-top:0">Now try to break it</h3>
+      <ul>
+        <li><strong>Run the same theme twice.</strong> Does it notice the duplicates and pick new recipes?</li>
+        <li><strong>A contradiction:</strong> “vegan sushi with beef”. Does it explain the problem, or invent something?</li>
+        <li><strong>Nothing to find:</strong> “Antarctic street food”. Does it widen its search sensibly?</li>
+        <li><strong>A tight limit:</strong> set the limit to 8 tool calls. What does it do when it runs out?</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2 id="help">When things go wrong</h2>
+  <div class="table-wrap"><table>
+    <tr><th>You see</th><th>Try</th></tr>
+    <tr><td><code>401</code> “Missing or wrong group key”</td><td>Check your key on the <a href="/#key">Welcome page</a>. Then ask Lovable: “Check that save_recipe sends the header Authorization: Bearer followed by the COORDINATOR_KEY secret.”</td></tr>
+    <tr><td>A <code>400</code> with reasons</td><td>That’s the coordinator doing its job. If the agent keeps making the same mistake, paste the reason into Lovable: “The coordinator rejects our recipes with: … Update the instructions for the model so it gets this right.”</td></tr>
+    <tr><td>“unknown field: …”</td><td>The agent added a field that isn’t in the format. Ask Lovable to send only the fields listed on this page.</td></tr>
+    <tr><td>A CORS error in the browser console</td><td>The page is calling the coordinator directly. Saving must happen in a backend function: “Move the save_recipe call into a backend function.”</td></tr>
+    <tr><td>The agent stops early or loops</td><td>Look at the last few steps of the trace. Tell Lovable what it did and what it should have done instead.</td></tr>
+  </table></div>
+  <p><a class="btn primary" href="/planner">Next: build the Meal Planner</a></p>
+</main>
+
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="status-strip" id="status-strip" aria-live="polite"></div>
+  </div>
+</footer>
+<script src="/site.js"></script>
+</body>
+</html>

@@ -1,10 +1,11 @@
-// Setup check used by the Recipe Board: is a database connected, do the tables
+// Setup check used by the site footer and the Database page: is a database connected, do the tables
 // exist, are group keys set? Shows setting names and group names, never values.
 import { getStore, configuredBackend } from '../lib/store/index.js';
 import { TABLES_MISSING_SUPABASE, TABLES_MISSING_POSTGRES } from '../lib/store/errors.js';
 import { databaseSettingNames } from '../lib/env.js';
 import { parseGroupKeys } from '../lib/groups.js';
 import { json } from '../lib/http.js';
+import { krogerConfigured } from '../lib/kroger.js';
 
 export async function GET() {
   const problems = [];
@@ -38,8 +39,14 @@ export async function GET() {
     }
   }
 
+  const warnings = krogerConfigured()
+    ? []
+    : ['Kroger prices are off: add KROGER_CLIENT_ID and KROGER_CLIENT_SECRET in Vercel, then redeploy. The Meal Planner needs them.'];
+
   return json(problems.length ? 503 : 200, {
     ok: problems.length === 0,
+    kroger: krogerConfigured(),
+    warnings,
     backend,
     database,
     database_settings_seen: seen,

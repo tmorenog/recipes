@@ -4,8 +4,7 @@
 //   POST /api/recipes                    save a recipe         (group key required)
 //   POST /api/recipes/{id}/processed     mark it processed     (group key required)
 import { saveRecipe, listRecipes, markProcessed } from '../lib/recipes.js';
-import { groupFromRequest, unauthorized } from '../lib/groups.js';
-import { json, guarded } from '../lib/http.js';
+import { json, guarded, requireGroup } from '../lib/http.js';
 
 // vercel.json rewrites /api/recipes/{id}/processed to this function with ?id=
 // and ?action=processed. The path is also parsed in case the original URL arrives.
@@ -26,11 +25,8 @@ export const GET = guarded(async (request) => {
 });
 
 export const POST = guarded(async (request) => {
-  const group = groupFromRequest(request);
-  if (!group) {
-    const { status, error } = unauthorized();
-    return json(status, { errors: [error] });
-  }
+  const { group, response } = await requireGroup(request);
+  if (response) return response;
 
   const { id, action } = target(new URL(request.url));
   if (action === 'processed') {

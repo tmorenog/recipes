@@ -6,7 +6,7 @@ import { randomUUID } from 'node:crypto';
 const UNIQUE = { recipes: ['group_name', 'theme', 'meal_id'] };
 
 export function fakeSupabase() {
-  const tables = { recipes: [], activity: [] };
+  const tables = { recipes: [], activity: [], plans: [] };
   let clock = 0;
   const now = () => new Date(Date.UTC(2026, 0, 1) + ++clock * 1000).toISOString();
 
@@ -16,7 +16,8 @@ export function fakeSupabase() {
       select(_cols, opts = {}) { if (state.op === 'select') state.head = Boolean(opts.head); return builder; },
       insert(values) { state.op = 'insert'; state.values = values; return builder; },
       update(values) { state.op = 'update'; state.values = values; return builder; },
-      eq(col, val) { state.filters.push([col, val]); return builder; },
+      eq(col, val) { state.filters.push([col, (v) => v === val]); return builder; },
+      in(col, vals) { state.filters.push([col, (v) => vals.includes(v)]); return builder; },
       order(col, { ascending = true } = {}) { state.order = [col, ascending]; return builder; },
       limit(n) { state.limit = n; return builder; },
       single() { state.single = true; return builder; },
@@ -27,7 +28,7 @@ export function fakeSupabase() {
     function execute() {
       const rows = tables[table];
       if (!rows) return { data: null, error: { code: 'PGRST205', message: `Could not find the table 'public.${table}' in the schema cache` } };
-      const match = (r) => state.filters.every(([c, v]) => r[c] === v);
+      const match = (r) => state.filters.every(([c, test]) => test(r[c]));
 
       if (state.op === 'insert') {
         const row = { ...state.values };
@@ -37,6 +38,8 @@ export function fakeSupabase() {
             return { data: null, error: { code: '23505', message: 'duplicate key value violates unique constraint' } };
           }
           Object.assign(row, { id: randomUUID(), status: 'new', created_at: now(), processed_at: null, processed_by: null });
+        } else if (table === 'plans') {
+          Object.assign(row, { id: randomUUID(), created_at: now() });
         } else {
           Object.assign(row, { id: rows.length + 1, at: now() });
         }

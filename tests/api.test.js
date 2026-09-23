@@ -9,7 +9,10 @@ import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/
 import { handle } from '../api/mcp.js';
 import * as rest from '../api/recipes.js';
 import { GET as health } from '../api/health.js';
-import { BACKENDS, KEYS, recipe, closeDatabase } from './helpers.js';
+import { BACKENDS, KEYS, recipe, mealPlan, closeDatabase } from './helpers.js';
+import * as plansApi from '../api/meal-plans.js';
+import { GET as activityApi } from '../api/activity.js';
+import { GET as whoami } from '../api/whoami.js';
 
 async function mcp(group = 'team-1') {
   const transport = new StreamableHTTPClientTransport(new URL('http://test.local/api/mcp'), {
@@ -39,10 +42,12 @@ for (const backend of BACKENDS) {
     let db;
     beforeEach(async () => { db = await backend.fresh(); });
 
-    test('MCP publishes exactly the three tools, with their input formats', async () => {
+    test('MCP publishes the tools, with their input formats', async () => {
       const client = await mcp();
       const { tools } = await client.listTools();
-      assert.deepEqual(tools.map((t) => t.name).sort(), ['list_recipes', 'mark_processed', 'save_recipe']);
+      assert.deepEqual(tools.map((t) => t.name).sort(), [
+        'find_kroger_stores', 'list_recipes', 'mark_processed', 'save_meal_plan', 'save_recipe', 'search_kroger_products',
+      ]);
       const save = tools.find((t) => t.name === 'save_recipe');
       assert.equal(save.inputSchema.additionalProperties, false);
       assert.ok(save.inputSchema.required.includes('why_chosen'));
@@ -159,6 +164,54 @@ for (const backend of BACKENDS) {
       const tool = await (await mcp()).callTool({ name: 'list_recipes', arguments: {} });
       assert.equal(tool.isError, true);
       assert.match(tool.content[0].text, hint);
+    });
+
+    test('save_meal_plan checks the plan, saves it, and reminds the planner to mark recipes', async () => {
+      const scout = await mcp('team-1');
+      const ids = [];
+      for (let i = 0; i < 5; i++) ids.push(out(await scout.callTool({ name: 'save_recipe', arguments: recipe() })).id);
+      const planner = await mcp('team-2');
+
+      const bad = mealPlan(ids);
+      bad.total_cost_usd = 20;
+      bad.meals[1].day = 1;
+      bad.meals[2].cost_per_serving_usd = 5;
+      bad.meals[4].recipe_id = randomUUID();
+      bad.shopping_list[0].recipe_ids = [randomUUID()];
+      const rejected = await planner.callTool({ name: 'save_meal_plan', arguments: bad });
+      assert.equal(rejected.isError, true);
+      for (const reason of [/adds up to 13.47/, /different day/, /cost_used_usd ÷ servings is 2.00/, /no recipe has the id/, /isn’t one of this plan’s meals/]) {
+        assert.match(rejected.content[0].text, reason);
+      }
+      const four = mealPlan(ids.slice(0, 4));
+      assert.match((await planner.callTool({ name: 'save_meal_plan', arguments: four })).content[0].text, /meals needs exactly 5 items/);
+      assert.equal((await db.plans()).length, 0);
+
+      const saved = out(await planner.callTool({ name: 'save_meal_plan', arguments: mealPlan(ids, { budget_usd: 10 }) }));
+      assert.equal(saved.saved, true);
+      assert.deepEqual(saved.warnings, ['over budget: 13.47 > 10']);
+      assert.match(saved.next_step, /mark these recipes processed/);
+
+      // REST: same rules, public reading.
+      const post = (body, group = 'team-2') =>
+        plansApi.POST(new Request('http://x/api/meal-plans', { method: 'POST', headers: { authorization: `Bearer ${KEYS[group]}`, 'content-type': 'application/json' }, body: JSON.stringify(body) }));
+      const restBad = await post({ ...mealPlan(ids), meals: [] });
+      assert.equal(restBad.status, 400);
+      assert.deepEqual((await restBad.json()).errors, ['meals needs exactly 5 items']);
+      assert.equal((await post(mealPlan(ids))).status, 201);
+      const listed = await (await plansApi.GET(new Request('http://x/api/meal-plans?group=team-2'))).json();
+      assert.equal(listed.count, 2);
+      assert.deepEqual([listed.plans[0].group, listed.plans[0].meals.length, typeof listed.plans[0].total_cost_usd], ['team-2', 5, 'number']);
+
+      const log = await (await activityApi(new Request('http://x/api/activity?group=team-2&result=rejected'))).json();
+      assert.deepEqual(log.activity.map((a) => [a.action, a.channel]), [['save_meal_plan', 'rest'], ['save_meal_plan', 'mcp'], ['save_meal_plan', 'mcp']]);
+      assert.equal((await activityApi(new Request('http://x/api/activity?result=maybe'))).status, 400);
+    });
+
+    test('whoami names the group for a key', async () => {
+      const ok = await whoami(new Request('http://x/api/whoami', { headers: { authorization: `Bearer ${KEYS['team-2']}` } }));
+      assert.deepEqual([ok.status, await ok.json()], [200, { group: 'team-2' }]);
+      assert.equal((await whoami(new Request('http://x/api/whoami', { headers: { authorization: 'Bearer wrong-key-123' } }))).status, 401);
     });
 
     if (backend.name === 'postgres') {

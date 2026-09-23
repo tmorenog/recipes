@@ -31,6 +31,7 @@ export const BACKENDS = [
       return {
         recipes: async () => fake.rows('recipes'),
         activity: async () => fake.rows('activity'),
+        plans: async () => fake.rows('plans'),
         dropRecipes: async () => fake.drop('recipes'),
       };
     },
@@ -40,13 +41,14 @@ export const BACKENDS = [
     skip: TEST_DB ? false : 'set TEST_DATABASE_URL to run the Postgres tests',
     async fresh() {
       pool ??= new pg.Pool({ ...poolConfig(TEST_DB), max: 3 });
-      await pool.query('drop table if exists recipes, activity cascade');
+      await pool.query('drop table if exists recipes, activity, plans cascade');
       await pool.query(await schema());
       setStore(postgresStore(pool));
       return {
         pool,
         recipes: async () => (await pool.query('select * from recipes order by created_at')).rows,
         activity: async () => (await pool.query('select * from activity order by id')).rows,
+        plans: async () => (await pool.query('select * from plans order by created_at')).rows,
         dropRecipes: async () => pool.query('drop table recipes cascade'),
       };
     },
@@ -76,6 +78,30 @@ export function recipe(overrides = {}) {
     image_url: 'https://www.themealdb.com/images/media/meals/x.jpg',
     source_url: null,
     why_chosen: 'Cheap, fast and meat-free.',
+    ...overrides,
+  };
+}
+
+// A valid 5-meal plan for the given recipe ids (costs and totals add up).
+export function mealPlan(ids, overrides = {}) {
+  return {
+    summary: 'Five balanced vegetarian dinners under budget.',
+    budget_usd: 60,
+    store_id: '01400943',
+    total_cost_usd: 13.47,
+    meals: ids.map((recipe_id, i) => ({
+      day: i + 1,
+      recipe_id,
+      servings: 4,
+      cost_used_usd: 8,
+      cost_per_serving_usd: 2,
+      nutrition_per_serving: { calories: 550, protein_g: 25, fiber_g: 9, sodium_mg: 700 },
+    })),
+    shopping_list: [
+      { item: 'chickpeas', kroger_product_id: '0001111', size: '15 oz', quantity: 3, unit_price_usd: 1.29, recipe_ids: [ids[0], ids[1]] },
+      { item: 'yellow onions', size: '3 lb bag', quantity: 2, unit_price_usd: 4.8, recipe_ids: ids },
+    ],
+    rule_checks: [{ rule: 'at least 20 g protein per serving', passed: true }],
     ...overrides,
   };
 }

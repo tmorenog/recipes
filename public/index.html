@@ -3,76 +3,105 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Recipe Board</title>
-<meta name="description" content="Every recipe the class's agents have saved, with photos, ingredients, group and status.">
+<title>Recipe Coordinator</title>
+<meta name="description" content="The hub for the two-agent recipe exercise: instructions, prompts and the shared database.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=JetBrains+Mono:wght@400;500&family=Source+Sans+3:wght@400;600&display=swap">
-<link rel="stylesheet" href="/viewer.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=JetBrains+Mono:wght@400;500&family=Source+Sans+3:wght@400;600&display=swap">
+<link rel="stylesheet" href="/site.css">
 </head>
 <body>
-<header class="top">
-  <div class="wrap top-inner">
-    <div class="brand">
-      <h1>Recipe Board</h1>
-      <p class="sub">Everything the agents have saved. Updates by itself every 15 seconds.</p>
-    </div>
-    <p class="stamp" id="stamp" aria-live="polite"></p>
+<header class="site-head">
+  <div class="wrap">
+    <a class="brand" href="/"><span class="brand-mark" aria-hidden="true">RC</span>Recipe Coordinator</a>
+    <nav aria-label="Sections">
+      <ul class="tabs">
+        <li><a href="/" aria-current="page">Welcome</a></li>
+        <li><a href="/scout"><span class="num">1</span>Recipe Scout</a></li>
+        <li><a href="/planner"><span class="num">2</span>Meal Planner</a></li>
+        <li><a href="/database">Database</a></li>
+      </ul>
+    </nav>
   </div>
 </header>
 
-<nav class="filters" aria-label="Filters">
-  <div class="wrap filters-inner">
-    <label class="field">
-      <span>Theme</span>
-      <select id="f-theme"><option value="">All themes</option></select>
-    </label>
-    <label class="field">
-      <span>Group</span>
-      <select id="f-group"><option value="">All groups</option></select>
-    </label>
-    <fieldset class="field status-toggle">
-      <legend>Status</legend>
-      <div class="seg" role="radiogroup">
-        <label><input type="radio" name="status" value="" checked><span>All</span></label>
-        <label><input type="radio" name="status" value="new"><span>New</span></label>
-        <label><input type="radio" name="status" value="processed"><span>Processed</span></label>
-      </div>
-    </fieldset>
-    <p class="count" id="count"></p>
-  </div>
-</nav>
-
 <main class="wrap">
-  <section class="notice" id="notice" hidden></section>
-  <ul class="grid" id="grid" aria-live="polite"></ul>
-  <p class="empty" id="empty" hidden></p>
+  <section class="hero">
+    <div>
+      <p class="eyebrow">Agents exercise</p>
+      <h1>Welcome! Today you build two agents that plan a week of dinners.</h1>
+      <p class="lede">Your group builds two AI agents in Lovable. The first finds real recipes. The second turns recipes into five balanced, affordable dinners, priced at a real Kroger store. This site connects them: it holds the shared database, checks everything your agents send, and shows the whole class’s results as they happen.</p>
+    </div>
+    <div class="flow" aria-label="How the pieces fit together">
+      <div class="flow-node scout"><strong>Agent 1 · Recipe Scout</strong><span>Searches TheMealDB for recipes that fit a theme</span></div>
+      <div class="flow-arrow">saves recipes</div>
+      <div class="flow-node hub"><strong>Recipe Coordinator</strong><span>This site: shared database, checks every write, Kroger prices</span></div>
+      <div class="flow-arrow">reads new recipes, prices them</div>
+      <div class="flow-node planner"><strong>Agent 2 · Meal Planner</strong><span>Picks 5 balanced, well-priced dinners and a shopping list</span><span class="flow-side">saves the plan · marks recipes used</span></div>
+    </div>
+  </section>
+
+  <h2>What you’ll do</h2>
+  <ol class="steps">
+    <li><strong>Get your group key from your instructor</strong><p>It tells the coordinator which group your agents belong to. Check it works below.</p></li>
+    <li><strong>Build Agent 1, the Recipe Scout</strong><p>Follow the <a href="/scout">Recipe Scout page</a>: what it must do, how to talk to the coordinator, and prompts to paste into Lovable.</p></li>
+    <li><strong>Build Agent 2, the Meal Planner</strong><p>Follow the <a href="/planner">Meal Planner page</a>. It reads the recipes the Scouts saved, prices them at Kroger, and saves a plan.</p></li>
+    <li><strong>Watch the results</strong><p>The <a href="/database">Database page</a> shows every recipe, every meal plan, and every attempt your agents made, including the ones the coordinator turned down and why.</p></li>
+  </ol>
+
+  <h2>The two agents</h2>
+  <div class="grid-2 agent-cards">
+    <div class="panel scout">
+      <span class="agent-tag scout">Agent 1</span>
+      <h3>Recipe Scout</h3>
+      <p class="small">Given a theme like “cheap weeknight vegetarian dinners”, it searches TheMealDB, reads full recipes, picks five that fit, and saves each one to the coordinator in the agreed format.</p>
+      <ul class="small">
+        <li>Uses tools: search, look up, save</li>
+        <li>Fixes and retries when a recipe is rejected</li>
+      </ul>
+      <p><a class="btn primary" href="/scout">Build the Recipe Scout</a></p>
+    </div>
+    <div class="panel planner">
+      <span class="agent-tag planner">Agent 2</span>
+      <h3>Meal Planner</h3>
+      <p class="small">Reads the new recipes, prices every ingredient at a nearby Kroger, estimates nutrition, and picks five dinners that are balanced and within budget. Saves the plan with a shopping list, then marks the recipes as used.</p>
+      <ul class="small">
+        <li>Plans across many tool calls</li>
+        <li>Lets code do the maths, the model the judgment</li>
+      </ul>
+      <p><a class="btn primary" href="/planner" style="background:var(--planner);border-color:var(--planner)">Build the Meal Planner</a></p>
+    </div>
+  </div>
+
+  <h2 id="key">Your group key</h2>
+  <div class="panel narrow">
+    <p style="margin:0">Your instructor gives each group one key. Your agents send it with everything they save, so the coordinator knows who they are. Treat it like a password:</p>
+    <ul>
+      <li>Store it in Lovable as a <strong>secret</strong>, when a prompt asks for it. Never paste it into a prompt, your code, or a chat.</li>
+      <li>Only your app’s backend should use it. Browsers can read the coordinator, but can’t send keys to it.</li>
+    </ul>
+    <form class="keycheck" id="keycheck" autocomplete="off">
+      <label class="muted small" for="key-input" style="flex-basis:100%">Check your key. It’s sent only to this site and isn’t stored.</label>
+      <input id="key-input" type="password" placeholder="Paste your group key" spellcheck="false">
+      <button class="btn primary" type="submit">Check key</button>
+    </form>
+    <p class="keycheck-result" id="keycheck-result" aria-live="polite"></p>
+  </div>
+
+  <h2>Good to know</h2>
+  <div class="grid-3">
+    <div class="panel"><h3 style="margin-top:0">Rejections are normal</h3><p class="small" style="margin:0">The coordinator checks every recipe and plan. When something’s wrong it says exactly what, e.g. “est_servings must be at least 1”. A good agent reads the reasons, fixes them, and tries again.</p></div>
+    <div class="panel"><h3 style="margin-top:0">Everything is visible</h3><p class="small" style="margin:0">All groups’ recipes, plans and attempts appear on the Database page. Use it to check your agent did what you think it did.</p></div>
+    <div class="panel"><h3 style="margin-top:0">Build in small steps</h3><p class="small" style="margin:0">Paste one prompt at a time and test before moving on. When something breaks, tell Lovable what you expected and what happened instead.</p></div>
+  </div>
 </main>
 
-<footer class="wrap foot">
-  Agents write here through <code>/api/mcp</code> (MCP) or <code>/api/recipes</code> (REST) with their group key.
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="status-strip" id="status-strip" aria-live="polite"></div>
+    <div>For developers: agents can also connect over MCP at <code>{{SITE}}/api/mcp</code>. See the agent pages.</div>
+  </div>
 </footer>
-
-<template id="card">
-  <li class="card">
-    <div class="photo">
-      <img alt="" loading="lazy">
-      <span class="pill"></span>
-    </div>
-    <div class="body">
-      <p class="tags"><span class="chip"></span><span class="theme"></span></p>
-      <h2 class="name"><a target="_blank" rel="noopener"></a></h2>
-      <p class="meta"></p>
-      <p class="why"></p>
-      <details class="ingredients">
-        <summary></summary>
-        <ul></ul>
-      </details>
-      <p class="processed-note"></p>
-    </div>
-  </li>
-</template>
-
-<script src="/viewer.js"></script>
+<script src="/site.js"></script>
 </body>
 </html>
