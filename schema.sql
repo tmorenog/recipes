@@ -1,5 +1,9 @@
--- Recipes database. Safe to run any number of times: `npm run db:setup`
--- runs it on every deploy.
+-- Recipes database. Safe to run any number of times.
+--
+-- With Supabase: open your project, go to SQL Editor, paste this whole file
+-- and click Run.
+-- With a Postgres connection string: `npm run db:setup` runs it (and Vercel
+-- runs that on every deploy).
 
 create extension if not exists pgcrypto;
 
@@ -47,8 +51,20 @@ create table if not exists activity (
 );
 create index if not exists activity_at_idx on activity (at desc);
 
--- If this database also has a public data API (Supabase does), row level
--- security with no policies keeps its public key out. This app connects as the
--- tables' owner, which RLS doesn't restrict.
+-- Row level security with no policies: Supabase's public (anon) key can't read
+-- or write anything. This app uses the service role key (or connects as the
+-- tables' owner), which RLS doesn't restrict.
 alter table recipes  enable row level security;
 alter table activity enable row level security;
+
+-- On Supabase, make sure the service role can use the tables through the API,
+-- and tell the API to pick up the new tables right away.
+do $$
+begin
+  if exists (select 1 from pg_roles where rolname = 'service_role') then
+    grant select, insert, update on recipes to service_role;
+    grant select, insert on activity to service_role;
+    grant usage, select on sequence activity_id_seq to service_role;
+  end if;
+end $$;
+notify pgrst, 'reload schema';

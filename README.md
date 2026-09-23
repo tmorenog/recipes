@@ -10,13 +10,15 @@ Every group has its own key. The key tells the API which group is calling, so ea
 
 ## Deploy
 
-You need a Vercel account and this repository on GitHub.
+You need a Vercel account, a Supabase database, and this repository on GitHub.
 
 1. **Create the Vercel project.** In Vercel, click **Add New → Project** and import this repository. Leave every setting at its default and click **Deploy**. The first deploy finishes without a database; the site will say so.
 
-2. **Create the database.** In the project, open the **Storage** tab, click **Create Database**, and pick a Postgres provider (Neon is the simplest; Supabase also works). Connect it to this project. Vercel adds the connection string (`POSTGRES_URL` or `DATABASE_URL`) to the project's environment variables for you.
+2. **Connect Supabase.** In the project, open the **Storage** tab and create or connect a Supabase database for this project. Vercel adds `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` to the project's environment variables. (Adding those two yourself also works: copy them from Supabase's **Project Settings → API**.)
 
-3. **Set the group keys.** Open **Settings → Environment Variables** and add one variable, `GROUP_KEYS`, listing every group and its key:
+3. **Create the tables, once.** Open the project in Supabase (**Open in Supabase** in Vercel's Storage tab), go to **SQL Editor**, paste the whole of [`schema.sql`](schema.sql), and click **Run**. It's safe to run again. This step is manual because Supabase's API can't create tables.
+
+4. **Set the group keys.** In Vercel, open **Settings → Environment Variables** and add one variable, `GROUP_KEYS`, listing every group and its key:
 
    ```
    team-1:8f3c1a9d2b7e4f60,team-2:c41e97a05d3b28f1,team-3:5a0d6e2f9c18b743
@@ -26,11 +28,13 @@ You need a Vercel account and this repository on GitHub.
    - Keys must be at least 8 characters and all different. Make them random, e.g. with `openssl rand -hex 8`.
    - Give each group only its own key.
 
-4. **Redeploy.** Go to **Deployments**, open the ⋯ menu on the latest one and click **Redeploy**. The build creates the tables automatically; the build log shows `✓ Database ready`.
+5. **Redeploy.** Go to **Deployments**, open the ⋯ menu on the latest one and click **Redeploy**. Settings only take effect in new deployments. The build log shows `✓ Supabase is connected and the tables exist`.
 
-5. **Check it.** Open your site's address. You should see the Recipe Board (empty at first). If something is missing, a notice at the top says exactly what.
+6. **Check it.** Open your site's address. You should see the Recipe Board (empty at first). If something is missing, a notice at the top says exactly what.
 
 To add a group later, edit `GROUP_KEYS` and redeploy.
+
+**Without Supabase:** the app also works with any Postgres database that gives a connection string (`POSTGRES_URL` or `DATABASE_URL`), for example Neon from Vercel's Storage tab. Then step 3 isn't needed: every deploy creates the tables itself. If both are set, Supabase is used.
 
 ## The recipe format
 
@@ -115,7 +119,7 @@ npm install
 npm i -g vercel
 vercel link                  # connect this folder to your Vercel project
 vercel env pull .env.local   # download the database and GROUP_KEYS settings
-npm run db:setup             # create or update the tables (safe to repeat)
+npm run db:setup             # check the tables (with a Postgres connection string, also create them)
 vercel dev                   # http://localhost:3000
 ```
 
@@ -125,7 +129,7 @@ vercel dev                   # http://localhost:3000
 npm test
 ```
 
-The tests that need a database run only when `TEST_DATABASE_URL` points at a Postgres you don't mind wiping; they recreate the tables each time:
+The end-to-end tests run against the Supabase store (with an in-memory stand-in for Supabase's API) and, when `TEST_DATABASE_URL` points at a Postgres you don't mind wiping, against the Postgres store too:
 
 ```sh
 TEST_DATABASE_URL=postgres://postgres@localhost:5432/recipes_test npm test
@@ -137,15 +141,16 @@ TEST_DATABASE_URL=postgres://postgres@localhost:5432/recipes_test npm test
 
 | File | What it is |
 | --- | --- |
-| `schema.sql` | Tables and indexes. Safe to run repeatedly; also upgrades databases from the earlier Supabase version |
-| `scripts/setup-db.js` | Runs `schema.sql` (`npm run db:setup`; Vercel runs it on every deploy) |
+| `schema.sql` | Tables, indexes and permissions. Safe to run repeatedly; also upgrades databases from the earlier version |
+| `scripts/setup-db.js` | `npm run db:setup`, also run on every deploy: checks the tables, and creates them when it has a Postgres connection string |
 | `api/mcp.js` | MCP endpoint |
 | `api/recipes.js` | REST endpoint |
 | `api/health.js` | Setup check |
 | `lib/recipes.js` | The recipe rules and database operations shared by MCP and REST |
 | `lib/mcp.js` | The three MCP tools |
 | `lib/groups.js` | Reads `GROUP_KEYS` and matches a request's key to its group |
-| `lib/db.js` | Postgres connection |
+| `lib/store/` | Where recipes are stored: `supabase.js` (default) or `postgres.js` |
+| `lib/env.js`, `lib/db.js` | Finding the Supabase or Postgres settings |
 | `public/` | The Recipe Board |
 | `tests/` | Tests |
 
@@ -153,4 +158,4 @@ TEST_DATABASE_URL=postgres://postgres@localhost:5432/recipes_test npm test
 
 - Anyone with the site's address can read the recipes. Only holders of a group key can write.
 - Keys live only in Vercel's environment variables. Don't put them in code, in the repository, or in a page's JavaScript.
-- If the database comes from Supabase, its public data API is blocked: row level security is on and no public access is allowed. Only this app, which connects as the database owner, can reach the tables.
+- Supabase's public (anon) key can't reach the tables: row level security is on with no policies. Only this app, using the service role key on the server, can. Never put the service role key in a page or app.
