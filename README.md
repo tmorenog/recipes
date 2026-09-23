@@ -1,78 +1,75 @@
 # Recipes API
 
-A shared Supabase database for two teaching agents, exposed as an MCP server on Vercel.
+A shared recipe database for a class building AI agents. Each group's agent saves recipes it finds; another agent reads them and marks the ones it uses. Everyone can watch the results on a live board.
 
-- The **Recipe Scout** finds recipes and stores them with `save_recipe`.
-- The **Meal Planner** reads unused recipes with `list_recipes`, prices them, saves a 5-meal plan with `save_meal_plan`, and hands back the recipes it used with `mark_processed`.
+- **MCP server** at `/api/mcp`, with three tools: `save_recipe`, `list_recipes` and `mark_processed`.
+- **REST API** at `/api/recipes` for apps that don't speak MCP. Same data, same rules, same error messages.
+- **Recipe Board** at the site root: photos, ingredients, group and status, filterable by theme, group and status. It updates itself every 15 seconds.
 
-Every write is validated. A rejected call returns every problem at once, so the agent can fix them and try again. Every call, accepted or rejected, is recorded in the `mcp_calls` table.
+Every group has its own key. The key tells the API which group is calling, so each recipe records which group saved it, and which group processed it.
 
-## Tools
+## Deploy
 
-| Tool | Who calls it | What it does |
+You need a Vercel account and this repository on GitHub.
+
+1. **Create the Vercel project.** In Vercel, click **Add New → Project** and import this repository. Leave every setting at its default and click **Deploy**. The first deploy finishes without a database; the site will say so.
+
+2. **Create the database.** In the project, open the **Storage** tab, click **Create Database**, and pick a Postgres provider (Neon is the simplest; Supabase also works). Connect it to this project. Vercel adds the connection string (`POSTGRES_URL` or `DATABASE_URL`) to the project's environment variables for you.
+
+3. **Set the group keys.** Open **Settings → Environment Variables** and add one variable, `GROUP_KEYS`, listing every group and its key:
+
+   ```
+   team-1:8f3c1a9d2b7e4f60,team-2:c41e97a05d3b28f1,team-3:5a0d6e2f9c18b743
+   ```
+
+   - Separate groups with commas (or new lines). Each entry is `group-name:key`.
+   - Keys must be at least 8 characters and all different. Make them random, e.g. with `openssl rand -hex 8`.
+   - Give each group only its own key.
+
+4. **Redeploy.** Go to **Deployments**, open the ⋯ menu on the latest one and click **Redeploy**. The build creates the tables automatically; the build log shows `✓ Database ready`.
+
+5. **Check it.** Open your site's address. You should see the Recipe Board (empty at first). If something is missing, a notice at the top says exactly what.
+
+To add a group later, edit `GROUP_KEYS` and redeploy.
+
+## The recipe format
+
+Both the MCP tool and the REST API take the same JSON:
+
+| Field | Required | Rules |
 | --- | --- | --- |
-| `save_recipe` | Recipe Scout | Stores one recipe. Rejects missing or empty fields, fields that aren't in the contract, bad numbers or URLs, and duplicates (same `theme` + `meal_id`). |
-| `list_recipes` | Meal Planner | Returns recipes in the agreed format, oldest first. `status` is `new` (default), `processed` or `all`. Optional `theme` and `limit` (max 100). |
-| `mark_processed` | Meal Planner | Marks recipes as used, so they drop out of `list_recipes`. Reports which ids were `updated`, `already_processed` or `not_found`. |
-| `save_meal_plan` | Meal Planner | Stores a plan: exactly 5 meals, their costs and nutrition, and a shopping list. Checked before saving, see below. |
+| `theme` | yes | What the agent was searching for, e.g. `"cheap weeknight vegetarian dinners"` |
+| `meal_id` | yes | The recipe's id at its source, e.g. TheMealDB's `"52772"` |
+| `name` | yes | |
+| `category`, `cuisine` | no | Text or `null` |
+| `ingredients` | yes | At least 1 item. Each item: `name` (text), `amount` (positive number or `null`), `unit` (text or `null`), `raw` (the original text, e.g. `"2 tbsp, chopped"`) |
+| `instructions` | yes | At least 20 characters |
+| `est_minutes` | yes | Whole number, 1 to 1440 |
+| `est_servings` | yes | Whole number, 1 to 100 |
+| `image_url`, `source_url` | no | `http://` or `https://` address, or `null` |
+| `why_chosen` | yes | One sentence on why it fits the theme |
 
-The exact fields and limits are in [`lib/schemas.js`](lib/schemas.js). Agents also receive them as each tool's input schema.
+Rules:
+- Unknown fields are rejected, so typos like `instuctions` don't slip through silently.
+- **Duplicates:** a group can't save the same `meal_id` twice for the same theme. Different groups can.
+- A rejected recipe gets every problem at once, in plain words, e.g. `est_servings must be at least 1`, `why_chosen is empty`, `unknown field: calories`.
+- Every write attempt is recorded in the `activity` table with the group, whether it worked, and why not.
 
-### What `save_meal_plan` checks
-- Exactly 5 meals, on different days, with no recipe used twice.
-- Every `recipe_id` exists (use the ids from `list_recipes`).
-- For each meal, `cost_per_serving_usd` = `cost_used_usd / servings` (within 5 cents).
-- `total_cost_usd` = the sum of `quantity × unit_price_usd` over the shopping list (within 5 cents).
-- Every `recipe_ids` entry in the shopping list is one of the plan's meals.
-- Going over `budget_usd` is allowed, but the response includes a warning.
+## MCP
 
-The plan, its meals and its shopping list are saved in one transaction: either all of it is stored or none of it is.
+Endpoint: `https://<your-site>.vercel.app/api/mcp`. Send the group's key as `Authorization: Bearer <group key>`.
 
-## Set up Supabase
-
-The simplest route is Vercel's Supabase integration, which creates the database and the connection settings for you.
-
-1. In your Vercel project, open **Storage → Create Database → Supabase** (or add Supabase from the Marketplace) and connect it to this project. This adds `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` to the project's environment variables.
-2. Create the tables. The integration doesn't run SQL for you:
-   - open the database in Supabase (the **Open in Supabase** button in Vercel's Storage tab)
-   - go to **SQL Editor**, paste the contents of [`supabase/migrations/0001_init.sql`](supabase/migrations/0001_init.sql), and click **Run**
-   - it's safe to run again
-
-If you create the Supabase project yourself instead, run the same SQL, then copy the **Project URL** and the **service_role** key (in newer projects, a **secret key** starting `sb_secret_`) from **Project Settings → API**. Add them to Vercel as `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`.
-
-Keep the service role key out of chats, code and frontends: it bypasses all security rules.
-
-Row level security is on for every table, with no policies. The public `anon` key can't read or write anything; only this API, using the service role key, can.
-
-### Tables
-
-| Table | Holds |
+| Tool | What it does |
 | --- | --- |
-| `recipes` | Scout output. `status` goes from `new` to `processed`. |
-| `meal_plans` | One row per plan: planner, summary, budget, total, Kroger store id, rule checks. |
-| `meal_plan_items` | The 5 meals of each plan, with cost and nutrition per serving. |
-| `shopping_list_items` | What to buy for each plan, with Kroger product, quantity and price. |
-| `mcp_calls` | Audit log of every tool call and why it was rejected. |
-
-## Deploy to Vercel
-
-1. Import this repo in Vercel (**Add New → Project**). Leave **Framework Preset** as **Other**.
-2. Check **Settings → Environment Variables** has `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` (the Supabase integration adds them), then add one more, for Production and Preview:
-   - `MCP_API_KEY`: a long random string you make up, e.g. from `openssl rand -hex 32`. Agents send this to use the server.
-3. Deploy. The MCP endpoint is `https://<your-app>.vercel.app/mcp`.
-4. Open `https://<your-app>.vercel.app/` in a browser. It shows whether the settings are in place and the tables exist, and says what to fix if not. The same check, as JSON, is at `/api/health`.
-
-## Connect an agent
-
-Send two headers with every request:
-- `Authorization: Bearer <MCP_API_KEY>` (required)
-- `X-Caller: <team or agent name>` (optional). It's recorded in `mcp_calls` and as `created_by` / `processed_by`.
+| `save_recipe` | Saves one recipe under your group. |
+| `list_recipes` | Recipes from every group, newest first. Options: `status` (`new`, the default; `processed`; or `all`), `theme`, `group`, `limit` (default 50, max 500). |
+| `mark_processed` | Takes one `recipe_id`. Marks that recipe as used by your group, so it drops out of the `new` list. Marking it again changes nothing. |
 
 Claude Code:
 
 ```sh
-claude mcp add --transport http recipes https://<your-app>.vercel.app/mcp \
-  --header "Authorization: Bearer <MCP_API_KEY>" --header "X-Caller: scout-team-1"
+claude mcp add --transport http recipes https://<your-site>.vercel.app/api/mcp \
+  --header "Authorization: Bearer <group key>"
 ```
 
 Most other MCP clients take a config like this:
@@ -82,40 +79,78 @@ Most other MCP clients take a config like this:
   "mcpServers": {
     "recipes": {
       "type": "http",
-      "url": "https://<your-app>.vercel.app/mcp",
-      "headers": { "Authorization": "Bearer <MCP_API_KEY>", "X-Caller": "planner-team-1" }
+      "url": "https://<your-site>.vercel.app/api/mcp",
+      "headers": { "Authorization": "Bearer <group key>" }
     }
   }
 }
 ```
 
-Quick check from a terminal, which should list the four tools:
+## REST
+
+Reading needs no key. Writing needs the group key, sent the same way.
+
+| Request | What it does | Success | Errors |
+| --- | --- | --- | --- |
+| `GET /api/recipes?status=&theme=&group=&limit=` | List recipes (same options as `list_recipes`) | `200` `{ count, recipes }` | `400` bad option |
+| `POST /api/recipes` with the recipe as JSON | Save a recipe | `201` `{ saved, recipe }` | `400` incomplete, `401` wrong key, `409` duplicate |
+| `POST /api/recipes/{id}/processed` | Mark it processed | `200` `{ processed, already, recipe }` | `401` wrong key, `404` no such recipe |
+
+Every error response looks like `{ "errors": ["reason", "reason"] }`.
 
 ```sh
-curl -s https://<your-app>.vercel.app/mcp \
-  -H "Authorization: Bearer <MCP_API_KEY>" \
-  -H "Content-Type: application/json" -H "Accept: application/json, text/event-stream" \
-  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
+curl -X POST https://<your-site>.vercel.app/api/recipes \
+  -H "Authorization: Bearer <group key>" -H "Content-Type: application/json" \
+  -d '{"theme":"15-minute lunches","meal_id":"52771","name":"Halloumi wraps","ingredients":[{"name":"halloumi","amount":1,"unit":"block","raw":"1 block halloumi"}],"instructions":"Grill the halloumi, slice it and wrap it with salad.","est_minutes":15,"est_servings":2,"why_chosen":"Ready in 15 minutes."}'
 ```
 
-## Develop
+## Checking the setup
+
+`/api/health` reports whether a database is connected, whether the tables exist, and which groups are configured. It shows group names, never keys. The Recipe Board uses it to explain what's missing.
+
+## Run it locally
 
 ```sh
 npm install
-npm test        # end-to-end MCP tests against an in-memory database
+npm i -g vercel
+vercel link                  # connect this folder to your Vercel project
+vercel env pull .env.local   # download the database and GROUP_KEYS settings
+npm run db:setup             # create or update the tables (safe to repeat)
+vercel dev                   # http://localhost:3000
 ```
 
-`@modelcontextprotocol/sdk` is pinned to an exact version because `lib/server.js` hooks an internal SDK method to log calls that fail schema validation. Run the tests after upgrading it.
+## Tests
+
+```sh
+npm test
+```
+
+The tests that need a database run only when `TEST_DATABASE_URL` points at a Postgres you don't mind wiping; they recreate the tables each time:
+
+```sh
+TEST_DATABASE_URL=postgres://postgres@localhost:5432/recipes_test npm test
+```
+
+`@modelcontextprotocol/sdk` is pinned to an exact version because `lib/mcp.js` replaces one internal SDK method (so MCP and REST share the same validation). Run the tests after upgrading it.
 
 ## Files
 
 | File | What it is |
 | --- | --- |
-| `api/mcp.js` | Vercel function: checks the API key and serves MCP over HTTP |
-| `api/health.js` | Status check: settings present, tables reachable (no secrets shown) |
-| `index.html` | Home page showing the status check |
-| `lib/server.js` | The four tools |
-| `lib/schemas.js` | The data contract and the meal-plan consistency checks |
-| `lib/db.js` | Supabase queries |
-| `supabase/migrations/0001_init.sql` | Tables, constraints, security, and the `save_meal_plan` function |
-| `tests/` | Tests and an in-memory database |
+| `schema.sql` | Tables and indexes. Safe to run repeatedly; also upgrades databases from the earlier Supabase version |
+| `scripts/setup-db.js` | Runs `schema.sql` (`npm run db:setup`; Vercel runs it on every deploy) |
+| `api/mcp.js` | MCP endpoint |
+| `api/recipes.js` | REST endpoint |
+| `api/health.js` | Setup check |
+| `lib/recipes.js` | The recipe rules and database operations shared by MCP and REST |
+| `lib/mcp.js` | The three MCP tools |
+| `lib/groups.js` | Reads `GROUP_KEYS` and matches a request's key to its group |
+| `lib/db.js` | Postgres connection |
+| `public/` | The Recipe Board |
+| `tests/` | Tests |
+
+## Security notes
+
+- Anyone with the site's address can read the recipes. Only holders of a group key can write.
+- Keys live only in Vercel's environment variables. Don't put them in code, in the repository, or in a page's JavaScript.
+- If the database comes from Supabase, its public data API is blocked: row level security is on and no public access is allowed. Only this app, which connects as the database owner, can reach the tables.

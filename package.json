@@ -3,14 +3,16 @@
   "private": true,
   "type": "module",
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "scripts": {
+    "vercel-build": "node scripts/setup-db.js",
+    "db:setup": "node --env-file-if-exists=.env.local scripts/setup-db.js",
     "test": "node --test"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.30.0",
-    "@supabase/supabase-js": "^2.117.0",
+    "pg": "^8.23.0",
     "zod": "^4.6.5"
   }
 }

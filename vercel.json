@@ -1,3 +1,5 @@
 {
-  "rewrites": [{ "source": "/mcp", "destination": "/api/mcp" }]
+  "rewrites": [
+    { "source": "/api/recipes/:id/processed", "destination": "/api/recipes?id=:id&action=processed" }
+  ]
 }

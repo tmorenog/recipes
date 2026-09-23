@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Recipe Board</title>
+<meta name="description" content="Every recipe the class's agents have saved, with photos, ingredients, group and status.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=JetBrains+Mono:wght@400;500&family=Source+Sans+3:wght@400;600&display=swap">
+<link rel="stylesheet" href="/viewer.css">
+</head>
+<body>
+<header class="top">
+  <div class="wrap top-inner">
+    <div class="brand">
+      <h1>Recipe Board</h1>
+      <p class="sub">Everything the agents have saved. Updates by itself every 15 seconds.</p>
+    </div>
+    <p class="stamp" id="stamp" aria-live="polite"></p>
+  </div>
+</header>
+
+<nav class="filters" aria-label="Filters">
+  <div class="wrap filters-inner">
+    <label class="field">
+      <span>Theme</span>
+      <select id="f-theme"><option value="">All themes</option></select>
+    </label>
+    <label class="field">
+      <span>Group</span>
+      <select id="f-group"><option value="">All groups</option></select>
+    </label>
+    <fieldset class="field status-toggle">
+      <legend>Status</legend>
+      <div class="seg" role="radiogroup">
+        <label><input type="radio" name="status" value="" checked><span>All</span></label>
+        <label><input type="radio" name="status" value="new"><span>New</span></label>
+        <label><input type="radio" name="status" value="processed"><span>Processed</span></label>
+      </div>
+    </fieldset>
+    <p class="count" id="count"></p>
+  </div>
+</nav>
+
+<main class="wrap">
+  <section class="notice" id="notice" hidden></section>
+  <ul class="grid" id="grid" aria-live="polite"></ul>
+  <p class="empty" id="empty" hidden></p>
+</main>
+
+<footer class="wrap foot">
+  Agents write here through <code>/api/mcp</code> (MCP) or <code>/api/recipes</code> (REST) with their group key.
+</footer>
+
+<template id="card">
+  <li class="card">
+    <div class="photo">
+      <img alt="" loading="lazy">
+      <span class="pill"></span>
+    </div>
+    <div class="body">
+      <p class="tags"><span class="chip"></span><span class="theme"></span></p>
+      <h2 class="name"><a target="_blank" rel="noopener"></a></h2>
+      <p class="meta"></p>
+      <p class="why"></p>
+      <details class="ingredients">
+        <summary></summary>
+        <ul></ul>
+      </details>
+      <p class="processed-note"></p>
+    </div>
+  </li>
+</template>
+
+<script src="/viewer.js"></script>
+</body>
+</html>
