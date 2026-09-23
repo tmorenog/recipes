@@ -8,7 +8,7 @@
 create extension if not exists pgcrypto;
 
 -- ---------------------------------------------------------------- recipes
--- Written by the Recipe Scout (add_recipe), read by the Meal Planner
+-- Written by the Recipe Scout (save_recipe), read by the Meal Planner
 -- (list_recipes), handed off with mark_processed.
 create table if not exists public.recipes (
   id            uuid primary key default gen_random_uuid(),

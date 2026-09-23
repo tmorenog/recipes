@@ -12,7 +12,7 @@ export function memoryDb() {
     plans,
     calls,
 
-    async addRecipe(recipe, createdBy) {
+    async saveRecipe(recipe, createdBy) {
       if (recipes.some((r) => r.theme === recipe.theme && r.meal_id === recipe.meal_id)) return { duplicate: true };
       const row = {
         id: randomUUID(),

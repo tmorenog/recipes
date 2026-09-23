@@ -2,7 +2,7 @@
 
 A shared Supabase database for two teaching agents, exposed as an MCP server on Vercel.
 
-- The **Recipe Scout** finds recipes and stores them with `add_recipe`.
+- The **Recipe Scout** finds recipes and stores them with `save_recipe`.
 - The **Meal Planner** reads unused recipes with `list_recipes`, prices them, saves a 5-meal plan with `save_meal_plan`, and hands back the recipes it used with `mark_processed`.
 
 Every write is validated. A rejected call returns every problem at once, so the agent can fix them and try again. Every call, accepted or rejected, is recorded in the `mcp_calls` table.
@@ -11,7 +11,7 @@ Every write is validated. A rejected call returns every problem at once, so the 
 
 | Tool | Who calls it | What it does |
 | --- | --- | --- |
-| `add_recipe` | Recipe Scout | Stores one recipe. Rejects missing or empty fields, fields that aren't in the contract, bad numbers or URLs, and duplicates (same `theme` + `meal_id`). |
+| `save_recipe` | Recipe Scout | Stores one recipe. Rejects missing or empty fields, fields that aren't in the contract, bad numbers or URLs, and duplicates (same `theme` + `meal_id`). |
 | `list_recipes` | Meal Planner | Returns recipes in the agreed format, oldest first. `status` is `new` (default), `processed` or `all`. Optional `theme` and `limit` (max 100). |
 | `mark_processed` | Meal Planner | Marks recipes as used, so they drop out of `list_recipes`. Reports which ids were `updated`, `already_processed` or `not_found`. |
 | `save_meal_plan` | Meal Planner | Stores a plan: exactly 5 meals, their costs and nutrition, and a shopping list. Checked before saving, see below. |

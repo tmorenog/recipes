@@ -47,7 +47,7 @@ function recipe(overrides = {}) {
 
 async function addFive(client) {
   const ids = [];
-  for (let i = 0; i < 5; i++) ids.push(body(await client.callTool({ name: 'add_recipe', arguments: recipe() })).id);
+  for (let i = 0; i < 5; i++) ids.push(body(await client.callTool({ name: 'save_recipe', arguments: recipe() })).id);
   return ids;
 }
 
@@ -91,27 +91,27 @@ test('rejects requests without the right API key', async () => {
 test('publishes the four tools', async () => {
   const client = await connect();
   const { tools } = await client.listTools();
-  assert.deepEqual(tools.map((t) => t.name).sort(), ['add_recipe', 'list_recipes', 'mark_processed', 'save_meal_plan']);
-  const add = tools.find((t) => t.name === 'add_recipe');
+  assert.deepEqual(tools.map((t) => t.name).sort(), ['list_recipes', 'mark_processed', 'save_meal_plan', 'save_recipe']);
+  const add = tools.find((t) => t.name === 'save_recipe');
   assert.equal(add.inputSchema.additionalProperties, false);
   assert.ok(add.inputSchema.required.includes('why_chosen'));
 });
 
-test('add_recipe stores a valid recipe and rejects duplicates', async () => {
+test('save_recipe stores a valid recipe and rejects duplicates', async () => {
   const client = await connect();
   const r = recipe({ meal_id: '52772' });
-  const saved = await client.callTool({ name: 'add_recipe', arguments: r });
+  const saved = await client.callTool({ name: 'save_recipe', arguments: r });
   assert.ok(!saved.isError);
   assert.equal(body(saved).status, 'new');
   assert.equal(db.recipes[0].created_by, 'team-1');
 
-  const dup = await client.callTool({ name: 'add_recipe', arguments: r });
+  const dup = await client.callTool({ name: 'save_recipe', arguments: r });
   assert.equal(dup.isError, true);
   assert.match(dup.content[0].text, /already saved/);
   assert.equal(db.recipes.length, 1);
 });
 
-test('add_recipe rejects malformed recipes, with reasons, and logs them', async () => {
+test('save_recipe rejects malformed recipes, with reasons, and logs them', async () => {
   const client = await connect();
   const cases = [
     [recipe({ why_chosen: '' }), /why_chosen/],
@@ -123,12 +123,12 @@ test('add_recipe rejects malformed recipes, with reasons, and logs them', async 
     [(({ instructions, ...rest }) => rest)(recipe()), /instructions/],
   ];
   for (const [args, reason] of cases) {
-    const res = await client.callTool({ name: 'add_recipe', arguments: args });
+    const res = await client.callTool({ name: 'save_recipe', arguments: args });
     assert.equal(res.isError, true, `expected rejection for ${reason}`);
     assert.match(res.content[0].text, reason);
   }
   assert.equal(db.recipes.length, 0);
-  assert.equal(db.calls.filter((c) => c.tool === 'add_recipe' && !c.ok).length, cases.length);
+  assert.equal(db.calls.filter((c) => c.tool === 'save_recipe' && !c.ok).length, cases.length);
 });
 
 test('list_recipes returns new recipes by default', async () => {
