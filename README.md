@@ -60,6 +60,7 @@ Row level security is on for every table, with no policies. The public `anon` ke
 2. Check **Settings → Environment Variables** has `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` (the Supabase integration adds them), then add one more, for Production and Preview:
    - `MCP_API_KEY`: a long random string you make up, e.g. from `openssl rand -hex 32`. Agents send this to use the server.
 3. Deploy. The MCP endpoint is `https://<your-app>.vercel.app/mcp`.
+4. Open `https://<your-app>.vercel.app/` in a browser. It shows whether the settings are in place and the tables exist, and says what to fix if not. The same check, as JSON, is at `/api/health`.
 
 ## Connect an agent
 
@@ -111,6 +112,8 @@ npm test        # end-to-end MCP tests against an in-memory database
 | File | What it is |
 | --- | --- |
 | `api/mcp.js` | Vercel function: checks the API key and serves MCP over HTTP |
+| `api/health.js` | Status check: settings present, tables reachable (no secrets shown) |
+| `index.html` | Home page showing the status check |
 | `lib/server.js` | The four tools |
 | `lib/schemas.js` | The data contract and the meal-plan consistency checks |
 | `lib/db.js` | Supabase queries |
