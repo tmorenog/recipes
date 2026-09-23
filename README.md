@@ -15,13 +15,13 @@ Every group has its own key. The key tells the coordinator which group is callin
 
 ## Deploy
 
-You need a Vercel account, a Supabase database, and this repository on GitHub.
+You need a Vercel account and this repository on GitHub.
 
 1. **Create the Vercel project.** In Vercel, click **Add New → Project** and import this repository. Leave every setting at its default and click **Deploy**. The first deploy finishes without a database; the site will say so.
 
-2. **Connect Supabase.** In the project, open the **Storage** tab and create or connect a Supabase database for this project. Vercel adds `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` to the project's environment variables. (Adding those two yourself also works: copy them from Supabase's **Project Settings → API**.)
+2. **Create the database.** In the project, open the **Storage** tab, click **Create Database**, choose a **Postgres** provider (Neon is the simplest), and connect it to this project. Vercel adds its connection string (`POSTGRES_URL` / `DATABASE_URL`) to the project's settings.
 
-3. **Create the tables.** Open the project in Supabase (**Open in Supabase** in Vercel's Storage tab), go to **SQL Editor**, paste the whole of [`schema.sql`](schema.sql), and click **Run**. It's safe to run again, and you should run it again whenever `schema.sql` changes (this version added the `plans` table for meal plans). This step is manual because Supabase's API can't create tables.
+3. **Nothing to do for the tables.** Every deploy runs `schema.sql` against that database, creating or updating the tables automatically.
 
 4. **Set the group keys and Kroger credentials.** In Vercel, open **Settings → Environment Variables** and add one variable, `GROUP_KEYS`, listing every group and its key:
 
@@ -35,13 +35,13 @@ You need a Vercel account, a Supabase database, and this repository on GitHub.
 
    Also add `KROGER_CLIENT_ID` and `KROGER_CLIENT_SECRET` from your app at [developer.kroger.com](https://developer.kroger.com) (it needs the product scope). The Meal Planners' price lookups go through these. Without them, everything else works and the site shows "Kroger prices off".
 
-5. **Redeploy.** Go to **Deployments**, open the ⋯ menu on the latest one and click **Redeploy**. Settings only take effect in new deployments. The build log shows `✓ Supabase is connected and the tables exist`.
+5. **Redeploy.** Go to **Deployments**, open the ⋯ menu on the latest one and click **Redeploy**. Settings only take effect in new deployments. The build log shows `✓ Database ready`.
 
 6. **Check it.** Open your site's address. The footer shows whether the database is ready, how many groups are set up, and whether Kroger prices are on. The Database page explains anything that's missing.
 
 To add a group later, edit `GROUP_KEYS` and redeploy.
 
-**Without Supabase:** the app also works with any Postgres database that gives a connection string (`POSTGRES_URL` or `DATABASE_URL`), for example Neon from Vercel's Storage tab. Then step 3 isn't needed: every deploy creates the tables itself. If both are set, Supabase is used.
+**Using Supabase's API instead:** without a Postgres connection string, the app uses `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`. Supabase's API can't create tables, so you then have to paste [`schema.sql`](schema.sql) into Supabase's **SQL Editor** and click **Run**, and do it again whenever `schema.sql` changes. If both are set, the Postgres connection string is used.
 
 ## The recipe format
 

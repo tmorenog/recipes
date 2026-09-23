@@ -22,8 +22,8 @@ export async function GET() {
   if (!backend) {
     problems.push(
       seen.length
-        ? `The database settings are incomplete (found ${seen.join(', ')}). This app needs both SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.`
-        : 'No database is connected: in Vercel, open Storage and connect a Supabase database to this project, then redeploy.',
+        ? `The database settings are incomplete (found ${seen.join(', ')}). Easiest fix: in Vercel, open Storage, create a Postgres database, connect it to this project, and redeploy. The tables are then created automatically.`
+        : 'No database is connected: in Vercel, open Storage, create a Postgres database, connect it to this project, and redeploy. The tables are then created automatically.',
     );
   } else {
     try {

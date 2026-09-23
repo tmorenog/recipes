@@ -74,9 +74,10 @@ test('settings are found with or without a prefix, preferring exact names', asyn
   assert.deepEqual(databaseSettingNames({ SUPABASE_URL: 'x', SUPABASE_SERVICE_ROLE_KEY: 'y', HOME: '/root', EMPTY_DATABASE_URL: '' }), ['SUPABASE_SERVICE_ROLE_KEY', 'SUPABASE_URL']);
 });
 
-test('Supabase settings take priority; incomplete settings are named in health', async () => {
+test('a Postgres connection string takes priority; incomplete settings are named in health', async () => {
   const { configuredBackend } = await import('../lib/store/index.js');
-  assert.equal(configuredBackend({ SUPABASE_URL: 'u', SUPABASE_SERVICE_ROLE_KEY: 'k', POSTGRES_URL: 'postgres://x/y' }), 'supabase');
+  assert.equal(configuredBackend({ SUPABASE_URL: 'u', SUPABASE_SERVICE_ROLE_KEY: 'k', POSTGRES_URL: 'postgres://x/y' }), 'postgres');
+  assert.equal(configuredBackend({ SUPABASE_URL: 'u', SUPABASE_SERVICE_ROLE_KEY: 'k' }), 'supabase');
   assert.equal(configuredBackend({ SUPABASE_URL: 'u', POSTGRES_URL: 'postgres://x/y' }), 'postgres');
   assert.equal(configuredBackend({ SUPABASE_URL: 'u' }), null);
 
@@ -88,7 +89,7 @@ test('Supabase settings take priority; incomplete settings are named in health',
     const text = await (await GET()).text();
     const body = JSON.parse(text);
     assert.deepEqual([body.backend, body.database_settings_seen], [null, ['SUPABASE_URL']]);
-    assert.match(body.problems.join(' '), /needs both SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY/);
+    assert.match(body.problems.join(' '), /incomplete \(found SUPABASE_URL\).*create a Postgres database/);
     assert.doesNotMatch(text, /secret-ref/);
   } finally {
     for (const k of Object.keys(process.env)) if (!(k in saved)) delete process.env[k];
