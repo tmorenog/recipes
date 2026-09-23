@@ -30,11 +30,17 @@ The plan, its meals and its shopping list are saved in one transaction: either a
 
 ## Set up Supabase
 
-1. Create a project at [supabase.com](https://supabase.com).
-2. Open **SQL Editor**, paste the contents of [`supabase/migrations/0001_init.sql`](supabase/migrations/0001_init.sql), and click **Run**. It's safe to run again.
-3. Open **Project Settings → API** (called **API Keys** in some versions of the dashboard) and copy:
-   - the **Project URL**
-   - the **service_role** key, or in newer projects a **secret key** (starts with `sb_secret_`). Keep it out of chats, code and frontends: it bypasses all security rules.
+The simplest route is Vercel's Supabase integration, which creates the database and the connection settings for you.
+
+1. In your Vercel project, open **Storage → Create Database → Supabase** (or add Supabase from the Marketplace) and connect it to this project. This adds `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` to the project's environment variables.
+2. Create the tables. The integration doesn't run SQL for you:
+   - open the database in Supabase (the **Open in Supabase** button in Vercel's Storage tab)
+   - go to **SQL Editor**, paste the contents of [`supabase/migrations/0001_init.sql`](supabase/migrations/0001_init.sql), and click **Run**
+   - it's safe to run again
+
+If you create the Supabase project yourself instead, run the same SQL, then copy the **Project URL** and the **service_role** key (in newer projects, a **secret key** starting `sb_secret_`) from **Project Settings → API**. Add them to Vercel as `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`.
+
+Keep the service role key out of chats, code and frontends: it bypasses all security rules.
 
 Row level security is on for every table, with no policies. The public `anon` key can't read or write anything; only this API, using the service role key, can.
 
@@ -51,9 +57,7 @@ Row level security is on for every table, with no policies. The public `anon` ke
 ## Deploy to Vercel
 
 1. Import this repo in Vercel (**Add New → Project**). Leave **Framework Preset** as **Other**.
-2. Add three environment variables, for Production and Preview:
-   - `SUPABASE_URL`: the Project URL.
-   - `SUPABASE_SERVICE_ROLE_KEY`: the service_role or secret key.
+2. Check **Settings → Environment Variables** has `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` (the Supabase integration adds them), then add one more, for Production and Preview:
    - `MCP_API_KEY`: a long random string you make up, e.g. from `openssl rand -hex 32`. Agents send this to use the server.
 3. Deploy. The MCP endpoint is `https://<your-app>.vercel.app/mcp`.
 
