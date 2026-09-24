@@ -6,6 +6,8 @@ import { TABLES_MISSING } from '../lib/store/errors.js';
 import { classKeySet } from '../lib/auth.js';
 import { adminKeySet } from '../lib/admin.js';
 import { krogerConfigured } from '../lib/kroger.js';
+import { pricerSettings } from '../lib/pricer.js';
+import { usdaKey } from '../lib/usda.js';
 import { json } from '../lib/http.js';
 
 export async function GET() {
@@ -33,6 +35,9 @@ export async function GET() {
   const warnings = [];
   if (!krogerConfigured()) warnings.push('Kroger prices are off: add KROGER_CLIENT_ID and KROGER_CLIENT_SECRET in Vercel, then redeploy. The Meal Planner needs them.');
   if (!adminKeySet()) warnings.push('The Admin page is off: add ADMIN_KEY in Vercel, then redeploy.');
+  const pricer = pricerSettings();
+  if (!pricer.aiKey) warnings.push('The Pricer agent is off: add ANTHROPIC_API_KEY in Vercel, then redeploy.');
+  if (!usdaKey()) warnings.push('Nutrition uses USDA’s shared DEMO_KEY, which runs out quickly: add USDA_API_KEY (free from api.data.gov) in Vercel.');
 
   return json(problems.length ? 503 : 200, {
     ok: problems.length === 0,
@@ -40,6 +45,8 @@ export async function GET() {
     class_key: classKeySet(),
     admin_key: adminKeySet(),
     kroger: krogerConfigured(),
+    pricer: Boolean(pricer.aiKey),
+    usda_key: Boolean(usdaKey()),
     problems,
     warnings,
   });

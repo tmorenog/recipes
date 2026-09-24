@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pricer · Recipe Coordinator</title>
+<meta name="description" content="The Pricer agent turns each saved recipe into a Kroger shopping cart with prices and nutrition. Watch it work, and edit its instructions.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=JetBrains+Mono:wght@400;500&family=Source+Sans+3:wght@400;600&display=swap">
+<link rel="stylesheet" href="/site.css">
+</head>
+<body>
+<header class="site-head">
+  <div class="wrap">
+    <a class="brand" href="/"><span class="brand-mark" aria-hidden="true">RC</span>Recipe Coordinator</a>
+    <nav aria-label="Sections">
+      <ul class="tabs">
+        <li><a href="/">Welcome</a></li>
+        <li><a href="/scout"><span class="num">1</span>Recipe Scout</a></li>
+        <li><a href="/pricer" aria-current="page">Pricer</a></li>
+        <li><a href="/planner"><span class="num">2</span>Meal Planner</a></li>
+        <li><a href="/database">Database</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="page-head">
+    <span class="agent-tag pricer">Runs on the coordinator</span>
+    <h1>The Pricer agent</h1>
+    <p class="lede">Every time a Scout saves a recipe, this agent builds the Kroger shopping cart needed to cook it and works out its nutrition. Meal Planners then compare recipes by cost per serving and nutrition, without searching Kroger themselves.</p>
+    <p class="pricer-facts small" id="facts"></p>
+  </div>
+
+  <section class="notice" id="problem" hidden></section>
+
+  <h2 id="instructions">Its instructions</h2>
+  <p>This is the prompt the agent follows. It sets how many people the cart feeds, how to choose products, and when to skip an ingredient. A change applies to recipes priced from then on; use <strong>Price again</strong> for earlier ones.</p>
+  <div class="prompt pricer">
+    <div class="prompt-head">
+      <p class="prompt-kind" id="prompt-kind">Prompt</p>
+      <span class="small muted" id="prompt-state"></span>
+    </div>
+    <textarea class="prompt-edit" id="prompt" rows="16" spellcheck="true" readonly aria-label="The Pricer agent's prompt"></textarea>
+  </div>
+
+  <div class="panel pricer-controls" id="signin">
+    <form class="keycheck" id="signin-form" autocomplete="off">
+      <label class="small" for="admin-key" style="flex-basis:100%"><strong>To edit the prompt or price recipes, sign in</strong> <span class="muted">with the admin key (ADMIN_KEY in Vercel; kept in this browser tab only)</span></label>
+      <input id="admin-key" type="password" placeholder="Paste the admin key" spellcheck="false">
+      <button class="btn primary" type="submit">Sign in</button>
+    </form>
+    <p class="keycheck-result" id="signin-result" aria-live="polite"></p>
+  </div>
+  <div class="panel pricer-controls" id="controls" hidden>
+    <div class="row-actions">
+      <button class="btn primary" type="button" id="save-prompt">Save prompt</button>
+      <button class="btn" type="button" id="reset-prompt" data-confirm="Click again to go back to the default">Back to the default prompt</button>
+      <span class="spacer"></span>
+      <button class="btn" type="button" id="run">Price waiting recipes now</button>
+      <button class="btn" type="button" id="retry">Retry failed</button>
+      <button class="btn danger" type="button" id="reprice-all" data-confirm="Click again to re-price every recipe">Re-price every recipe</button>
+    </div>
+    <p class="small muted" style="margin:10px 0 0">Signed in. <button class="linklike" type="button" id="signout">Sign out</button></p>
+    <p class="toast" id="toast" role="status" aria-live="polite" hidden></p>
+  </div>
+
+  <h2 id="carts">Shopping carts</h2>
+  <p class="counts" id="counts" aria-live="polite"></p>
+  <div class="pricer-layout">
+    <nav class="pricer-queue" aria-label="Recipes">
+      <ul id="queue"></ul>
+      <p class="empty small" id="queue-empty" hidden>No recipes yet. They appear here as soon as a Scout saves one.</p>
+    </nav>
+    <section class="pricer-detail" id="detail" aria-live="polite">
+      <p class="empty">Choose a recipe to see its cart and what the agent did.</p>
+    </section>
+  </div>
+</main>
+
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="status-strip" id="status-strip" aria-live="polite"></div>
+    <div><a href="/admin" class="small">Admin</a></div>
+  </div>
+</footer>
+<script src="/site.js"></script>
+<script src="/pricer.js"></script>
+</body>
+</html>

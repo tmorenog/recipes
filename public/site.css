@@ -11,6 +11,8 @@
   --accent-ink: #ffffff;
   --planner: #b0472a;        /* tomato: Agent 2 */
   --planner-soft: #fbe9e3;
+  --pricer: #2b5f8e;         /* blue: the Pricer agent */
+  --pricer-soft: #e2edf7;
   --scout-soft: #e3f0e7;
   --new-bg: #fff1d6;
   --new-ink: #7a4a00;
@@ -39,6 +41,8 @@
     --accent-ink: #0d1a12;
     --planner: #f08a68;
     --planner-soft: #3a211a;
+    --pricer: #7fb2e0;
+    --pricer-soft: #1a2835;
     --scout-soft: #1c3025;
     --new-bg: #3a2c10;
     --new-ink: #ffcf7a;
@@ -91,6 +95,7 @@ p, li { max-width: 70ch; }
 .agent-tag { display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px; border-radius: 999px; font: 600 14px/1.4 var(--body); margin-bottom: 14px; }
 .agent-tag.scout { background: var(--scout-soft); color: var(--accent); }
 .agent-tag.planner { background: var(--planner-soft); color: var(--planner); }
+.agent-tag.pricer { background: var(--pricer-soft); color: var(--pricer); }
 .muted { color: var(--muted); }
 .small { font-size: 15px; }
 
@@ -332,3 +337,78 @@ h2 .count { font: 500 15px var(--mono); color: var(--muted); margin-left: 6px; }
 .prompt-kind { margin: 0; font: 600 12px/1.4 var(--body); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
 .step-check { margin: 12px 0 0; font-size: 15px; color: var(--muted); max-width: 70ch; }
 .step-check strong { color: var(--ink); }
+
+/* ---------------------------------------------------------------- Pricer page */
+.pricer-facts { margin: 12px 0 0; color: var(--muted); }
+.prompt.pricer .prompt-head { box-shadow: inset 4px 0 0 var(--pricer); }
+.prompt-edit { display: block; width: 100%; box-sizing: border-box; min-height: 320px; margin: 0; padding: 14px 16px; border: 0; resize: vertical;
+  font: 15px/1.6 var(--body); color: var(--ink); background: var(--surface); }
+.prompt-edit[readonly] { color: var(--ink); cursor: default; }
+.prompt-edit:not([readonly]):focus { outline: 2px solid var(--pricer); outline-offset: -2px; }
+.pricer-controls { margin-top: 14px; }
+.pricer-controls .spacer { flex: 1; }
+.counts { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; }
+.count-chip { padding: 4px 12px; border-radius: 999px; font-size: 14px; background: var(--surface-2); }
+.pill.price-pending, .count-chip.price-pending { background: var(--surface-2); color: var(--muted); }
+.pill.price-pricing, .count-chip.price-pricing { background: var(--pricer-soft); color: var(--pricer); }
+.pill.price-priced, .count-chip.price-priced { background: var(--scout-soft); color: var(--good-ink); }
+.pill.price-failed, .count-chip.price-failed { background: var(--bad-bg); color: var(--bad-ink); }
+.pill.price-pricing::before { content: ""; display: inline-block; width: 7px; height: 7px; margin-right: 6px; border-radius: 50%; background: currentColor; animation: pulse 1.2s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: .25; } }
+@media (prefers-reduced-motion: reduce) { .pill.price-pricing::before { animation: none; } }
+.pill.sale { margin-left: 6px; background: var(--new-bg); color: var(--new-ink); }
+
+.pricer-layout { display: grid; grid-template-columns: minmax(240px, 300px) minmax(0, 1fr); gap: 20px; align-items: start; }
+.pricer-queue { position: sticky; top: 12px; max-height: calc(100vh - 24px); overflow-y: auto; }
+.pricer-queue ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.queue-item { display: flex; gap: 10px; align-items: center; width: 100%; padding: 8px; text-align: left; font: inherit; color: inherit;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px; cursor: pointer; }
+.queue-item:hover { border-color: var(--pricer); }
+.queue-item.selected { border-color: var(--pricer); box-shadow: inset 3px 0 0 var(--pricer); }
+.queue-item img, .thumb-blank { width: 48px; height: 48px; flex: none; border-radius: 6px; object-fit: cover; background: var(--surface-2); }
+.queue-text { display: grid; gap: 3px; min-width: 0; }
+.queue-name { font-weight: 600; line-height: 1.25; overflow-wrap: anywhere; }
+.queue-meta { font-size: 13px; color: var(--muted); }
+
+.pricer-detail { min-width: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px; }
+.pricer-detail h3 { margin: 22px 0 10px; }
+.detail-head { display: flex; gap: 16px; align-items: flex-start; }
+.detail-head img { width: 96px; height: 96px; border-radius: 10px; object-fit: cover; flex: none; }
+.detail-head h3 { margin: 0 0 4px; font-size: 22px; }
+.detail-head p { margin: 0 0 10px; }
+.cart-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin: 16px 0 4px; }
+.tile { display: grid; gap: 2px; padding: 12px 14px; border-radius: 10px; background: var(--surface-2); }
+.tile span { font-size: 13px; color: var(--muted); }
+.tile strong { font: 700 24px/1.2 var(--display); }
+.tile small { font-size: 13px; color: var(--muted); }
+.cart-summary { margin: 12px 0 0; }
+.cart table { min-width: 720px; }
+.cart td, .cart th { vertical-align: top; }
+.cart .num { text-align: right; white-space: nowrap; }
+.cart tr.waiting td, .cart tr.skipped td { color: var(--muted); }
+.cart tfoot td { font-weight: 600; border-top: 2px solid var(--line); }
+
+.trace-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.trace-step { padding: 8px 12px; border-radius: 8px; background: var(--surface-2); border-left: 3px solid var(--line); font-size: 14px; overflow-wrap: anywhere; }
+.trace-step p { margin: 0; }
+.trace-step .step-head { float: right; margin-left: 10px; }
+.step-time { font: 12px var(--mono); color: var(--muted); }
+.trace-step.call { border-left-color: var(--pricer); }
+.trace-step.result summary { cursor: pointer; }
+.trace-step.result pre { max-height: 260px; overflow: auto; margin: 8px 0 0; }
+.trace-step.error { border-left-color: var(--bad-ink); background: var(--bad-bg); color: var(--bad-ink); }
+.trace-step.final { border-left-color: var(--good-ink); background: var(--scout-soft); }
+.trace-step.thought { background: transparent; border-left-style: dashed; font-style: italic; }
+
+@media (max-width: 760px) {
+  .pricer-layout { grid-template-columns: 1fr; }
+  .pricer-queue { position: static; max-height: 280px; }
+  .detail-head img { width: 64px; height: 64px; }
+  .pricer-detail { padding: 14px; }
+}
+
+/* Database cards: the Pricer's result */
+.card .price { display: inline-block; padding: 2px 10px; border-radius: 999px; font: 600 13px/1.5 var(--body); text-decoration: none; }
+.card .price.price-priced { background: var(--pricer-soft); color: var(--pricer); }
+.card .price.price-pending, .card .price.price-pricing { background: var(--surface-2); color: var(--muted); }
+.card .price.price-failed { background: var(--bad-bg); color: var(--bad-ink); }

@@ -11,7 +11,9 @@
     "test": "node --test --test-concurrency=1"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.128.0",
     "@modelcontextprotocol/sdk": "1.30.0",
+    "@vercel/functions": "^3.9.9",
     "pg": "^8.23.0",
     "zod": "^4.6.5"
   }

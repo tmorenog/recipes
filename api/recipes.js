@@ -5,6 +5,7 @@
 //   POST /api/recipes/{id}/processed     mark it processed     (class key + X-Group required)
 import { saveRecipe, listRecipes, markProcessed } from '../lib/recipes.js';
 import { json, guarded, requireGroup } from '../lib/http.js';
+import { resumePricer } from '../lib/pricer.js';
 
 // vercel.json rewrites /api/recipes/{id}/processed to this function with ?id=
 // and ?action=processed. The path is also parsed in case the original URL arrives.
@@ -20,6 +21,7 @@ const fail = (res) => json(res.status, { errors: res.errors });
 export const GET = guarded(async (request) => {
   const url = new URL(request.url);
   if (target(url).action) return json(405, { errors: ['Use POST to mark a recipe processed.'] }, { allow: 'POST' });
+  await resumePricer(); // the Database page reads here: restart the Pricer if work is waiting
   const res = await listRecipes(Object.fromEntries(url.searchParams));
   return res.ok ? json(200, { count: res.count, recipes: res.recipes }) : fail(res);
 });

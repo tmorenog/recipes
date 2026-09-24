@@ -65,3 +65,62 @@ create table if not exists plans (
   created_at      timestamptz not null default now()
 );
 create index if not exists plans_created_idx on plans (created_at desc);
+
+-- The Pricer: an agent on the coordinator that prices each recipe at the
+-- class's Kroger store and works out its nutrition. One pricing per TheMealDB
+-- recipe (meal_id), shared by every group that saved it.
+create table if not exists pricings (
+  meal_id          text primary key,
+  status           text not null default 'pending' check (status in ('pending', 'pricing', 'priced', 'failed')),
+  store_id         text,
+  attempts         int  not null default 0,
+  claimed_at       timestamptz,                -- when a run picked it up; a stale claim is picked up again
+  finished_at      timestamptz,
+  error            text,
+  summary          text,
+  basket           jsonb not null default '[]'::jsonb,   -- one entry per ingredient line
+  total_cost_usd   numeric(10,2),              -- what the whole recipe uses (shares of packages)
+  to_buy_usd       numeric(10,2),              -- what you'd pay for whole packages
+  nutrition_total  jsonb,                      -- { calories, protein_g, fiber_g, sodium_mg } for the whole recipe
+  tool_calls       int  not null default 0,
+  messages         jsonb,                      -- the conversation so far, so an interrupted run resumes
+  created_at       timestamptz not null default now(),
+  updated_at       timestamptz not null default now()
+);
+create index if not exists pricings_status_idx on pricings (status, created_at);
+
+-- Every step the Pricer takes, for the trace on the Pricer page.
+create table if not exists pricer_steps (
+  id        bigint generated always as identity primary key,
+  meal_id   text not null references pricings (meal_id) on delete cascade,
+  attempt   int  not null,
+  at        timestamptz not null default now(),
+  kind      text not null check (kind in ('thought', 'tool_call', 'tool_result', 'error', 'final')),
+  tool      text,
+  input     jsonb,
+  output    jsonb,
+  text      text
+);
+create index if not exists pricer_steps_meal_idx on pricer_steps (meal_id, id);
+
+-- Kroger and USDA answers, so the same search is made once for the class.
+create table if not exists pricer_cache (
+  key   text primary key,
+  data  jsonb not null,
+  at    timestamptz not null default now()
+);
+
+-- Recipes saved before the Pricer existed get priced too.
+insert into pricings (meal_id) select distinct meal_id from recipes on conflict do nothing;
+
+-- How many people the cart feeds (from the Pricer's instructions) and the
+-- instructions it followed, so a change of prompt is visible per recipe.
+alter table pricings add column if not exists people int;
+alter table pricings add column if not exists prompt text;
+
+-- Settings the instructor changes on the Pricer page, e.g. the agent's prompt.
+create table if not exists pricer_config (
+  key         text primary key,
+  value       text not null,
+  updated_at  timestamptz not null default now()
+);

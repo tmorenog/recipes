@@ -78,14 +78,16 @@ test('the connection string is found with or without a prefix, preferring exact 
 test('health explains a missing database and keys, without showing values', async () => {
   const { GET } = await import('../api/health.js');
   const saved = { ...process.env };
-  for (const k of Object.keys(process.env)) if (/POSTGRES|DATABASE_URL|CLASS_KEY|ADMIN_KEY|KROGER/.test(k)) delete process.env[k];
+  for (const k of Object.keys(process.env)) if (/POSTGRES|DATABASE_URL|CLASS_KEY|ADMIN_KEY|KROGER|ANTHROPIC|USDA|FDC_API/.test(k)) delete process.env[k];
   try {
     const res = await GET();
     const body = await res.json();
     assert.equal(res.status, 503);
     assert.deepEqual([body.database, body.class_key, body.admin_key, body.kroger], ['not connected', false, false, false]);
     assert.match(body.problems.join(' '), /CLASS_KEY is not set.*create a Neon/);
-    assert.equal(body.warnings.length, 2);
+    assert.equal(body.warnings.length, 4);
+    assert.deepEqual([body.pricer, body.usda_key], [false, false]);
+    assert.match(body.warnings.join(' '), /ANTHROPIC_API_KEY.*USDA_API_KEY/);
   } finally {
     Object.assign(process.env, saved);
   }

@@ -86,6 +86,14 @@
     node.querySelector('.meta').textContent = [r.cuisine, r.category, r.est_minutes && `${r.est_minutes} min`, r.est_servings && `serves ${r.est_servings}`]
       .filter(Boolean).join(' · ');
     node.querySelector('.why').textContent = r.why_chosen;
+    // What the Pricer agent found: cost per serving and calories, or where it's up to.
+    const p = r.pricing || { status: 'pending' };
+    const price = node.querySelector('.price');
+    price.href = `/pricer#${encodeURIComponent(r.meal_id)}`;
+    price.className = `price price-${p.status}`;
+    price.textContent = p.status === 'priced'
+      ? `$${p.cost_per_serving_usd.toFixed(2)} a serving · ${Math.round(p.nutrition_per_serving.calories ?? 0)} kcal`
+      : { pending: 'Waiting to be priced', pricing: 'Being priced…', failed: 'Couldn’t be priced' }[p.status] || p.status;
     const ings = r.ingredients || [];
     node.querySelector('.ingredients summary').textContent = `${ings.length} ingredient${ings.length === 1 ? '' : 's'}`;
     node.querySelector('.ingredients ul').replaceChildren(

@@ -28,7 +28,11 @@ You need a Vercel account and this repository on GitHub. Everything else happens
    | --- | --- |
    | `CLASS_KEY` | A password for the whole class, e.g. from `openssl rand -hex 8`. Give it to every group. |
    | `ADMIN_KEY` | A different password, only for you: it opens the Admin page. |
-   | `KROGER_CLIENT_ID`, `KROGER_CLIENT_SECRET` | From your app at [developer.kroger.com](https://developer.kroger.com) (product scope). Needed for the Meal Planners’ prices; everything else works without them. |
+   | `KROGER_CLIENT_ID`, `KROGER_CLIENT_SECRET` | From your app at [developer.kroger.com](https://developer.kroger.com) (product scope). Needed for the Pricer’s prices; everything else works without them. |
+   | `ANTHROPIC_API_KEY` | From [console.anthropic.com](https://console.anthropic.com). Runs the Pricer agent. |
+   | `USDA_API_KEY` | Free from [api.data.gov/signup](https://api.data.gov/signup/). Nutrition for the Pricer; without it the shared, heavily limited `DEMO_KEY` is used. |
+   | `PRICER_ZIP` (optional) | The ZIP code of the class’s Kroger store. Default `45202`. |
+   | `PRICER_MODEL` (optional) | The Claude model the Pricer uses. Default `claude-opus-5`; `claude-haiku-4-5` is cheaper. |
 
    `DATABASE_URL` / `POSTGRES_URL` are added by step 2; don't add them yourself.
 
@@ -37,6 +41,16 @@ You need a Vercel account and this repository on GitHub. Everything else happens
 5. **Check it.** Open the site. The footer should say **Database ready** and **Class key set**. If not, the Database page says what's missing.
 
 Each group picks its own group name (like `team-3`) and sends it with every request in the `X-Group` header; the agent pages fill it into the prompts. New groups need no setup.
+
+## The Pricer agent
+
+The Pricer runs on the coordinator. When a Scout saves a recipe, the Pricer builds the Kroger shopping cart needed to cook it (for 50 people by default) and works out its nutrition from USDA FoodData Central. The AI chooses products and amounts; code works out packages, costs and nutrition. Each TheMealDB recipe is priced once for the whole class, and Kroger and USDA answers are remembered.
+
+The **Pricer page** (`/pricer`) shows the queue, each recipe’s cart, and every step the agent took. Signed in with the admin key, you can edit the agent’s prompt (for example, the number of people), price a recipe again, retry failed ones, or re-price everything.
+
+Each recipe from `list_recipes` / `GET /api/recipes` carries a `pricing` object: `status` (`pending`, `pricing`, `priced` or `failed`) and, once priced, `people`, `cart_usd`, `cost_used_usd`, `cost_per_serving_usd` and `nutrition_per_serving`.
+
+A run starts in the background after each save. The Pricer and Database pages restart it if recipes are waiting or a run stopped part-way, and a stopped run carries on where it left off.
 
 ## Admin
 
@@ -183,6 +197,9 @@ TEST_DATABASE_URL=postgres://postgres@localhost:5432/recipes_test npm test
 | `lib/kroger.js` | Kroger sign-in, store and product lookups, caching |
 | `lib/mcp.js` | The MCP tools |
 | `lib/expectations.js` | What `get_expectations` returns for each agent |
+| `lib/pricer.js` | The Pricer agent: its prompt, tools, loop and queue |
+| `lib/units.js`, `lib/usda.js` | Package sizes and unit conversion; USDA nutrition |
+| `api/pricer.js`, `public/pricer.html`, `public/pricer.js` | The Pricer page and its API |
 | `public/prompts/` | The sample prompt for each step, one text file per step |
 | `lib/auth.js` | Checks the class key and reads the group name from `X-Group` |
 | `lib/store/` | The database queries (`postgres.js`) |
