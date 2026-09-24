@@ -79,21 +79,11 @@ For now, build one page with:
     </div>
     <div class="prompt-body" id="p2">Create the tools the agent will use, in backend code. No AI yet.
 
-TheMealDB (free test key "1"). Read https://www.themealdb.com/AGENTS.md, https://www.themealdb.com/SKILL.md and https://www.themealdb.com/documentation, and use them to implement exactly these five tools:
-1. search_by_name(query)
-2. filter_by_ingredient(ingredient)
-3. filter_by_category(category)
-4. filter_by_cuisine(area)
-5. get_recipe(meal_id): the full recipe (the filters only return id, name and photo)
-Each returns JSON, and an empty list (not an error) when nothing is found ("meals": null). URL-encode what you search for. Use only what the free key allows.
+TheMealDB: read https://www.themealdb.com/AGENTS.md and follow it, using the free key "1". Build five tools: search_by_name, filter_by_ingredient, filter_by_category, filter_by_cuisine and get_recipe.
 
-Our coordinator is an MCP server: {{SITE}}/api/mcp?agent=scout
-- Send the headers "Authorization: Bearer " + the COORDINATOR_KEY secret and "X-Group: {{GROUP}}" on every request.
-- It speaks JSON-RPC 2.0 over HTTP POST and answers with JSON. Use the official MCP TypeScript SDK (npm:@modelcontextprotocol/sdk, StreamableHTTPClientTransport), or plain POST requests with the methods "tools/list" and "tools/call".
-- Get its tools with tools/list and give them to the agent with the names, descriptions and input schemas exactly as the server sends them. Don't write the recipe format into our code: it comes from the server.
-- When a tool result has "isError": true, it's a rejection with reasons, not a crash: pass the text back to the agent.
+Our coordinator is an MCP server (Streamable HTTP) at {{SITE}}/api/mcp?agent=scout. Send the headers "Authorization: Bearer " + COORDINATOR_KEY and "X-Group: {{GROUP}}" on every request. Load its tools with tools/list and give them to the agent exactly as the server describes them: don't write the recipe format into our code. A result with "isError": true is a rejection to pass back to the agent, not a crash.
 
-Test tools 1 to 5 once each, then list the coordinator's tools and call get_expectations. Show me the results. Don't call save_recipe yet.</div>
+Test the five TheMealDB tools once each, then list the coordinator's tools and call get_expectations. Show me the results. Don't call save_recipe yet.</div>
   </section>
 
   <section class="prompt scout">
@@ -101,16 +91,13 @@ Test tools 1 to 5 once each, then list the coordinator's tools and call get_expe
       <p class="prompt-title"><span class="where">Prompt 3 of 4</span>Add the agent loop</p>
       <button class="btn" type="button" data-copy="p3">Copy</button>
     </div>
-    <div class="prompt-body" id="p3">Now add the agent: a backend function run-scout that uses Lovable AI with tool calling, the five TheMealDB tools, and the coordinator's tools.
+    <div class="prompt-body" id="p3">Add the agent: a backend function run-scout that uses Lovable AI with tool calling and all the tools above, plus finish(summary).
 
-How it runs:
-- Create a run record with the theme. Send the model the instructions below, the theme, and the tool definitions.
-- When the model asks for a tool, run it and send back the result. Repeat.
-- Stop when the model calls finish(summary), or after 25 tool calls, or after 2 minutes. If it stops because of a limit, record why. Keep both limits as constants at the top of the code so I can change them.
-- Save every step to a table agent_steps (run_id, step number, kind: thought / tool_call / tool_result / error / final, tool name, input, output, time) as it happens, so the page can show them live.
+- Run the tools the model asks for and send back the results until it calls finish, or until 25 tool calls or 2 minutes (constants I can change). Record why it stopped.
+- Save every step (thought, tool call, result, error) to a table agent_steps as it happens, so the page can show them live.
 
 Instructions for the model:
-"You are Recipe Scout. First call get_expectations: it tells you your goal, the rules, and the exact recipe format that save_recipe accepts. Follow it exactly. Find recipes with the TheMealDB tools and save them with save_recipe. If save_recipe rejects a recipe, fix every reason it gives and try again. When you're done, call finish with a short summary."</div>
+"You are Recipe Scout. First call get_expectations and follow it exactly. Find recipes with the TheMealDB tools and save them with save_recipe. If a save is rejected, fix every reason and try again. Call finish with a short summary when you're done."</div>
   </section>
 
   <section class="prompt scout">
@@ -120,11 +107,10 @@ Instructions for the model:
     </div>
     <div class="prompt-body" id="p4">Connect the page to run-scout.
 
-- "Run Recipe Scout" starts a run with the theme and disables itself until the run ends.
-- "What the agent is doing" shows the steps live, one card per step: thoughts in plain text, tool calls with the tool name and inputs, results collapsed by default (click to see the JSON), errors and coordinator rejections in red. Show a counter like "12 / 25 tool calls" and the time left.
-- "Saved recipes" shows each recipe the coordinator accepted: photo, name (linked to https://www.themealdb.com/meal/MEAL_ID), cuisine, estimated time and why_chosen.
-- Credit the source under the recipes: "Recipe data and imagery: TheMealDB" linked to https://www.themealdb.com/
-- Add a link "See it on the class database" to {{SITE}}/database
+- "Run Recipe Scout" starts a run and is disabled until it ends.
+- "What the agent is doing" shows the steps live: tool name and inputs, results collapsed (click for JSON), rejections in red, a counter like "12 / 25 tool calls" and the time left.
+- "Saved recipes" shows each accepted recipe: photo, name, cuisine, time and why_chosen. Link and credit TheMealDB as AGENTS.md asks.
+- Link "See it on the class database" to {{SITE}}/database
 - Keep a list of past runs so I can reopen any earlier trace.</div>
   </section>
 
