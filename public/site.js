@@ -27,6 +27,24 @@
     }
   };
   fill();
+
+  // Sample prompts live in text files under /prompts/, so the instructor can
+  // edit them without touching the pages: <div data-prompt="/prompts/...txt">.
+  for (const box of document.querySelectorAll('[data-prompt]')) {
+    const path = box.dataset.prompt;
+    box.textContent = 'Loading the prompt…';
+    fetch(path, { cache: 'no-cache' })
+      .then((res) => (res.ok ? res.text() : Promise.reject(new Error(res.status))))
+      .then((text) => {
+        const node = document.createTextNode(text.trim());
+        box.replaceChildren(node);
+        slots.push({ node, template: node.nodeValue });
+        fill();
+      })
+      .catch(() => {
+        box.replaceChildren('This prompt didn’t load. Reload the page, or open ', Object.assign(document.createElement('a'), { href: path, textContent: path }), '.');
+      });
+  }
   for (const a of document.querySelectorAll('a[href*="%7B%7BSITE%7D%7D"], a[href*="{{SITE}}"]')) {
     a.href = a.getAttribute('href').replace(/%7B%7BSITE%7D%7D|\{\{SITE\}\}/g, SITE);
   }

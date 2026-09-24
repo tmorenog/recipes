@@ -5,6 +5,7 @@ The hub for a two-agent class exercise. Groups build two AI agents in Lovable: a
 **Pages**
 - **Welcome** (`/`): what the exercise is, how the pieces fit, and a check that the class key works.
 - **Recipe Scout** (`/scout`) and **Meal Planner** (`/planner`): goals, copy-ready Lovable prompts with this site's address filled in, test checklists and troubleshooting. Each agent connects to `/api/mcp?agent=…` and reads its rules from `get_expectations`.
+  The sample prompts are plain text files in [`public/prompts/`](public/prompts/README.md) (`scout/step-1.txt` … `planner/step-5.txt`): edit a file and the page shows the new text after the next deploy.
 - **Database** (`/database`): every recipe, meal plan and attempt (including rejections and why), filterable by group. Updates every 15 seconds.
 
 **API** (used by the students' agents)
@@ -182,6 +183,7 @@ TEST_DATABASE_URL=postgres://postgres@localhost:5432/recipes_test npm test
 | `lib/kroger.js` | Kroger sign-in, store and product lookups, caching |
 | `lib/mcp.js` | The MCP tools |
 | `lib/expectations.js` | What `get_expectations` returns for each agent |
+| `public/prompts/` | The sample prompt for each step, one text file per step |
 | `lib/auth.js` | Checks the class key and reads the group name from `X-Group` |
 | `lib/store/` | The database queries (`postgres.js`) |
 | `lib/env.js`, `lib/db.js` | Finding the database connection string |

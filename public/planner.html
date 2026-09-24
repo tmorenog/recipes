@@ -62,18 +62,7 @@
         <p class="prompt-kind">Sample prompt</p>
         <button class="btn" type="button" data-copy="q1">Copy prompt</button>
       </div>
-      <div class="prompt-body" id="q1">Build a web app called "Meal Planner" for a class exercise. It's an AI agent that plans 5 dinners from recipes stored in our class coordinator at {{SITE}}, priced at a real Kroger store.
-
-Enable Lovable Cloud so the app has a backend.
-
-Add a secret named COORDINATOR_KEY and ask me to enter its value. It is our class key. Only backend functions may use it: never put it in the page, the browser, or the code.
-
-Our group name is {{GROUP}}.
-
-Build one page with:
-- inputs: ZIP code (default 45202), budget in US dollars (default 60), people per meal (default 4)
-- a "Plan my week" button
-- two empty panels: "What the agent is doing" and "The plan"</div>
+      <div class="prompt-body" id="q1" data-prompt="/prompts/planner/step-1.txt"></div>
     </div>
   </section>
 
@@ -85,11 +74,7 @@ Build one page with:
         <p class="prompt-kind">Sample prompt</p>
         <button class="btn" type="button" data-copy="q2">Copy prompt</button>
       </div>
-      <div class="prompt-body" id="q2">Our coordinator is an MCP server (Streamable HTTP) with every tool the agent needs to read recipes, look up Kroger prices and save the plan: {{SITE}}/api/mcp?agent=planner
-
-From backend code only, send the headers "Authorization: Bearer " + COORDINATOR_KEY and "X-Group: {{GROUP}}" on every request. Load its tools with tools/list and give them to the agent exactly as the server describes them: don't write the plan format or rules into our code. A result with "isError": true is a rejection to pass back to the agent, not a crash. During a run, reuse earlier search_kroger_products answers for the same term and store instead of asking again.
-
-No AI yet. Test it: list the coordinator's tools, call get_expectations, list_recipes, find_kroger_stores for ZIP 45202, and search_kroger_products for "yellow onions" at the first store. Show me the results. Don't call save_meal_plan or mark_processed yet.</div>
+      <div class="prompt-body" id="q2" data-prompt="/prompts/planner/step-2.txt"></div>
     </div>
   </section>
 
@@ -101,13 +86,7 @@ No AI yet. Test it: list the coordinator's tools, call get_expectations, list_re
         <p class="prompt-kind">Sample prompt</p>
         <button class="btn" type="button" data-copy="q3">Copy prompt</button>
       </div>
-      <div class="prompt-body" id="q3">Add two calculator tools in plain code, so the AI never does arithmetic itself.
-
-1. price_ingredient(amount, unit, package_size, package_price_usd): what a recipe's quantity costs. Parse package sizes like "16.9 fl oz", "3 lb", "12 ct" or "each", and convert between weight, volume and count units. Between volume and weight, assume 1 ml weighs 1 g and say so in "note". A null amount ("to taste") costs 0; a null unit means a count ("2 eggs"). If the units can't be converted, return an error instead of guessing. Return { fraction_of_package, cost_used_usd, packages_to_buy, cost_to_buy_usd, note }, with money rounded to cents.
-
-2. plan_totals(meals, shopping_list): set each meal's cost_per_serving_usd = cost_used_usd ÷ servings, and total_cost_usd = the sum of quantity × unit_price_usd over the shopping list, rounded to cents.
-
-Test price_ingredient with 2 tbsp olive oil from a "16.9 fl oz" bottle at 7.99 (expect about 0.47 used, 7.99 to buy), and 300 g onions from a "3 lb" bag at 3.49.</div>
+      <div class="prompt-body" id="q3" data-prompt="/prompts/planner/step-3.txt"></div>
     </div>
   </section>
 
@@ -119,13 +98,7 @@ Test price_ingredient with 2 tbsp olive oil from a "16.9 fl oz" bottle at 7.99 (
         <p class="prompt-kind">Sample prompt</p>
         <button class="btn" type="button" data-copy="q4">Copy prompt</button>
       </div>
-      <div class="prompt-body" id="q4">Add the agent: a backend function run-planner that uses Lovable AI with tool calling, the coordinator's tools, our two calculators, and finish(summary). It takes the ZIP code, budget and people per meal from the page.
-
-- Run the tools the model asks for and send back the results until it calls finish, or until 80 tool calls or 5 minutes (constants I can change). Record why it stopped.
-- Save every step (thought, tool call, result, error) to a table agent_steps as it happens, so the page can show them live.
-
-Instructions for the model (fill in PEOPLE, ZIP and BUDGET from the page):
-"You are Meal Planner. Plan 5 dinners for PEOPLE people, priced at a Kroger store near ZIP, within a budget of BUDGET US dollars. First call get_expectations and follow it exactly. Never do arithmetic yourself: use price_ingredient for every ingredient's cost, and plan_totals before saving. If a save is rejected, fix every reason and try again. Call finish with a short summary when you're done."</div>
+      <div class="prompt-body" id="q4" data-prompt="/prompts/planner/step-4.txt"></div>
     </div>
   </section>
 
@@ -137,13 +110,7 @@ Instructions for the model (fill in PEOPLE, ZIP and BUDGET from the page):
         <p class="prompt-kind">Sample prompt</p>
         <button class="btn" type="button" data-copy="q5">Copy prompt</button>
       </div>
-      <div class="prompt-body" id="q5">Connect the page to run-planner.
-
-- "Plan my week" starts a run and is disabled until it ends.
-- "What the agent is doing" shows the steps live: tool name and inputs, results collapsed (click for JSON), rejections in red, a counter like "34 / 80 tool calls" and the time left.
-- "The plan" shows, once saved: five day cards (recipe photo and name, cost per serving, calories, protein), the shopping list with its total against the budget, the rule checks as pass/fail badges, and the summary. Credit TheMealDB for the recipe photos.
-- Link "See it on the class database" to {{SITE}}/database
-- Keep a list of past runs so I can reopen any earlier trace and plan.</div>
+      <div class="prompt-body" id="q5" data-prompt="/prompts/planner/step-5.txt"></div>
     </div>
   </section>
 

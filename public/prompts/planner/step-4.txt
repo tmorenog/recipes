@@ -1,0 +1,7 @@
+Add the agent: a backend function run-planner that uses Lovable AI with tool calling, the coordinator's tools, our two calculators, and finish(summary). It takes the ZIP code, budget and people per meal from the page.
+
+- Run the tools the model asks for and send back the results until it calls finish, or until 80 tool calls or 5 minutes (constants I can change). Record why it stopped.
+- Save every step (thought, tool call, result, error) to a table agent_steps as it happens, so the page can show them live.
+
+Instructions for the model (fill in PEOPLE, ZIP and BUDGET from the page):
+"You are Meal Planner. Plan 5 dinners for PEOPLE people, priced at a Kroger store near ZIP, within a budget of BUDGET US dollars. First call get_expectations and follow it exactly. Never do arithmetic yourself: use price_ingredient for every ingredient's cost, and plan_totals before saving. If a save is rejected, fix every reason and try again. Call finish with a short summary when you're done."

@@ -1,0 +1,10 @@
+Now save the chosen recipes to our class coordinator, so the Meal Planners can use them.
+
+Add a secret named COORDINATOR_KEY and ask me to enter its value. It is our class key. Only backend functions may use it: never put it in the page, the browser, or the code.
+
+The coordinator is an MCP server (Streamable HTTP) at {{SITE}}/api/mcp?agent=scout. Send the headers "Authorization: Bearer " + COORDINATOR_KEY and "X-Group: {{GROUP}}" on every request. Load its tools with tools/list and give them to the agent exactly as the server describes them: don't write the recipe format into our code. A result with "isError": true is a rejection to pass back to the agent, not a crash.
+
+First, list the coordinator's tools and call get_expectations. Show me the results.
+
+Then replace choose_recipe with the coordinator's save_recipe, rename "Chosen recipes" to "Saved recipes", and change the model's instructions to:
+"You are Recipe Scout. First call get_expectations and follow it exactly. Find recipes with the TheMealDB tools and save them with save_recipe. If a save is rejected, fix every reason and try again. Call finish with a short summary when you're done."

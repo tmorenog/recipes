@@ -1,0 +1,5 @@
+Create the tools the agent will use to find recipes, in backend code. No AI yet.
+
+Read https://www.themealdb.com/AGENTS.md and follow it, using the free key "1". Build five tools: search_by_name, filter_by_ingredient, filter_by_category, filter_by_cuisine and get_recipe. Each returns JSON, and an empty list when nothing is found.
+
+Test each tool once and show me the results.

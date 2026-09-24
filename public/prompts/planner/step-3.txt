@@ -1,0 +1,7 @@
+Add two calculator tools in plain code, so the AI never does arithmetic itself.
+
+1. price_ingredient(amount, unit, package_size, package_price_usd): what a recipe's quantity costs. Parse package sizes like "16.9 fl oz", "3 lb", "12 ct" or "each", and convert between weight, volume and count units. Between volume and weight, assume 1 ml weighs 1 g and say so in "note". A null amount ("to taste") costs 0; a null unit means a count ("2 eggs"). If the units can't be converted, return an error instead of guessing. Return { fraction_of_package, cost_used_usd, packages_to_buy, cost_to_buy_usd, note }, with money rounded to cents.
+
+2. plan_totals(meals, shopping_list): set each meal's cost_per_serving_usd = cost_used_usd ÷ servings, and total_cost_usd = the sum of quantity × unit_price_usd over the shopping list, rounded to cents.
+
+Test price_ingredient with 2 tbsp olive oil from a "16.9 fl oz" bottle at 7.99 (expect about 0.47 used, 7.99 to buy), and 300 g onions from a "3 lb" bag at 3.49.

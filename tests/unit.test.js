@@ -130,3 +130,18 @@ test('an ingredient without a measure is accepted, since TheMealDB has some', ()
   r.ingredients.push({ name: 'salt', amount: null, unit: null, raw: '' }, { name: 'pepper', amount: null, unit: null, raw: null });
   assert.ok(recipeSchema.safeParse(r).success);
 });
+
+test('every sample prompt on the agent pages has its text file, using only known placeholders', async () => {
+  const { readFile } = await import('node:fs/promises');
+  for (const page of ['scout', 'planner']) {
+    const html = await readFile(new URL(`../public/${page}.html`, import.meta.url), 'utf8');
+    const paths = [...html.matchAll(/data-prompt="([^"]+)"/g)].map((m) => m[1]);
+    assert.equal(paths.length, 5, `${page} has 5 steps`);
+    for (const path of paths) {
+      const text = await readFile(new URL(`../public${path}`, import.meta.url), 'utf8');
+      assert.ok(text.trim().length > 50, `${path} is not empty`);
+      const unknown = [...text.matchAll(/\{\{(\w+)\}\}/g)].map((m) => m[1]).filter((k) => !['SITE', 'GROUP'].includes(k));
+      assert.deepEqual(unknown, [], `${path} uses only {{SITE}} and {{GROUP}}`);
+    }
+  }
+});

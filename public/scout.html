@@ -54,14 +54,7 @@
         <p class="prompt-kind">Sample prompt</p>
         <button class="btn" type="button" data-copy="p1">Copy prompt</button>
       </div>
-      <div class="prompt-body" id="p1">Build a web app called "Recipe Scout" for a class exercise: an AI agent that finds real recipes for a theme.
-
-Enable Lovable Cloud so the app has a backend.
-
-For now, build one page with:
-- a text box for the theme, with the examples "cheap weeknight vegetarian dinners", "comfort food for a rainy day" and "15-minute lunches" as clickable chips
-- a "Run Recipe Scout" button
-- two empty panels side by side: "What the agent is doing" and "Chosen recipes"</div>
+      <div class="prompt-body" id="p1" data-prompt="/prompts/scout/step-1.txt"></div>
     </div>
     <p class="step-check"><strong>You should see:</strong> the page with the theme box, the example chips, the button and two empty panels. Nothing happens yet when you press the button.</p>
   </section>
@@ -74,11 +67,7 @@ For now, build one page with:
         <p class="prompt-kind">Sample prompt</p>
         <button class="btn" type="button" data-copy="p2">Copy prompt</button>
       </div>
-      <div class="prompt-body" id="p2">Create the tools the agent will use to find recipes, in backend code. No AI yet.
-
-Read https://www.themealdb.com/AGENTS.md and follow it, using the free key "1". Build five tools: search_by_name, filter_by_ingredient, filter_by_category, filter_by_cuisine and get_recipe. Each returns JSON, and an empty list when nothing is found.
-
-Test each tool once and show me the results.</div>
+      <div class="prompt-body" id="p2" data-prompt="/prompts/scout/step-2.txt"></div>
     </div>
     <p class="step-check"><strong>You should see:</strong> five test results from TheMealDB. The filters return only an id, a name and a photo; <code>get_recipe</code> returns the full recipe with ingredients, measures and instructions.</p>
   </section>
@@ -91,18 +80,7 @@ Test each tool once and show me the results.</div>
         <p class="prompt-kind">Sample prompt</p>
         <button class="btn" type="button" data-copy="p3">Copy prompt</button>
       </div>
-      <div class="prompt-body" id="p3">Add the agent: a backend function run-scout that uses Lovable AI with tool calling, the five TheMealDB tools, and two more tools:
-- choose_recipe(meal_id, why_chosen): adds a recipe to this run's chosen recipes
-- finish(summary): ends the run
-
-How it runs:
-- Run the tools the model asks for and send back the results until it calls finish, or until 25 tool calls or 2 minutes (constants I can change). Record why it stopped.
-- Save every step (thought, tool call, result, error) to a table agent_steps as it happens.
-
-Instructions for the model:
-"You are Recipe Scout. Find 5 real recipes on TheMealDB that fit the theme. Search in several ways, and call get_recipe to read the full recipe before choosing it. Never invent a recipe. Choose varied recipes, and call choose_recipe for each with one sentence on why it fits. Call finish when you have 5, or explain why the theme can't be met."
-
-Connect the page: "Run Recipe Scout" starts a run with the theme. "What the agent is doing" shows each step live. "Chosen recipes" shows each chosen recipe with its photo, name, cuisine and why it was chosen.</div>
+      <div class="prompt-body" id="p3" data-prompt="/prompts/scout/step-3.txt"></div>
     </div>
     <p class="step-check"><strong>You should see:</strong> press the button, watch the searches and look-ups appear one by one, and five recipe cards with photos fill “Chosen recipes”. Try a couple of themes before moving on.</p>
   </section>
@@ -124,16 +102,7 @@ Connect the page: "Run Recipe Scout" starts a run with the theme. "What the agen
         <p class="prompt-kind">Sample prompt</p>
         <button class="btn" type="button" data-copy="p4">Copy prompt</button>
       </div>
-      <div class="prompt-body" id="p4">Now save the chosen recipes to our class coordinator, so the Meal Planners can use them.
-
-Add a secret named COORDINATOR_KEY and ask me to enter its value. It is our class key. Only backend functions may use it: never put it in the page, the browser, or the code.
-
-The coordinator is an MCP server (Streamable HTTP) at {{SITE}}/api/mcp?agent=scout. Send the headers "Authorization: Bearer " + COORDINATOR_KEY and "X-Group: {{GROUP}}" on every request. Load its tools with tools/list and give them to the agent exactly as the server describes them: don't write the recipe format into our code. A result with "isError": true is a rejection to pass back to the agent, not a crash.
-
-First, list the coordinator's tools and call get_expectations. Show me the results.
-
-Then replace choose_recipe with the coordinator's save_recipe, rename "Chosen recipes" to "Saved recipes", and change the model's instructions to:
-"You are Recipe Scout. First call get_expectations and follow it exactly. Find recipes with the TheMealDB tools and save them with save_recipe. If a save is rejected, fix every reason and try again. Call finish with a short summary when you're done."</div>
+      <div class="prompt-body" id="p4" data-prompt="/prompts/scout/step-4.txt"></div>
     </div>
     <p class="step-check"><strong>You should see:</strong> three coordinator tools and the brief from <code>get_expectations</code>: the goal, the rules and the recipe format. Then a run that starts with <code>get_expectations</code> and ends with five saved recipes on the <a href="/database">Database page</a> under your group.</p>
   </section>
@@ -146,12 +115,7 @@ Then replace choose_recipe with the coordinator's save_recipe, rename "Chosen re
         <p class="prompt-kind">Sample prompt</p>
         <button class="btn" type="button" data-copy="p5">Copy prompt</button>
       </div>
-      <div class="prompt-body" id="p5">Improve the page:
-- "Run Recipe Scout" is disabled until the run ends.
-- "What the agent is doing" shows tool names and inputs, results collapsed (click for JSON), coordinator rejections in red, a counter like "12 / 25 tool calls" and the time left.
-- "Saved recipes": link and credit TheMealDB as AGENTS.md asks.
-- Add a link "See it on the class database" to {{SITE}}/database
-- Keep a list of past runs so I can reopen any earlier trace.</div>
+      <div class="prompt-body" id="p5" data-prompt="/prompts/scout/step-5.txt"></div>
     </div>
     <p class="step-check"><strong>You should see:</strong> a clear, live trace with a counter, rejections in red, and a list of past runs you can reopen.</p>
   </section>
