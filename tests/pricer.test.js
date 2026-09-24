@@ -187,10 +187,11 @@ for (const backend of BACKENDS) {
       assert.equal((await control('test', { ingredients: ['x', 'y'], prompt: 'y'.repeat(60) }, 'wrong-key')).status, 401, 'a draft prompt needs the admin key');
       assert.equal((await control('test', { ingredients: [] })).status, 400);
 
-      // Anyone can run a plain test; one at a time.
-      const open = await control('test', { ingredients: ['400g tin chickpeas', 'salt, to taste'] }, 'no-key');
-      assert.equal(open.status, 202);
-      assert.equal((await control('test', { ingredients: ['1 onion'] }, 'no-key')).status, 429, 'one test at a time');
+      // Only the instructor runs tests; one at a time.
+      assert.equal((await control('test', { ingredients: ['400g tin chickpeas', 'salt, to taste'] }, 'no-key')).status, 401);
+      const first = await control('test', { ingredients: ['400g tin chickpeas', 'salt, to taste'] });
+      assert.equal(first.status, 202);
+      assert.equal((await control('test', { ingredients: ['1 onion'] })).status, 429, 'one test at a time');
       for (let i = 0; i < 50 && (await pricer('?test=latest')).body.status === 'running'; i++) await new Promise((r) => setTimeout(r, 20));
       log.length = 0;
 

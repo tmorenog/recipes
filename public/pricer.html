@@ -43,7 +43,7 @@
 
   <div class="panel instructor-bar" id="signin">
     <form class="keycheck" id="signin-form" autocomplete="off">
-      <label class="small" for="admin-key" style="flex-basis:100%"><strong>Instructor tools:</strong> edit the agent’s instructions, reprice or clear all recipes. Sign in with the admin key <span class="muted">(ADMIN_KEY in Vercel; kept in this browser tab only)</span>.</label>
+      <label class="small" for="admin-key" style="flex-basis:100%"><strong>Instructor tools:</strong> run tests, edit the agent’s instructions, reprice or clear all recipes. Sign in with the admin key <span class="muted">(ADMIN_KEY in Vercel; kept in this browser tab only)</span>.</label>
       <input id="admin-key" type="password" placeholder="Paste the admin key" spellcheck="false">
       <button class="btn primary" type="submit">Sign in</button>
     </form>
@@ -53,14 +53,14 @@
   <p class="toast" id="toast" role="status" aria-live="polite" hidden></p>
 
   <h2 id="try"><span class="section-num">1</span>Try it on a sample list</h2>
-  <p>See exactly what the Pricer does, with the real AI and real Kroger prices, on a short list. Nothing is saved to the recipes. Anyone can run a test. It uses the instructions in section 2; signed in as the instructor, it also tries changes you haven’t saved, so it’s the way to test a change before applying it.</p>
+  <p>See exactly what the Pricer does, with the real AI and real Kroger prices, on a short list. Nothing is saved to the recipes. The instructor runs tests (sign in above); everyone can watch the latest one here. A test uses the instructions in section 2, including changes not saved yet, so it’s the way to try a change before applying it.</p>
   <div class="try-grid">
     <div class="panel try-input">
       <label for="test-lines"><strong>Ingredients</strong> <span class="small muted">one per line, as a recipe would list them</span></label>
       <textarea id="test-lines" rows="7" spellcheck="false"></textarea>
       <label class="small" for="test-serves">The list serves <input id="test-serves" type="number" min="1" max="100" value="4" style="width:4.5em"> people as written</label>
-      <button class="btn primary" type="button" id="run-test">Run the test</button>
-      <p class="small muted" id="test-hint">Uses the real AI and Kroger prices; a test takes a minute or two. One test at a time.</p>
+      <button class="btn primary" type="button" id="run-test" disabled>Run the test</button>
+      <p class="small muted" id="test-hint">Sign in with the admin key above to run a test.</p>
     </div>
     <div class="try-result" id="test-result" aria-live="polite">
       <p class="empty small">No test yet. Run one to see the agent search Kroger and fill a cart.</p>

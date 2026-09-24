@@ -91,7 +91,10 @@
     $('prompt-actions').hidden = !on;
     $('prompt').readOnly = !on;
     $('prompt-kind').textContent = on ? 'Prompt · you can edit it' : 'Prompt';
-    $('run-test').disabled = test?.status === 'running';
+    $('run-test').disabled = !on || test?.status === 'running';
+    $('test-hint').textContent = on
+      ? 'Uses the real AI and Kroger prices; a test takes a minute or two. One test at a time.'
+      : 'Sign in with the admin key above to run a test.';
     $('reprice-all').disabled = !on;
     $('clear-all').disabled = !on;
     $('admin-note').hidden = on;
@@ -206,7 +209,7 @@
       t.summary ? el('p', { className: 'cart-summary' }, el('strong', { textContent: 'The agent’s summary: ' }), t.summary) : null,
       trace(t.steps || [], { open: running, toolCalls: t.tool_calls }),
     );
-    $('run-test').disabled = running;
+    $('run-test').disabled = !key || running;
     if (!$('test-lines').dataset.touched && t.ingredients) $('test-lines').value = t.ingredients.join('\n');
   }
   $('test-lines').addEventListener('input', () => { $('test-lines').dataset.touched = '1'; });

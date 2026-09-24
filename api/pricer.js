@@ -5,13 +5,13 @@
 //   GET  /api/pricer?test=latest|<id>   the latest (or one) test run                              (anyone)
 //   POST /api/pricer?action=…
 //     anyone:
-//        test            body {"ingredients": ["1 onion", …], "serves": 4} runs the agent on a short list;
-//                        nothing is saved to the recipes (one at a time, 30 an hour)
 //        price           body {"meal_id": "…"} prices that recipe (again) from scratch
 //        price-unpriced  prices every recipe without a price (cleared, or couldn't be priced)
 //     instructor, with Authorization: Bearer <ADMIN_KEY>:
 //        prompt          body {"prompt": "…"} saves the agent's instructions; {"reset": true} goes back to the default
-//        test            with "prompt": a draft of the instructions
+//        test            body {"ingredients": ["1 onion", …], "serves": 4, "prompt"?: "…"} runs the agent on a short
+//                        list (with a draft of the instructions, if given); nothing is saved to the recipes
+//                        (one at a time, 30 an hour)
 //        clear-all       body {"confirm": "CLEAR"} removes every price (recipes stay unpriced until asked)
 //        reprice-all     body {"confirm": "REPRICE"} prices every recipe again
 import { getStore } from '../lib/store/index.js';
@@ -45,7 +45,7 @@ export const GET = guarded(async (request) => {
   return json(200, { ...pricerInfo(), prompt, prompt_is_default: prompt === DEFAULT_PROMPT, default_prompt: DEFAULT_PROMPT, sample_ingredients: SAMPLE_INGREDIENTS, counts, pricings, activity });
 });
 
-const OPEN = new Set(['test', 'price', 'price-unpriced']);
+const OPEN = new Set(['price', 'price-unpriced']);
 
 export const POST = guarded(async (request) => {
   const url = new URL(request.url);
@@ -56,8 +56,7 @@ export const POST = guarded(async (request) => {
   } catch {
     body = {};
   }
-  // Trying a draft of the instructions is the instructor's; a plain test is anyone's.
-  if (!OPEN.has(action) || (action === 'test' && body.prompt)) {
+  if (!OPEN.has(action)) {
     const auth = checkAdmin(request);
     if (!auth.ok) return json(auth.status, { errors: [auth.error] });
   }
