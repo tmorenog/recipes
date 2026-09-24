@@ -20,7 +20,7 @@
         <li><a href="/scout" aria-current="page"><span class="num">1</span>Recipe Scout</a></li>
         <li><a href="/pricer"><span class="num">2</span>Pricer</a></li>
         <li><a href="/planner"><span class="num">3</span>Meal Planner</a></li>
-        <li><a href="/database">Database</a></li>
+        <li><a href="/coordinator">Coordinator</a></li>
       </ul>
     </nav>
   </div>
@@ -37,7 +37,7 @@
 
   <h2 id="goal">The goal</h2>
   <div class="panel narrow">
-    <p style="margin-top:0"><strong>Your Scout is done when:</strong> you type a theme, press a button, watch it work step by step, and five recipes that fit the theme appear on the <a href="/database">Database page</a> under your group.</p>
+    <p style="margin-top:0"><strong>Your Scout is done when:</strong> you type a theme, press a button, watch it work step by step, and five recipes that fit the theme appear on the <a href="/coordinator">Coordinator page</a> under your group.</p>
     <ul class="checklist">
       <li>It only saves real recipes it looked up. It never invents one.</li>
       <li>It learns the rules from the coordinator (<code>get_expectations</code>) instead of having them written into its code.</li>
@@ -115,7 +115,7 @@
       </div>
       <div class="prompt-body" id="p4" data-prompt="/prompts/scout/step-4.txt"></div>
     </div>
-    <p class="step-check"><strong>You should see:</strong> three coordinator tools and the brief from <code>get_expectations</code>: the goal, the rules and the recipe format. Then a run that starts with <code>get_expectations</code> and ends with five saved recipes on the <a href="/database">Database page</a> under your group.</p>
+    <p class="step-check"><strong>You should see:</strong> three coordinator tools and the brief from <code>get_expectations</code>: the goal, the rules and the recipe format. Then a run that starts with <code>get_expectations</code> and ends with five saved recipes on the <a href="/coordinator">Coordinator page</a> under your group.</p>
   </section>
 
   <section class="step" id="step-5">
@@ -138,9 +138,9 @@
       <ul class="checklist">
         <li>The trace starts with <code>get_expectations</code></li>
         <li>A run with “cheap weeknight vegetarian dinners” saves 5 recipes</li>
-        <li>They appear on the <a href="/database">Database page</a> under your group, with photos</li>
+        <li>They appear on the <a href="/coordinator">Coordinator page</a> under your group, with photos</li>
         <li>The trace shows each search, look-up and save</li>
-        <li>The Database page’s Activity tab shows your saves as accepted</li>
+        <li>The Coordinator page’s Exchanges tab shows each call and your saves as accepted</li>
       </ul>
     </div>
     <div class="panel">

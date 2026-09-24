@@ -21,7 +21,7 @@ const fail = (res) => json(res.status, { errors: res.errors });
 export const GET = guarded(async (request) => {
   const url = new URL(request.url);
   if (target(url).action) return json(405, { errors: ['Use POST to mark a recipe processed.'] }, { allow: 'POST' });
-  await resumePricer(); // the Database page reads here: restart the Pricer if work is waiting
+  await resumePricer(); // the Coordinator page reads here: restart the Pricer if work is waiting
   const res = await listRecipes(Object.fromEntries(url.searchParams));
   return res.ok ? json(200, { count: res.count, recipes: res.recipes }) : fail(res);
 });

@@ -263,3 +263,21 @@ update prompt_overrides set
   text = regexp_replace(regexp_replace(text, '\s*Also call search_foods[^\n]*?show me the result\.', '', 'g'), ',? and USDA nutrition data', '', 'g'),
   updated_at = now()
 where agent = 'planner' and text ~ '(search_foods|USDA nutrition data)';
+
+-- The coordinator's exchange log (Coordinator page): each MCP request an agent
+-- sent and the answer, and each Pricer result. Headers, so the class key, are
+-- never stored; only the newest 2,000 entries are kept.
+create table if not exists exchanges (
+  id               bigserial primary key,
+  at               timestamptz not null default now(),
+  group_name       text,
+  agent            text,
+  method           text not null,
+  tool             text,
+  ok               boolean not null,
+  request          jsonb,
+  request_summary  text,
+  response         jsonb,
+  summary          text,
+  ms               int
+);

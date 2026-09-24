@@ -20,7 +20,7 @@
         <li><a href="/scout"><span class="num">1</span>Recipe Scout</a></li>
         <li><a href="/pricer"><span class="num">2</span>Pricer</a></li>
         <li><a href="/planner" aria-current="page"><span class="num">3</span>Meal Planner</a></li>
-        <li><a href="/database">Database</a></li>
+        <li><a href="/coordinator">Coordinator</a></li>
       </ul>
     </nav>
   </div>
@@ -37,7 +37,7 @@
 
   <h2 id="goal">The goal</h2>
   <div class="panel narrow">
-    <p style="margin-top:0"><strong>Your Planner is done when:</strong> you enter a budget, press a button, watch it work step by step, and a Monday-to-Friday plan appears in your app and on the <a href="/database">Database page</a> under your group.</p>
+    <p style="margin-top:0"><strong>Your Planner is done when:</strong> you enter a budget, press a button, watch it work step by step, and a Monday-to-Friday plan appears in your app and on the <a href="/coordinator">Coordinator page</a> under your group.</p>
     <ul class="checklist">
       <li>It uses only recipes the class saved, with the prices the <a href="/pricer">Pricer</a> worked out.</li>
       <li>It estimates each dinner’s nutrition from the ingredients, and says these are estimates.</li>
@@ -117,7 +117,7 @@
       </div>
       <div class="prompt-body" id="q4" data-prompt="/prompts/planner/step-4.txt"></div>
     </div>
-    <p class="step-check"><strong>You should see:</strong> a run that ends with <code>save_meal_plan</code>, and the plan on the <a href="/database">Database page</a> under Meal plans.</p>
+    <p class="step-check"><strong>You should see:</strong> a run that ends with <code>save_meal_plan</code>, and the plan on the <a href="/coordinator">Coordinator page</a> under Meal plans.</p>
   </section>
   <section class="step" id="step-5">
     <h3 class="step-title"><span class="step-num">Step 5 of 5</span>Show the agent working</h3>
@@ -140,7 +140,7 @@
         <li>The trace starts with <code>get_expectations</code></li>
         <li>It calls <code>check_meal_plan</code> before saving, and fixes failed rules</li>
         <li>A run with a $15 budget saves a plan, Monday to Friday</li>
-        <li>The plan appears on the <a href="/database">Database page</a> with its rule checks</li>
+        <li>The plan appears on the <a href="/coordinator">Coordinator page</a> with its rule checks</li>
       </ul>
     </div>
     <div class="panel">
@@ -216,7 +216,7 @@
     <p class="small muted">Send the same two headers. Over REST the agent can’t read the rules itself, so they have to go into the model’s instructions.</p>
   </details>
 
-  <p><a class="btn primary" href="/database">Go to the Database</a></p>
+  <p><a class="btn primary" href="/coordinator">Go to the Coordinator</a></p>
 </main>
 
 <footer class="site-foot">

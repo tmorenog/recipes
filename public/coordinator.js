@@ -1,15 +1,18 @@
-// Database page: recipes, meal plans and activity, filtered in the browser and
-// refreshed every 15 seconds. The view and filters are kept in the address.
+// Coordinator page: the live exchange log (what agents send to the coordinator
+// and what it answers), and the recipes and meal plans they saved. Filtered in
+// the browser; the view and filters are kept in the address.
 (() => {
   'use strict';
 
   const REFRESH_MS = 15000;
+  const LIVE_MS = 4000; // the exchange log, while it's showing
   const $ = (id) => document.getElementById(id);
-  const VIEWS = ['recipes', 'plans', 'activity'];
+  const VIEWS = ['exchanges', 'recipes', 'plans'];
 
   const params = new URLSearchParams(location.search);
   const state = {
-    view: VIEWS.includes(params.get('view')) ? params.get('view') : 'recipes',
+    view: VIEWS.includes(params.get('view')) ? params.get('view') : 'exchanges',
+    agent: params.get('agent') || '',
     group: params.get('group') || '',
     theme: params.get('theme') || '',
     status: params.get('status') || '',
@@ -18,7 +21,8 @@
     result: params.get('result') || '',
   };
   const openRows = new Set(); // recipes whose details are showing
-  const data = { recipes: [], plans: [], activity: [] };
+  const data = { recipes: [], plans: [], exchanges: [] };
+  const openExchanges = new Set();
   let lastOk = null;
 
   // ---------------------------------------------------------------- helpers
@@ -49,8 +53,8 @@
 
   function syncUrl() {
     const p = new URLSearchParams();
-    if (state.view !== 'recipes') p.set('view', state.view);
-    for (const k of ['group', 'theme', 'status', 'price', 'result']) if (state[k]) p.set(k, state[k]);
+    if (state.view !== 'exchanges') p.set('view', state.view);
+    for (const k of ['group', 'theme', 'status', 'price', 'agent', 'result']) if (state[k]) p.set(k, state[k]);
     if (state.view === 'recipes' && state.sort !== 'newest') p.set('sort', state.sort);
     history.replaceState(null, '', p.toString() ? `?${p}` : location.pathname);
   }
@@ -214,32 +218,46 @@
     return [shown.length, data.plans.length ? 'No meal plans from this group yet.' : 'No meal plans yet. They appear here when a Meal Planner saves one.'];
   }
 
-  // ---------------------------------------------------------------- activity
-  const ACTIONS = { save_recipe: 'Save recipe', mark_processed: 'Mark processed', save_meal_plan: 'Save meal plan' };
+  // ---------------------------------------------------------------- exchanges
+  const AGENT_NAME = { scout: 'Recipe Scout', planner: 'Meal Planner', pricer: 'Pricer' };
+  const pretty = (v) => (v == null ? '(nothing)' : JSON.stringify(v, null, 2));
 
-  function renderActivity() {
-    const shown = data.activity.filter(
-      (a) => (!state.group || a.group === state.group) && (!state.result || (state.result === 'accepted') === a.ok),
+  function exchangeRow(x) {
+    const open = openExchanges.has(x.id);
+    const what = x.method === 'tools/call' ? x.tool : x.method;
+    const ask = x.method === 'tools/list' ? 'What tools do you offer?' : x.request_summary || '';
+    const toggle = el('button', { type: 'button', className: 'btn small-btn linklike-btn', textContent: open ? 'Hide' : 'Details', 'aria-expanded': String(open) });
+    toggle.addEventListener('click', () => { if (open) openExchanges.delete(x.id); else openExchanges.add(x.id); render(); });
+    const who = x.agent === 'pricer'
+      ? el('span', { className: 'xch-who' }, el('span', { className: 'agent-pill pricer', textContent: 'Pricer' }), el('span', { className: 'muted small', textContent: 'on the coordinator' }))
+      : el('span', { className: 'xch-who' }, x.agent ? el('span', { className: `agent-pill ${x.agent}`, textContent: AGENT_NAME[x.agent] }) : null, x.group_name ? chip(x.group_name) : null);
+    const li = el('li', { className: `xch${x.ok ? '' : ' rejected'}${open ? ' open' : ''}` },
+      el('div', { className: 'xch-head' },
+        el('span', { className: 'xch-time', textContent: when(x.at) }),
+        who,
+        x.ms != null ? el('span', { className: 'xch-ms muted small', textContent: `${x.ms} ms` }) : null,
+        toggle),
+      el('p', { className: 'xch-req' }, el('span', { className: 'xch-arrow', 'aria-label': 'request', textContent: '→' }),
+        x.method === 'pricer' ? el('strong', { textContent: 'Priced' }) : el('code', { textContent: what }), ask ? el('span', { textContent: ` ${ask}` }) : null),
+      el('p', { className: 'xch-res' }, el('span', { className: 'xch-arrow', 'aria-label': 'answer', textContent: '←' }),
+        el('span', { className: `xch-mark ${x.ok ? 'ok' : 'bad'}`, textContent: x.ok ? '✓' : '✗' }), ` ${x.summary || ''}`));
+    if (open) {
+      li.append(el('div', { className: 'xch-detail' },
+        el('div', {}, el('h3', { textContent: x.method === 'pricer' ? 'Recipe' : 'Sent' }), el('pre', { className: 'code', textContent: pretty(x.request) })),
+        el('div', {}, el('h3', { textContent: 'Answer' }), el('pre', { className: 'code', textContent: pretty(x.response) }))));
+    }
+    return li;
+  }
+
+  function renderExchanges() {
+    const shown = data.exchanges.filter(
+      (x) => (!state.group || x.group_name === state.group) && (!state.agent || x.agent === state.agent)
+        && (!state.result || (state.result === 'accepted') === x.ok),
     );
-    $('activity').replaceChildren(...shown.map((a) => {
-      const details = el('td', {});
-      if (!a.ok && a.detail) details.append(el('ul', { className: 'reasons' }, ...a.detail.split('; ').map((d) => el('li', { textContent: d }))));
-      else if (a.input?.name) details.append(a.input.name);
-      else if (a.input?.recipe_id) details.append(`Recipe ${String(a.input.recipe_id).slice(0, 8)}…`);
-      else if (a.action === 'save_meal_plan' && a.ok) details.append('Plan saved');
-      if (a.input) {
-        details.append(el('details', {}, el('summary', { textContent: 'What was sent' }), el('pre', { textContent: JSON.stringify(a.input, null, 2) })));
-      }
-      return el('tr', {},
-        el('td', { className: 'when', textContent: when(a.at) }),
-        el('td', {}, chip(a.group || 'unknown')),
-        el('td', { textContent: `${ACTIONS[a.action] || a.action} · ${a.channel === 'mcp' ? 'MCP' : 'REST'}` }),
-        el('td', {}, el('span', { className: `pill ${a.ok ? 'accepted' : 'rejected'}`, textContent: a.ok ? 'Accepted' : 'Rejected' })),
-        details);
-    }));
-    const rejected = data.activity.filter((a) => !a.ok).length;
-    $('shown').textContent = `${shown.length} of ${data.activity.length} latest attempts · ${rejected} rejected`;
-    return [shown.length, data.activity.length ? 'Nothing matches these filters.' : 'No activity yet.'];
+    $('exchanges').replaceChildren(...shown.map(exchangeRow));
+    const rejected = data.exchanges.filter((x) => !x.ok).length;
+    $('shown').textContent = `${shown.length} of the latest ${data.exchanges.length} exchanges · ${rejected} rejected`;
+    return [shown.length, data.exchanges.length ? 'Nothing matches these filters.' : 'No exchanges yet. They appear here as soon as an agent talks to the coordinator.'];
   }
 
   // ---------------------------------------------------------------- render
@@ -251,13 +269,17 @@
     for (const f of document.querySelectorAll('.filters [data-for]')) f.hidden = f.dataset.for !== state.view;
     $('n-recipes').textContent = data.recipes.length || '';
     $('n-plans').textContent = data.plans.length || '';
-    $('n-activity').textContent = data.activity.length || '';
+    $('n-exchanges').textContent = 'live';
 
-    const groups = [...new Set([...data.recipes.flatMap((r) => r.picked_by || [r.group]), ...data.plans, ...data.activity].map((x) => (typeof x === 'string' ? x : x.group)).filter(Boolean))].sort();
+    const groups = [...new Set([
+      ...data.recipes.flatMap((r) => r.picked_by || [r.group]),
+      ...data.plans.map((p) => p.group),
+      ...data.exchanges.map((x) => x.group_name),
+    ].filter(Boolean))].sort();
     fillSelect($('f-group'), groups, state.group, 'All groups');
     fillSelect($('f-theme'), [...new Set(data.recipes.flatMap((r) => (r.picks?.length ? r.picks.map((p) => p.theme) : [r.theme])))].sort(), state.theme, 'All themes');
 
-    const [count, emptyText] = state.view === 'recipes' ? renderRecipes() : state.view === 'plans' ? renderPlans() : renderActivity();
+    const [count, emptyText] = state.view === 'recipes' ? renderRecipes() : state.view === 'plans' ? renderPlans() : renderExchanges();
     $('empty').hidden = count > 0 || !$('notice').hidden;
     $('empty').textContent = emptyText;
   }
@@ -287,14 +309,14 @@
 
   async function load() {
     try {
-      const [r, p, a] = await Promise.all([
+      const [r, p, x] = await Promise.all([
         getJson('/api/recipes?status=all&limit=500'),
         getJson('/api/meal-plans?limit=200'),
-        getJson('/api/activity?limit=300'),
+        getJson('/api/exchanges?limit=300'),
       ]);
       data.recipes = r.recipes;
       data.plans = p.plans;
-      data.activity = a.activity;
+      data.exchanges = x.exchanges;
       lastOk = new Date();
       $('notice').hidden = true;
       $('stamp').className = '';
@@ -324,6 +346,8 @@
   });
   $('f-group').addEventListener('change', (e) => { state.group = e.target.value; syncUrl(); render(); });
   $('f-theme').addEventListener('change', (e) => { state.theme = e.target.value; syncUrl(); render(); });
+  $('f-agent').value = AGENT_NAME[state.agent] ? state.agent : '';
+  $('f-agent').addEventListener('change', (e) => { state.agent = e.target.value; syncUrl(); render(); });
   $('f-sort').value = SORTS[state.sort] ? state.sort : 'newest';
   $('f-sort').addEventListener('change', (e) => { state.sort = e.target.value; syncUrl(); render(); });
   for (const name of ['status', 'price', 'result']) {
@@ -333,8 +357,21 @@
     }
   }
 
+  // New exchanges, every few seconds while that view is showing.
+  async function loadNewExchanges() {
+    if (document.hidden || state.view !== 'exchanges' || !lastOk) return;
+    try {
+      const after = data.exchanges[0]?.id ?? 0;
+      const x = await getJson(`/api/exchanges?after=${after}&limit=200`);
+      if (!x.exchanges.length) return;
+      data.exchanges = [...x.exchanges, ...data.exchanges].slice(0, 300);
+      render();
+    } catch { /* the full refresh reports problems */ }
+  }
+
   render();
   load();
   setInterval(() => { if (!document.hidden) load(); }, REFRESH_MS);
+  setInterval(loadNewExchanges, LIVE_MS);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) load(); });
 })();

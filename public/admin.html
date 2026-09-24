@@ -20,7 +20,7 @@
         <li><a href="/scout"><span class="num">1</span>Recipe Scout</a></li>
         <li><a href="/pricer"><span class="num">2</span>Pricer</a></li>
         <li><a href="/planner"><span class="num">3</span>Meal Planner</a></li>
-        <li><a href="/database">Database</a></li>
+        <li><a href="/coordinator">Coordinator</a></li>
       </ul>
     </nav>
   </div>
@@ -109,10 +109,18 @@
       </table>
     </div>
 
-    <h2>Activity log <span class="count" id="n-activity"></span></h2>
-    <div class="panel narrow">
-      <p class="small" style="margin-top:0">The log of every save and mark attempt, shown on the Database page. Clearing it doesn’t touch recipes or meal plans.</p>
-      <button class="btn danger" type="button" id="clear-activity" data-confirm="Click again to clear the log">Clear activity log</button>
+    <h2>Logs</h2>
+    <div class="grid-2">
+      <div class="panel">
+        <h3 style="margin-top:0">Exchange log</h3>
+        <p class="small">Every request agents sent to the coordinator and its answer, shown live on the <a href="/coordinator">Coordinator page</a>. It keeps the newest 2,000. Clear it before a class so students see only their own session.</p>
+        <button class="btn danger" type="button" id="clear-exchanges" data-confirm="Click again to clear the exchanges">Clear exchange log</button>
+      </div>
+      <div class="panel">
+        <h3 style="margin-top:0">Activity log <span class="count" id="n-activity"></span></h3>
+        <p class="small">Every save and mark attempt, including admin changes, kept for backups. Clearing it doesn’t touch recipes or meal plans.</p>
+        <button class="btn danger" type="button" id="clear-activity" data-confirm="Click again to clear the log">Clear activity log</button>
+      </div>
     </div>
 
     <h2>Start over</h2>

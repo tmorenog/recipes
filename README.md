@@ -6,7 +6,7 @@ The hub for a two-agent class exercise. Groups build two AI agents in Lovable: a
 - **Welcome** (`/`): what the exercise is, how the pieces fit, and a check that the class key works.
 - **Recipe Scout** (`/scout`) and **Meal Planner** (`/planner`): goals, copy-ready Lovable prompts with this site's address filled in, test checklists and troubleshooting. Each agent connects to `/api/mcp?agent=…` and reads its rules from `get_expectations`.
   The sample prompts are plain text files in [`public/prompts/`](public/prompts/README.md) (`scout/step-1.txt` … `planner/step-5.txt`). Signed in on the Admin page, you can also edit any step on the page itself (**Edit**); edits are stored in the database (`/api/prompts`) and shown to everyone at once.
-- **Database** (`/database`): every recipe, meal plan and attempt (including rejections and why), filterable by group. Updates every 15 seconds.
+- **Coordinator** (`/coordinator`, formerly `/database`): a live log of every MCP request agents send and the coordinator's answer (with rejections and why), plus every recipe and meal plan, filterable by group. The log keeps the newest 2,000 exchanges; headers, and so the class key, are never stored.
 
 **API** (used by the students' agents)
 - **REST** under `/api/…` for Lovable backends. Same data, same rules, same error messages as MCP.
@@ -38,7 +38,7 @@ You need a Vercel account and this repository on GitHub. Everything else happens
 
 4. **Redeploy:** **Deployments → ⋯ → Redeploy**. The build creates the database tables (the log shows `✓ Database ready`). Settings only take effect in new deployments.
 
-5. **Check it.** Open the site. The footer should say **Database ready** and **Class key set**. If not, the Database page says what's missing.
+5. **Check it.** Open the site. The footer should say **Database ready** and **Class key set**. If not, the Coordinator page says what's missing.
 
 Each group picks its own group name (like `team-3`) and sends it with every request in the `X-Group` header; the agent pages fill it into the prompts. New groups need no setup.
 
@@ -60,7 +60,7 @@ Each TheMealDB recipe is stored once. When another group saves a recipe that’s
 
 Nutrition is the Meal Planner’s job: its agent estimates each dinner’s nutrition per serving from the recipe’s ingredients. The coordinator checks those estimates against the balance rules.
 
-A run starts in the background after each save. The Pricer and Database pages restart it if recipes are waiting or a run stopped part-way, and a stopped run carries on where it left off.
+A run starts in the background after each save. The Pricer and Coordinator pages restart it if recipes are waiting or a run stopped part-way, and a stopped run carries on where it left off.
 
 ## Admin
 
@@ -166,7 +166,7 @@ Checked and reported with ✓ or ✗ (the plan is saved either way): the week’
 
 ## Checking the setup
 
-`/api/health` reports whether a database is connected, whether the tables exist, and whether each key and the Kroger credentials are set. It never shows their values. The site footer and the Database page use it to explain what’s missing.
+`/api/health` reports whether a database is connected, whether the tables exist, and whether each key and the Kroger credentials are set. It never shows their values. The site footer and the Coordinator page use it to explain what’s missing.
 
 ## Run it locally
 

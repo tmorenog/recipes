@@ -107,7 +107,7 @@
       data.activity = a.activity || [];
       if (r.errors) toast(r.errors[0], true);
     } catch {
-      toast('Couldn’t load the data. Check the database on the Database page.', true);
+      toast('Couldn’t load the data. Check the database on the Coordinator page.', true);
     }
     render();
   }
@@ -289,6 +289,10 @@
   });
 
   // ---------------------------------------------------------------- clear, reset
+  confirmClick($('clear-exchanges'), async () => {
+    const res = await api('POST', 'clear-exchanges');
+    if (res.ok) toast('Exchange log cleared.'); else toast(res.errors.join('; '), true);
+  });
   confirmClick($('clear-activity'), async () => {
     const res = await api('POST', 'clear-activity');
     if (res.ok) toast('Activity log cleared.'); else toast(res.errors.join('; '), true);

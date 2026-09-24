@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Database · Recipe Coordinator</title>
-<meta name="description" content="Every recipe, meal plan and attempt the class's agents have made.">
+<title>Coordinator · Recipe Coordinator</title>
+<meta name="description" content="What the class’s agents are saying to the coordinator, live, and everything they have saved.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=JetBrains+Mono:wght@400;500&family=Source+Sans+3:wght@400;600&display=swap">
@@ -20,22 +20,22 @@
         <li><a href="/scout"><span class="num">1</span>Recipe Scout</a></li>
         <li><a href="/pricer"><span class="num">2</span>Pricer</a></li>
         <li><a href="/planner"><span class="num">3</span>Meal Planner</a></li>
-        <li><a href="/database" aria-current="page">Database</a></li>
+        <li><a href="/coordinator" aria-current="page">Coordinator</a></li>
       </ul>
     </nav>
   </div>
 </header>
 
 <main class="wrap">
-  <h1>Database</h1>
-  <p class="lede" style="margin-top:10px">Everything the class’s agents have saved, and every attempt the coordinator turned down. Updates itself every 15 seconds.</p>
+  <h1>The coordinator</h1>
+  <p class="lede" style="margin-top:10px">Watch the agents talk to the coordinator as it happens, and see everything they have saved: the recipes and the meal plans.</p>
 
   <section class="notice" id="notice" hidden></section>
 
   <div class="db-tabs" role="tablist" aria-label="Views">
-    <button role="tab" id="tab-recipes" aria-controls="view-recipes" aria-selected="true" data-view="recipes">Recipes<span class="count" id="n-recipes"></span></button>
+    <button role="tab" id="tab-exchanges" aria-controls="view-exchanges" aria-selected="true" data-view="exchanges">Exchanges<span class="count live-dot" id="n-exchanges"></span></button>
+    <button role="tab" id="tab-recipes" aria-controls="view-recipes" aria-selected="false" data-view="recipes">Recipes<span class="count" id="n-recipes"></span></button>
     <button role="tab" id="tab-plans" aria-controls="view-plans" aria-selected="false" data-view="plans">Meal plans<span class="count" id="n-plans"></span></button>
-    <button role="tab" id="tab-activity" aria-controls="view-activity" aria-selected="false" data-view="activity">Activity<span class="count" id="n-activity"></span></button>
   </div>
 
   <div class="filters">
@@ -64,8 +64,11 @@
       <option value="cheapest">Cheapest a serving</option>
       <option value="name">Name</option>
     </select></label>
-    <fieldset class="field seg-field" data-for="activity" hidden>
-      <legend>Result</legend>
+    <label class="field" data-for="exchanges"><span>Agent</span><select id="f-agent">
+      <option value="">All agents</option><option value="scout">Recipe Scout</option><option value="pricer">Pricer</option><option value="planner">Meal Planner</option>
+    </select></label>
+    <fieldset class="field seg-field" data-for="exchanges">
+      <legend>Answer</legend>
       <div class="seg">
         <label><input type="radio" name="result" value="" checked><span>All</span></label>
         <label><input type="radio" name="result" value="accepted"><span>Accepted</span></label>
@@ -75,7 +78,11 @@
     <p class="db-meta"><span id="shown"></span><br><span id="stamp"></span></p>
   </div>
 
-  <section id="view-recipes" role="tabpanel" aria-labelledby="tab-recipes">
+  <section id="view-exchanges" role="tabpanel" aria-labelledby="tab-exchanges">
+    <p class="small muted xch-intro">Each row is one request an agent sent to the coordinator over MCP (→) and the answer it got back (←), like the diagram on the <a href="/scout#coordinator">Recipe Scout</a> page. The Pricer’s results appear too. New ones appear at the top within a few seconds. Open a row to see exactly what was sent and returned.</p>
+    <ol class="xch-list" id="exchanges"></ol>
+  </section>
+  <section id="view-recipes" role="tabpanel" aria-labelledby="tab-recipes" hidden>
     <div class="db-list" role="table" aria-label="Recipes">
       <div class="db-row db-head" role="row">
         <span role="columnheader"></span><span role="columnheader">Recipe</span><span role="columnheader">Picked by</span><span role="columnheader">Price</span><span role="columnheader">Meal Planner</span><span role="columnheader">Saved</span><span role="columnheader"></span>
@@ -87,14 +94,6 @@
   <section id="view-plans" role="tabpanel" aria-labelledby="tab-plans" hidden>
     <div class="plans" id="plans"></div>
   </section>
-  <section id="view-activity" role="tabpanel" aria-labelledby="tab-activity" hidden>
-    <div class="table-wrap activity">
-      <table>
-        <thead><tr><th>When</th><th>Group</th><th>What</th><th>Result</th><th>Details</th></tr></thead>
-        <tbody id="activity"></tbody>
-      </table>
-    </div>
-  </section>
   <p class="empty" id="empty" hidden></p>
 </main>
 
@@ -105,6 +104,6 @@
   </div>
 </footer>
 <script src="/site.js"></script>
-<script src="/database.js"></script>
+<script src="/coordinator.js"></script>
 </body>
 </html>

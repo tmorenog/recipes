@@ -1,4 +1,4 @@
-// Setup check used by the site footer, the Database page and the Admin page:
+// Setup check used by the site footer, the Coordinator page and the Admin page:
 // is a database connected, do the tables exist, are the keys set?
 // Reports yes/no only, never the values.
 import { getStore, databaseConnected, NOT_CONNECTED } from '../lib/store/index.js';

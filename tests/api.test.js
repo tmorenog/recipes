@@ -13,6 +13,7 @@ import { BACKENDS, CLASS_KEY, as, recipe, mealPlan, markPriced, closeDatabase } 
 import * as plansApi from '../api/meal-plans.js';
 import { GET as activityApi } from '../api/activity.js';
 import { GET as whoami } from '../api/whoami.js';
+import { GET as exchangesApi } from '../api/exchanges.js';
 
 async function mcp(group = 'team-1') {
   const transport = new StreamableHTTPClientTransport(new URL('http://test.local/api/mcp'), {
@@ -51,6 +52,31 @@ for (const backend of BACKENDS) {
       const save = tools.find((t) => t.name === 'save_recipe');
       assert.equal(save.inputSchema.additionalProperties, false);
       assert.ok(save.inputSchema.required.includes('why_chosen'));
+    });
+
+    test('every MCP request and answer is logged for the Coordinator page, without the class key', async () => {
+      const client = await mcp('team-4');
+      await client.listTools();
+      await client.callTool({ name: 'get_expectations', arguments: { agent: 'scout' } });
+      await client.callTool({ name: 'save_recipe', arguments: recipe({ meal_id: '52772' }) });
+      await client.callTool({ name: 'save_recipe', arguments: { ...recipe({ meal_id: '52773' }), est_servings: 0 } });
+
+      const res = await exchangesApi(new Request('http://x/api/exchanges?group=team-4'));
+      const { exchanges } = await res.json();
+      const rows = exchanges.map((x) => [x.method, x.tool, x.ok, x.agent]);
+      assert.deepEqual(rows, [
+        ['tools/call', 'save_recipe', false, 'scout'],
+        ['tools/call', 'save_recipe', true, 'scout'],
+        ['tools/call', 'get_expectations', true, null],
+        ['tools/list', null, true, null],
+      ]);
+      assert.match(exchanges[0].summary, /est_servings must be at least 1/);
+      assert.match(exchanges[1].request_summary, /meal 52772/);
+      assert.match(exchanges[3].summary, /^\d+ tools: /);
+      assert.doesNotMatch(JSON.stringify(exchanges), new RegExp(CLASS_KEY));
+
+      const newer = await (await exchangesApi(new Request(`http://x/api/exchanges?after=${exchanges[1].id}`))).json();
+      assert.deepEqual(newer.exchanges.map((x) => x.id), [exchanges[0].id]);
     });
 
     test('save_recipe stores each recipe once, counts every group that picks it, and rejects repeats and incomplete recipes', async () => {

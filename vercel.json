@@ -13,5 +13,12 @@
       "source": "/api/admin/:action",
       "destination": "/api/admin?action=:action"
     }
+  ],
+  "redirects": [
+    {
+      "source": "/database",
+      "destination": "/coordinator",
+      "permanent": false
+    }
   ]
 }

@@ -42,7 +42,7 @@
         item(1, 'Open Lovable', h('p', {}, 'Go to ', lovable, ' and sign in. One person builds on their screen; everyone else watches the same screen and helps.')),
         item(2, 'Agree on roles', h('ul', { className: 'ready-roles' },
           h('li', {}, h('strong', { textContent: 'Builder' }), ': pastes the prompts into Lovable and drives.'),
-          h('li', {}, h('strong', { textContent: 'Tester' }), ': runs the agent after every step, tries to break it, and checks the Database page.'),
+          h('li', {}, h('strong', { textContent: 'Tester' }), ': runs the agent after every step, tries to break it, and checks the Coordinator page.'),
           h('li', {}, h('strong', { textContent: 'Recorder' }), ': notes what the agent did, what went wrong and why, and explains it at the end.')),
           h('p', { className: 'small muted', textContent: 'In a group of two, the Tester is also the Recorder.' })),
         item(3, 'Agree on a timebox', h('p', { textContent: TIMEBOX[page] })),
@@ -235,7 +235,7 @@
         const used = await groupsInUse();
         if (!used || normalize(input.value) !== group) return;
         if (used.has(group)) {
-          note.textContent = `“${group}” already has saved work on the Database page. If that isn’t your group, choose another name.`;
+          note.textContent = `“${group}” already has saved work on the Coordinator page. If that isn’t your group, choose another name.`;
           note.classList.add('warn');
         } else {
           note.textContent = `“${group}” is free, and the prompts use it.`;

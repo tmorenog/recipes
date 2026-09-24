@@ -12,6 +12,7 @@
 //   POST /api/admin/delete-recipe?id=…
 //   POST /api/admin/delete-plan?id=…
 //   POST /api/admin/clear-activity
+//   POST /api/admin/clear-exchanges
 //
 // vercel.json rewrites /api/admin/{action} to this function with ?action=.
 import * as admin from '../lib/admin.js';
@@ -68,6 +69,7 @@ export const POST = guarded(async (request) => {
     case 'delete-recipe': return reply(await admin.deleteRecipe(id));
     case 'delete-plan': return reply(await admin.deletePlan(id));
     case 'clear-activity': return reply(await admin.clearActivity());
+    case 'clear-exchanges': return reply(await admin.clearExchanges());
     default: return json(404, { errors: [`unknown admin action "${action}"`] });
   }
 });

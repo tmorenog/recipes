@@ -7,6 +7,7 @@ import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/
 import { createMcpServer } from '../lib/mcp.js';
 import { checkCaller } from '../lib/auth.js';
 import { AGENTS } from '../lib/expectations.js';
+import { logMcp } from '../lib/exchanges.js';
 
 const fail = (status, message) =>
   new Response(JSON.stringify({ jsonrpc: '2.0', error: { code: -32001, message }, id: null }), {
@@ -37,7 +38,15 @@ export async function handle(request) {
     enableJsonResponse: true,
   });
   await server.connect(transport);
-  return transport.handleRequest(acceptBoth(request));
+  const started = Date.now();
+  // Keep a copy of what was asked, for the Coordinator page's exchange log.
+  const body = request.method === 'POST' ? await request.clone().json().catch(() => null) : null;
+  const response = await transport.handleRequest(acceptBoth(request));
+  if (body) {
+    const responseBody = await response.clone().json().catch(() => null);
+    await logMcp({ body, responseBody, group, agent, ms: Date.now() - started });
+  }
+  return response;
 }
 
 export const POST = (request) => handle(request);
