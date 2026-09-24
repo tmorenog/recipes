@@ -292,6 +292,19 @@ for (const backend of BACKENDS) {
       assert.equal((await pricer()).body.pricings[0].estimated_lines, 1);
     });
 
+    test('a saved prompt that still uses the removed USDA tools is dropped; other saved prompts stay', async () => {
+      const { readFile } = await import('node:fs/promises');
+      const schema = await readFile(new URL('../schema.sql', import.meta.url), 'utf8');
+      await db.pool.query("insert into pricer_config (key, value) values ('prompt', 'Price it. Then call search_usda for each ingredient and pass usda_fdc_id.')");
+      await db.pool.query(schema);
+      assert.equal((await pricer()).body.prompt_is_default, true);
+      assert.doesNotMatch((await pricer()).body.prompt, /usda|nutrition/i);
+      const mine = `${DEFAULT_PROMPT}\nPrefer store brands.`;
+      await db.pool.query("insert into pricer_config (key, value) values ('prompt', $1)", [mine]);
+      await db.pool.query(schema);
+      assert.equal((await pricer()).body.prompt, mine);
+    });
+
     test('a model that stops without finishing is marked failed, with the reason', async () => {
       setPricerForTests({ model: async () => ({ stop_reason: 'end_turn', content: [{ type: 'text', text: 'Done, I think.' }] }), fetch: fakeFetch, auto: false });
       await save('team-1', recipe({ meal_id: '8' }));

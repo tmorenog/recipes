@@ -282,7 +282,7 @@
   function renderOverview() {
     const o = overview;
     $('facts').replaceChildren(
-      'Model ', el('code', { textContent: o.model }),
+      'Model ', el('code', { textContent: o.model }), /haiku/i.test(o.model) ? ' (a small, low-cost model)' : '',
       ' · Kroger store near ZIP ', el('code', { textContent: o.zip }),
       ' · up to ', String(o.limits.tool_calls), ' tool calls per recipe',
     );
@@ -356,7 +356,7 @@
     const line = now.length
       ? `Pricing ${now.map((p) => `${p.name} (${p.lines_done ?? 0} of ${p.lines ?? '?'} ingredients)`).join(' and ')}${waiting ? `; ${waiting} waiting` : ''}.`
       : waiting ? `${waiting} recipe${waiting === 1 ? '' : 's'} waiting; the agent starts within a minute.`
-        : testRunning ? 'Running a test on the sample list (section 1).'
+        : testRunning ? 'Running a test on the sample list (section 2).'
           : o.problem ? 'Stopped: see the message at the top of the page.' : 'Idle: nothing to price right now.';
     $('agent-now').replaceChildren(el('span', { className: `dot ${now.length || testRunning ? 'on' : ''}` }), line);
     $('feed').replaceChildren(...(o.activity || []).map((s) => {

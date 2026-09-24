@@ -249,3 +249,7 @@ drop trigger if exists pricings_sync_recipe on pricings;
 create trigger pricings_sync_recipe after insert or update on pricings for each row execute function sync_recipe_price();
 -- Bring existing recipes up to date.
 update pricings set meal_id = meal_id;
+
+-- A Pricer prompt saved before nutrition moved to the Meal Planner tells the
+-- agent to use USDA tools that no longer exist: drop it so the default applies.
+delete from pricer_config where key = 'prompt' and value ~* '(search_usda|usda_fdc_id)';
