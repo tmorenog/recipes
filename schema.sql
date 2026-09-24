@@ -166,3 +166,7 @@ update pricings set error = regexp_replace(error, 'sk-ant-[A-Za-z0-9_-]{8,}', 's
 -- asks for it to be priced.
 alter table pricings drop constraint if exists pricings_status_check;
 alter table pricings add constraint pricings_status_check check (status in ('unpriced', 'pending', 'pricing', 'priced', 'failed'));
+
+-- The Lovable secret for the class key is called CLASS_KEY (it was
+-- COORDINATOR_KEY): bring step prompts edited on the site in line.
+update prompt_overrides set text = replace(text, 'COORDINATOR_KEY', 'CLASS_KEY'), updated_at = now() where text like '%COORDINATOR_KEY%';

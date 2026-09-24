@@ -1,7 +1,7 @@
 Our class coordinator has the recipes the class found, already priced at Kroger, and USDA nutrition data. Connect to it from backend code. No AI yet.
 
-Add a secret named COORDINATOR_KEY and ask me to enter its value. It is our class key. Only backend functions may use it: never put it in the page, the browser, or the code.
+Add a secret named CLASS_KEY and ask me to enter its value. It is our class key. Only backend functions may use it: never put it in the page, the browser, or the code.
 
-The coordinator is an MCP server (Streamable HTTP) at {{SITE}}/api/mcp?agent=planner. Send the headers "Authorization: Bearer " + COORDINATOR_KEY and "X-Group: {{GROUP}}" on every request. Load its tools with tools/list and give them to the agent exactly as the server describes them: don't write the plan format or the rules into our code. A result with "isError": true is a rejection to pass back to the agent, not a crash.
+The coordinator is an MCP server (Streamable HTTP) at {{SITE}}/api/mcp?agent=planner. Send the headers "Authorization: Bearer " + CLASS_KEY and "X-Group: {{GROUP}}" on every request. Load its tools with tools/list and give them to the agent exactly as the server describes them: don't write the plan format or the rules into our code. A result with "isError": true is a rejection to pass back to the agent, not a crash.
 
 Test it: list the coordinator's tools, call get_expectations, and call list_recipes with {"priced": true}. Show the priced recipes in a table under the panels: photo, name, cuisine and cost per serving. Also call search_foods with {"query": "chickpeas canned"} and show me the result.

@@ -184,7 +184,7 @@
     <summary><strong>When things go wrong</strong></summary>
     <div class="table-wrap"><table>
       <tr><th>You see</th><th>Try</th></tr>
-      <tr><td><code>401</code> “Missing or wrong class key”</td><td>Re-enter the COORDINATOR_KEY secret. Then ask Lovable: “Check that every request to the coordinator sends Authorization: Bearer followed by the COORDINATOR_KEY secret.”</td></tr>
+      <tr><td><code>401</code> “Missing or wrong class key”</td><td>Re-enter the CLASS_KEY secret. Then ask Lovable: “Check that every request to the coordinator sends Authorization: Bearer followed by the CLASS_KEY secret.”</td></tr>
       <tr><td><code>400</code> about <code>X-Group</code></td><td>“Send the header X-Group: {{GROUP}} on every request to the coordinator.”</td></tr>
       <tr><td>“isn’t priced yet”</td><td>The Pricer hasn’t finished that recipe. Ask Lovable to call <code>list_recipes</code> with <code>{"priced": true}</code>, or check the <a href="/pricer">Pricer page</a>.</td></tr>
       <tr><td>No priced recipes</td><td>The Scouts haven’t saved any yet, or the Pricer is still working. Look at the <a href="/pricer">Pricer page</a>.</td></tr>

@@ -212,7 +212,7 @@
     <summary><strong>When things go wrong</strong></summary>
     <div class="table-wrap"><table>
       <tr><th>You see</th><th>Try</th></tr>
-      <tr><td><code>401</code> “Missing or wrong class key”</td><td>Re-enter the COORDINATOR_KEY secret. Then ask Lovable: “Check that every request to the coordinator sends Authorization: Bearer followed by the COORDINATOR_KEY secret.”</td></tr>
+      <tr><td><code>401</code> “Missing or wrong class key”</td><td>Re-enter the CLASS_KEY secret. Then ask Lovable: “Check that every request to the coordinator sends Authorization: Bearer followed by the CLASS_KEY secret.”</td></tr>
       <tr><td><code>400</code> about <code>X-Group</code></td><td>“Send the header X-Group: {{GROUP}} on every request to the coordinator.”</td></tr>
       <tr><td>The agent never calls <code>get_expectations</code>, or the tool is missing</td><td>“Load the coordinator’s tools with tools/list from {{SITE}}/api/mcp?agent=scout and give all of them to the model.”</td></tr>
       <tr><td>A rejection with reasons</td><td>That’s the coordinator doing its job. If the agent keeps making the same mistake, paste the reason into Lovable: “The coordinator rejects our recipes with: … Make sure the agent passes the rejection text back to the model.”</td></tr>
