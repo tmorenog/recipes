@@ -33,7 +33,7 @@ You need a Vercel account and this repository on GitHub. Everything else happens
    | `ANTHROPIC_API_KEY` | From [console.anthropic.com](https://console.anthropic.com). Runs the Pricer agent. |
    | `USDA_API_KEY` | Free from [api.data.gov/signup](https://api.data.gov/signup/). Nutrition lookups for the Meal Planner (`search_foods`); without it the shared, heavily limited `DEMO_KEY` is used. |
    | `PRICER_ZIP` (optional) | The ZIP code of the class’s Kroger store. Default `45202`. |
-   | `PRICER_MODEL` (optional) | The Claude model the Pricer uses. Default `claude-opus-5`; `claude-haiku-4-5` is cheaper. |
+   | `PRICER_MODEL` (optional) | The Claude model the Pricer uses. Default `claude-haiku-4-5` (the cheapest); set e.g. `claude-sonnet-5` for more careful product choices at a higher cost. |
 
    `DATABASE_URL` / `POSTGRES_URL` are added by step 2; don't add them yourself.
 
