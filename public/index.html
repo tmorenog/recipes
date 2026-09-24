@@ -42,9 +42,11 @@
     </div>
   </section>
 
+  <section data-ready="welcome"></section>
+
   <h2>What you’ll do</h2>
   <ol class="steps">
-    <li><strong>Get the class key and choose a group name</strong><p>Your instructor gives everyone the same class key. Your group picks a name, like <code>team-3</code>, which labels everything your agents save.</p></li>
+    <li><strong>Get ready</strong><p>Work through <a href="#before-you-start">Before you start</a> above: Lovable, roles, a timebox, a group name and the class key.</p></li>
     <li><strong>Build your first agent, step by step</strong><p>Each step says what it adds and gives a sample prompt to paste into Lovable. Test after every step.</p></li>
     <li><strong>Watch the results</strong><p>The <a href="/database">Database page</a> shows everything the class’s agents saved, and every attempt the coordinator turned down, with the reason.</p></li>
     <li><strong>If there’s time, keep going</strong><p>The other agents below build on your first one. One agent you understand well is a good result.</p></li>
@@ -95,21 +97,6 @@
     </div>
   </div>
 
-  <h2 id="key">The class key and your group name</h2>
-  <div class="panel narrow">
-    <p style="margin:0">Your agents send two things with everything they save:</p>
-    <ul>
-      <li><strong>The class key</strong>, the same for everyone, from your instructor. Treat it like a password: store it in Lovable as a <strong>secret</strong> when a prompt asks for it, and never paste it into a prompt, your code, or a chat. Only your app’s backend should use it.</li>
-      <li><strong>Your group name</strong>, which your group chooses, e.g. <code>team-3</code>. Use the same name for every agent you build. Type it on the building pages and the prompts fill it in for you.</li>
-    </ul>
-    <form class="keycheck" id="keycheck" autocomplete="off">
-      <label class="muted small" for="key-input" style="flex-basis:100%">Check the class key. It’s sent only to this site and isn’t stored.</label>
-      <input id="key-input" type="password" placeholder="Paste the class key" spellcheck="false">
-      <button class="btn primary" type="submit">Check key</button>
-    </form>
-    <p class="keycheck-result" id="keycheck-result" aria-live="polite"></p>
-  </div>
-
   <h2>Good to know</h2>
   <div class="grid-3">
     <div class="panel"><h3 style="margin-top:0">Rejections are normal</h3><p class="small" style="margin:0">The coordinator checks everything your agents save. When something’s wrong it says exactly what, e.g. “est_servings must be at least 1”. A good agent reads the reasons, fixes them, and tries again.</p></div>
@@ -120,8 +107,7 @@
 
 <footer class="site-foot">
   <div class="wrap">
-    <div class="status-strip" id="status-strip" aria-live="polite"></div>
-    <div><a href="/admin" class="small">Admin</a></div>
+    <div><a href="/admin" class="small">Instructor admin</a></div>
     <div>For developers: agents can also connect over MCP at <code>{{SITE}}/api/mcp</code>. See the agent pages.</div>
   </div>
 </footer>

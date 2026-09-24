@@ -4,6 +4,65 @@
   'use strict';
   const SITE = location.origin;
 
+  // "Before you start": the readiness checklist at the top of the Welcome,
+  // Recipe Scout and Meal Planner pages (<section data-ready="welcome|scout|planner">).
+  // Ticks are remembered in this browser. Rendered first so the group box and
+  // key check below are wired up like any other.
+  const TIMEBOX = {
+    welcome: 'About 60 minutes for the Recipe Scout. Move on to the Meal Planner only if your Scout works and there’s time left.',
+    scout: 'About 60 minutes: steps 1–3 in the first 30, step 4 by 45, then step 5 and testing. Stuck on one step for 10 minutes? Ask for help.',
+    planner: 'About 45 minutes: steps 1–2 in the first 15, step 3 by 30, step 4 by 40, then test. Stuck on one step for 10 minutes? Ask for help.',
+  };
+  const readyTick = (n, on) => {
+    const tick = document.getElementById(`ready-${n}`);
+    if (!tick || tick.checked === on) return;
+    tick.checked = on;
+    try { localStorage.setItem(`rc-ready-${n}`, on ? '1' : '0'); } catch { /* ignore */ }
+  };
+  for (const box of document.querySelectorAll('[data-ready]')) {
+    const page = TIMEBOX[box.dataset.ready] ? box.dataset.ready : 'welcome';
+    const h = (tag, props = {}, ...kids) => {
+      const n = Object.assign(document.createElement(tag), props);
+      n.append(...kids.filter((k) => k != null));
+      return n;
+    };
+    const item = (n, title, ...body) => {
+      const tick = h('input', { type: 'checkbox', id: `ready-${n}` });
+      try { tick.checked = localStorage.getItem(`rc-ready-${n}`) === '1'; } catch { /* storage unavailable */ }
+      tick.addEventListener('change', () => { try { localStorage.setItem(`rc-ready-${n}`, tick.checked ? '1' : '0'); } catch { /* ignore */ } });
+      return h('li', { className: 'ready-item' }, tick, h('div', {}, h('label', { htmlFor: `ready-${n}`, className: 'ready-title', textContent: title }), ...body));
+    };
+    const lovable = h('a', { href: 'https://lovable.dev', target: '_blank', rel: 'noopener', textContent: 'lovable.dev' });
+    box.className = 'ready';
+    box.id = 'before-you-start';
+    box.setAttribute('aria-labelledby', 'ready-heading');
+    box.replaceChildren(
+      h('h2', { id: 'ready-heading', textContent: 'Before you start' }),
+      h('ol', { className: 'ready-list' },
+        item(1, 'Open Lovable', h('p', {}, 'Go to ', lovable, ' and sign in. One person builds on their screen; everyone else watches the same screen and helps.')),
+        item(2, 'Agree on roles', h('ul', { className: 'ready-roles' },
+          h('li', {}, h('strong', { textContent: 'Builder' }), ': pastes the prompts into Lovable and drives.'),
+          h('li', {}, h('strong', { textContent: 'Tester' }), ': runs the agent after every step, tries to break it, and checks the Database page.'),
+          h('li', {}, h('strong', { textContent: 'Recorder' }), ': notes what the agent did, what went wrong and why, and explains it at the end.')),
+          h('p', { className: 'small muted', textContent: 'In a group of two, the Tester is also the Recorder.' })),
+        item(3, 'Agree on a timebox', h('p', { textContent: TIMEBOX[page] })),
+        item(4, 'Choose a unique group name',
+          h('div', { className: 'group-box' },
+            h('input', { className: 'group-input', id: `group-${page}`, type: 'text', placeholder: 'e.g. team-3', autocomplete: 'off', spellcheck: false, ariaLabel: 'Your group name' }),
+            h('p', { className: 'group-note small', ariaLive: 'polite' })),
+          h('p', { className: 'small muted', textContent: 'Use the same name for every agent you build. It labels everything your agents save, and the prompts fill it in.' })),
+        item(5, 'Check the class key',
+          h('form', { className: 'keycheck', id: 'keycheck', autocomplete: 'off' },
+            h('input', { type: 'password', placeholder: 'Paste the class key from your instructor', spellcheck: false, ariaLabel: 'Class key' }),
+            h('button', { className: 'btn primary', type: 'submit', textContent: 'Check key' })),
+          h('p', { className: 'keycheck-result', id: 'keycheck-result', ariaLive: 'polite' }),
+          h('p', { className: 'small muted', textContent: 'It’s sent only to this site and isn’t stored. In Lovable it goes into a secret, never into a prompt.' }))),
+      h('div', { className: 'ready-success' },
+        h('p', {}, h('strong', { textContent: 'An honest failure counts as success. ' }),
+          'If your agent can’t do the job, for example no five recipes fit the theme, the right result is an agent that says so and explains why. An agent that invents recipes or numbers to look finished has failed, even if everything looks green. At the end, you’ll explain what your agent did and why.')),
+    );
+  }
+
   // Fill in this site's address ({{SITE}}) and the group's name ({{GROUP}})
   // wherever a page uses them. The group name is typed into a .group-input box
   // and remembered in this browser.
@@ -146,13 +205,44 @@
     a.href = a.getAttribute('href').replace(/%7B%7BSITE%7D%7D|\{\{SITE\}\}/g, SITE);
   }
 
+  // Group names already used by saved recipes or meal plans (fetched once).
+  let usedGroups;
+  const groupsInUse = () => {
+    usedGroups ??= Promise.all([
+      fetch('/api/recipes?status=all&limit=500', { cache: 'no-store' }).then((r) => r.json()),
+      fetch('/api/meal-plans?limit=200', { cache: 'no-store' }).then((r) => r.json()),
+    ]).then(([r, p]) => new Set([
+      ...(r.recipes || []).flatMap((x) => (x.picked_by?.length ? x.picked_by : [x.group])),
+      ...(p.plans || []).map((x) => x.group),
+    ])).catch(() => null);
+    return usedGroups;
+  };
+
   for (const input of document.querySelectorAll('.group-input')) {
     const note = input.closest('.group-box')?.querySelector('.group-note');
+    let timer;
     const show = () => {
       if (!note) return;
-      note.textContent = group
-        ? `The prompts below use “${group}”.`
-        : input.value.trim() ? 'Use letters, numbers and dashes, e.g. team-3.' : 'Type your group name and the prompts below fill it in.';
+      note.className = 'group-note small';
+      if (!group) {
+        note.textContent = input.value.trim() ? 'Use letters, numbers and dashes, e.g. team-3.' : 'Type your group name and the prompts below fill it in.';
+        return;
+      }
+      note.textContent = `The prompts use “${group}”.`;
+      // Is the name already taken? Only worth saying if another group might be using it.
+      clearTimeout(timer);
+      timer = setTimeout(async () => {
+        const used = await groupsInUse();
+        if (!used || normalize(input.value) !== group) return;
+        if (used.has(group)) {
+          note.textContent = `“${group}” already has saved work on the Database page. If that isn’t your group, choose another name.`;
+          note.classList.add('warn');
+        } else {
+          note.textContent = `“${group}” is free, and the prompts use it.`;
+          note.classList.add('ok');
+          readyTick(4, true);
+        }
+      }, 400);
     };
     input.value = group;
     show();
@@ -187,7 +277,7 @@
     });
   }
 
-  // Class key check (Welcome page). The key goes only to this site's /api/whoami.
+  // Class key check (in "Before you start"). The key goes only to this site's /api/whoami.
   const form = document.getElementById('keycheck');
   if (form) {
     const input = form.querySelector('input');
@@ -204,6 +294,7 @@
         if (res.ok) {
           out.textContent = 'This key works.';
           out.classList.add('ok');
+          readyTick(5, true);
         } else {
           out.textContent = body.errors?.[0] || 'That isn’t the class key.';
           out.classList.add('bad');

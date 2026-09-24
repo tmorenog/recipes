@@ -41,19 +41,21 @@
   <p class="pricer-facts small" id="facts"></p>
   <section class="notice" id="problem" hidden></section>
 
-  <div class="panel instructor-bar" id="signin">
+  <details class="instructor-signin" id="signin">
+    <summary class="small">Instructor sign-in</summary>
     <form class="keycheck" id="signin-form" autocomplete="off">
-      <label class="small" for="admin-key" style="flex-basis:100%"><strong>Instructor tools:</strong> run tests, edit the agent’s instructions, and price, reprice or clear recipes. Sign in with the admin key <span class="muted">(ADMIN_KEY in Vercel; kept in this browser tab only)</span>.</label>
-      <input id="admin-key" type="password" placeholder="Paste the admin key" spellcheck="false">
+      <label class="small muted" for="admin-key" style="flex-basis:100%">For the instructor: run tests, edit the instructions, and price or clear recipes.</label>
+      <input id="admin-key" type="password" placeholder="Admin key" spellcheck="false">
       <button class="btn primary" type="submit">Sign in</button>
     </form>
     <p class="keycheck-result" id="signin-result" aria-live="polite"></p>
-  </div>
+  </details>
   <p class="small instructor-on" id="signed-in" hidden>Signed in as the instructor. <button class="linklike" type="button" id="signout">Sign out</button></p>
   <p class="toast" id="toast" role="status" aria-live="polite" hidden></p>
 
   <h2 id="instructions"><span class="section-num">1</span>Its instructions</h2>
-  <p>The prompt the agent follows: how many people the cart feeds, how to choose products, and when to skip an ingredient. A test in section 2 uses what’s in the box, saved or not, so you can try a change before saving it. Saved instructions apply to recipes priced from then on; <strong>Reprice all</strong> in section 3 applies them to the rest.</p>
+  <p>The prompt the agent follows: how many people the cart feeds, how to choose products, and when to skip an ingredient.</p>
+  <p class="small muted instructor-only" hidden>A test in section 2 uses what’s in the box, saved or not, so you can try a change before saving it. Saved instructions apply to recipes priced from then on; <strong>Reprice all</strong> in section 3 applies them to the rest.</p>
   <div class="prompt pricer">
     <div class="prompt-head">
       <p class="prompt-kind" id="prompt-kind">Prompt</p>
@@ -66,10 +68,10 @@
   </div>
 
   <h2 id="try"><span class="section-num">2</span>Try it on a sample list</h2>
-  <p>See exactly what the Pricer does, with the real AI and real Kroger prices, on a short list. Nothing is saved to the recipes. The instructor runs tests (sign in above); everyone can watch the latest one here. A test uses the instructions in section 1, including changes not saved yet, so it’s the way to try a change before applying it.</p>
+  <p>See exactly what the Pricer does, with the real AI and real Kroger prices, on a short list. Nothing is saved to the recipes. Your instructor runs these tests; the latest one appears here.</p>
   <div class="carts-layout try-layout">
     <div class="try-left">
-      <div class="panel try-input">
+      <div class="panel try-input instructor-only" hidden>
         <label for="test-name"><strong>Recipe</strong></label>
         <input id="test-name" type="text" maxlength="120" spellcheck="false">
         <label for="test-lines"><strong>Ingredients</strong> <span class="small muted">one per line, as a recipe would list them</span></label>
@@ -78,10 +80,10 @@
           <label class="small" for="test-serves">The list serves <input id="test-serves" type="number" min="1" max="100" value="4" style="width:4.5em"> people as written</label>
           <button class="btn primary" type="button" id="run-test" disabled>Run the test</button>
         </div>
-        <p class="small muted" id="test-hint">Sign in with the admin key above to run a test.</p>
+        <p class="small muted" id="test-hint">Uses the real AI and Kroger prices; a test takes a minute or two. One test at a time.</p>
       </div>
       <div class="try-result" id="test-result" aria-live="polite">
-        <p class="empty small">No test yet. Run one to see the agent search Kroger and fill a cart.</p>
+        <p class="empty small">No test yet. When your instructor runs one, you’ll see the agent search Kroger and fill a cart here.</p>
       </div>
     </div>
     <aside class="agent-feed" aria-live="polite">
@@ -96,19 +98,17 @@
     <p><strong>When does the agent run?</strong></p>
     <ul>
       <li><strong>By itself</strong>, as soon as a Scout saves a recipe. The recipe joins the queue and is priced within a few minutes; the agent works on one or two recipes at a time, a minute or two each.</li>
-      <li><strong>When the instructor asks</strong> (signed in above): <em>Price</em> or <em>Reprice</em> next to a recipe, <em>Price unpriced recipes</em>, or <em>Reprice all</em>.</li>
-      <li>After <em>Clear all prices</em>, nothing is priced again until the instructor asks.</li>
+      <li><strong>When the instructor asks</strong>, for example to price a recipe again with new instructions.</li>
     </ul>
   </div>
   <div class="carts-bar">
     <p class="counts" id="counts" aria-live="polite"></p>
-    <div class="row-actions">
-      <button class="btn primary small-btn" type="button" id="price-unpriced" disabled title="Instructor only">Price unpriced recipes</button>
-      <button class="btn small-btn" type="button" id="reprice-all" data-confirm="Click again: every recipe is priced again" title="Instructor only">Reprice all</button>
-      <button class="btn danger small-btn" type="button" id="clear-all" data-confirm="Click again to remove every price" title="Instructor only">Clear all prices</button>
+    <div class="row-actions instructor-only" hidden>
+      <button class="btn primary small-btn" type="button" id="price-unpriced">Price unpriced recipes</button>
+      <button class="btn small-btn" type="button" id="reprice-all" data-confirm="Click again: every recipe is priced again">Reprice all</button>
+      <button class="btn danger small-btn" type="button" id="clear-all" data-confirm="Click again to remove every price">Clear all prices</button>
     </div>
   </div>
-  <p class="small muted" id="admin-note">Everyone can watch; pricing buttons are for the instructor (sign in above). New recipes are priced automatically.</p>
   <div class="carts-layout">
     <section class="recipe-list" id="queue" aria-label="Recipes"></section>
     <aside class="agent-feed" aria-live="polite">
@@ -121,8 +121,7 @@
 
 <footer class="site-foot">
   <div class="wrap">
-    <div class="status-strip" id="status-strip" aria-live="polite"></div>
-    <div><a href="/admin" class="small">Admin</a></div>
+    <div><a href="/admin" class="small">Instructor admin</a></div>
   </div>
 </footer>
 <script src="/site.js"></script>

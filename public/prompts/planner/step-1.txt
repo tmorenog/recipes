@@ -1,9 +1,37 @@
-Build a web app called "Meal Planner" for a class exercise: an AI agent that plans five dinners, Monday to Friday, that are balanced, varied and cheap.
+Build a web app called “Meal Planner” for a class exercise.
+
+The app will eventually use an AI agent to plan five dinners, Monday through Friday, using recipes saved by the class. For this step, build only the interface. Do not add AI or external API calls yet.
 
 Enable Lovable Cloud so the app has a backend.
 
-For now, build one page with:
-- a number input "Budget per person for the week (US dollars)", default 15
-- a text box "Anything else to consider?", e.g. "no pork" or "we love spicy food"
-- a "Plan my week" button
-- two empty panels: "What the agent is doing", and "The week" with five day cards, Monday to Friday
+Build one page containing:
+
+1. A number input:
+   “Maximum budget per person for five dinners”
+   - US dollars
+   - default: 15
+   - minimum: 1
+
+2. A text box:
+   “Dietary requirements”
+   Examples: “vegetarian only”, “no pork”, “no peanuts”
+   Explain that these are hard constraints.
+
+3. A text box:
+   “Preferences”
+   Examples: “we like spicy food”, “prefer quick dinners”
+   Explain that these are preferences, not hard requirements.
+
+4. A “Plan my week” button.
+
+5. A “What the agent is doing” panel. Leave it empty for now.
+
+6. A “The week” panel with five empty cards:
+   Monday, Tuesday, Wednesday, Thursday and Friday.
+
+7. An empty outcome area that will eventually show one of:
+   - Valid plan found
+   - No feasible plan found
+   - Run failed
+
+Nothing should happen when the button is pressed yet. Make the page responsive and accessible.

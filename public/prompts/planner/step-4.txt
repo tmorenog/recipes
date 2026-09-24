@@ -1,6 +1,6 @@
 Now let the agent save its plan to the class coordinator.
 
 Give the agent the coordinator's save_meal_plan tool too, and change the model's instructions to:
-"You are Meal Planner. Plan five dinners, Monday to Friday, within a budget of BUDGET US dollars per person for the week. Also consider: NOTES. First call get_expectations and follow it exactly. Check your plan with check_meal_plan and improve it until every rule passes, or explain which rule can't pass. Then save it with save_meal_plan and call finish with a short summary."
+"You are Meal Planner. Plan five dinners, Monday to Friday, within a budget of BUDGET US dollars per person for the five dinners. Dietary requirements, which every dinner must meet: REQUIREMENTS. Preferences, to follow where you can: PREFERENCES. First call get_expectations and follow it exactly. Check your plan with check_meal_plan and improve it until every rule passes, or explain which rule can't pass and why. Then save it with save_meal_plan and call finish with a short summary. Never invent a recipe or a number."
 
-"The week" now shows the saved plan from save_meal_plan's answer, with a "Saved to the class database" badge and a link to {{SITE}}/database
+"The week" now shows the saved plan from save_meal_plan's answer, with a "Saved to the class database" badge and a link to {{SITE}}/database. The outcome area works as before.

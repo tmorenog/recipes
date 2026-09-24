@@ -1,11 +1,16 @@
 Add the agent: a backend function run-planner that uses Lovable AI with tool calling, the coordinator's tools except save_meal_plan (saving comes in the next step), and finish(summary).
 
 How it runs:
-- It takes the budget and the "anything else" text from the page.
+- It takes the budget, the dietary requirements and the preferences from the page.
 - Run the tools the model asks for and send back the results until it calls finish, or until 30 tool calls or 3 minutes (constants I can change). Record why it stopped.
 - Save every step (thought, tool call, result, error) to a table agent_steps as it happens.
 
-Instructions for the model (fill in BUDGET and NOTES from the page):
-"You are Meal Planner. Plan five dinners, Monday to Friday, within a budget of BUDGET US dollars per person for the week. Also consider: NOTES. First call get_expectations and follow it, but don't save yet: once check_meal_plan shows your best plan, call finish with a short summary."
+Instructions for the model (fill in BUDGET, REQUIREMENTS and PREFERENCES from the page; write "none" for an empty box):
+"You are Meal Planner. Plan five dinners, Monday to Friday, within a budget of BUDGET US dollars per person for the five dinners. Dietary requirements, which every dinner must meet: REQUIREMENTS. Preferences, to follow where you can: PREFERENCES. First call get_expectations and follow it, but don't save yet: once check_meal_plan shows your best plan, call finish with a short summary. If no plan can meet the requirements and the rules, say which can't be met and why. Never invent a recipe or a number."
 
 Connect the page: "Plan my week" starts a run, and "What the agent is doing" shows each step live. When the run finishes, "The week" shows the plan from the last check_meal_plan answer: for each day the photo, name, cost per serving, the agent's estimated calories and protein, and why; below the days, the week's cost per person against the budget and each rule with ✓ or ✗.
+
+Fill the outcome area:
+- "Valid plan found" when the last check_meal_plan passed every rule.
+- "No feasible plan found" when the agent finished without a plan that passes, with its explanation.
+- "Run failed" when the run stopped on an error or a limit, with the reason.

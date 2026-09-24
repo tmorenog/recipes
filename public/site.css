@@ -614,3 +614,54 @@ details.trace > summary { cursor: pointer; padding: 8px 0; }
 .sample-panel { margin-top: 20px; }
 .check { display: flex; gap: 8px; align-items: flex-start; margin: 0 0 12px; }
 .check input { margin-top: 3px; }
+
+/* Before you start: the readiness checklist */
+.ready { margin: 28px 0 8px; padding: 22px 24px 18px; border: 2px solid var(--ink); border-radius: 14px; background: var(--surface); box-shadow: var(--shadow); }
+.ready h2 { margin: 0 0 14px; }
+.ready-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px 28px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); }
+.ready-item { display: flex; gap: 12px; align-items: flex-start; min-width: 0; }
+.ready-item > input[type="checkbox"] { flex: none; width: 20px; height: 20px; margin: 3px 0 0; accent-color: var(--good-ink); }
+.ready-item > div { min-width: 0; flex: 1; }
+.ready-title { display: block; font: 700 17px/1.3 var(--display); cursor: pointer; }
+.ready-item p { margin: 4px 0 0; }
+.ready-roles { margin: 6px 0 0; padding-left: 18px; }
+.ready-roles li { margin: 2px 0; }
+.ready .group-box { margin-top: 6px; }
+.ready .group-input { width: 100%; max-width: 18em; }
+.ready .keycheck { margin-top: 6px; }
+.ready .keycheck input { flex: 1 1 12em; min-width: 0; }
+.group-note.ok { color: var(--good-ink); }
+.group-note.warn { color: var(--new-ink); }
+.ready-success { margin-top: 18px; padding: 12px 16px; border-radius: 10px; background: var(--scout-soft); color: var(--ink); }
+.ready-success p { margin: 0; }
+.ready-success strong { color: var(--good-ink); }
+
+/* MCP request/response diagram */
+.mcp-seq { margin: 16px 0 18px; padding: 16px 18px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+.mcp-lanes { display: flex; justify-content: space-between; gap: 12px; }
+.mcp-lanes span { display: flex; flex-direction: column; padding: 6px 12px; border-radius: 8px; background: var(--surface-2); font: 700 15px/1.25 var(--display); max-width: 46%; }
+.mcp-lanes span:last-child { text-align: right; background: var(--ink); color: var(--surface); }
+.mcp-lanes small { font: 400 12px/1.3 var(--body); opacity: .8; }
+.mcp-msgs { list-style: none; margin: 4px 0 10px; padding: 0 12px; position: relative; max-width: none; }
+.mcp-msgs::before, .mcp-msgs::after { content: ""; position: absolute; top: 0; bottom: 0; width: 0; border-left: 2px dashed var(--line); }
+.mcp-msgs::before { left: 12px; }
+.mcp-msgs::after { right: 12px; }
+.mcp-msgs li { max-width: none; position: relative; margin: 0 10px; padding: 10px 14px 12px; display: flex; flex-direction: column; gap: 2px; font-size: 15px; }
+.mcp-msgs li::after { content: ""; position: absolute; left: 0; right: 0; bottom: 4px; border-top: 2px solid currentColor; opacity: .55; }
+.mcp-msgs li::before { position: absolute; bottom: -5px; font: 700 14px/1 var(--body); opacity: .7; }
+.mcp-req { color: var(--ink); text-align: left; }
+.mcp-req::before { content: "▶"; right: -6px; }
+.mcp-res { color: var(--muted); text-align: right; align-items: flex-end; }
+.mcp-res::before { content: "◀"; left: -6px; }
+.mcp-res .mcp-label { color: var(--ink); }
+.mcp-res.ok .mcp-label { color: var(--good-ink); }
+.mcp-res.bad .mcp-label { color: var(--bad-ink); }
+.mcp-res.ok, .mcp-res.bad { margin-top: -4px; }
+.mcp-label { font-weight: 500; overflow-wrap: anywhere; }
+.mcp-detail { font-size: 13px; color: var(--muted); }
+.mcp-seq figcaption { margin: 0; }
+
+/* Pricer: the instructor's sign-in, out of the students' way */
+.instructor-signin { margin: 14px 0 0; }
+.instructor-signin summary { cursor: pointer; color: var(--muted); width: max-content; }
+.instructor-signin[open] { padding: 12px 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }

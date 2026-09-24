@@ -33,6 +33,8 @@
     <p class="lede">An agent that takes a budget, reads the recipes the class has found, and plans five dinners, Monday to Friday, that are nutritious, varied and cheap. It shows the week and saves the plan to the coordinator.</p>
   </div>
 
+  <section data-ready="planner"></section>
+
   <h2 id="goal">The goal</h2>
   <div class="panel narrow">
     <p style="margin-top:0"><strong>Your Planner is done when:</strong> you enter a budget, press a button, watch it work step by step, and a Monday-to-Friday plan appears in your app and on the <a href="/database">Database page</a> under your group.</p>
@@ -43,7 +45,7 @@
       <li>It learns the rules from the coordinator (<code>get_expectations</code>) instead of having them written into its code.</li>
       <li>It checks its plan with the coordinator, and improves it until the rules pass or it can explain why they can’t.</li>
       <li>Costs are added up by the coordinator, never guessed by the AI.</li>
-      <li>You can see every step it took.</li>
+      <li>You can see its progress, tool calls and results.</li>
     </ul>
   </div>
 
@@ -51,8 +53,8 @@
   <p>Each step says what it adds, then gives a <strong>sample prompt</strong>. Copy the prompt into Lovable as it is, or edit it to make the app your own, then check the result before moving on. Your app uses Lovable Cloud for its backend and Lovable’s built-in AI for the agent, so the only key you need is the class key.</p>
 
   <section class="step" id="step-1">
-    <h3 class="step-title"><span class="step-num">Step 1 of 5</span>Create the app</h3>
-    <p class="step-what">Sets up your Lovable project and the page: a budget, a box for anything else to consider, a button, and an empty Monday-to-Friday week. No agent yet.</p>
+    <h3 class="step-title"><span class="step-num">Step 1 of 5</span>Build the interface</h3>
+    <p class="step-what">Sets up your Lovable project and the page: a budget, dietary requirements (hard constraints) and preferences, a button, an empty Monday-to-Friday week and an outcome area. No agent yet.</p>
     <div class="prompt planner">
       <div class="prompt-head">
         <p class="prompt-kind">Sample prompt</p>
@@ -60,17 +62,26 @@
       </div>
       <div class="prompt-body" id="q1" data-prompt="/prompts/planner/step-1.txt"></div>
     </div>
-    <p class="step-check"><strong>You should see:</strong> the page with the budget (15 to start), the text box, the button and five empty day cards.</p>
+    <p class="step-check"><strong>Checkpoint:</strong> the inputs, button, progress panel, five day cards and outcome area appear.</p>
   </section>
 
-  <h3 id="coordinator">Before step 2: your group name and the class key</h3>
-  <div class="panel group-box">
-    <label for="group-planner"><strong>Your group name</strong></label>
-    <p class="small muted" style="margin:4px 0 10px">Pick one name for your group and use it for every agent you build, e.g. <code>team-3</code>. It labels everything your agents save. The prompts below fill it in.</p>
-    <input class="group-input" id="group-planner" type="text" placeholder="e.g. team-3" autocomplete="off" spellcheck="false">
-    <p class="group-note small" aria-live="polite"></p>
-  </div>
-  <div class="callout warn"><p><strong>The class key never goes in a prompt.</strong> Step 2 asks Lovable to create a secret. Lovable then shows a secure box where you paste the key.</p></div>
+  <h3 id="coordinator">Before step 2: how your agent talks to the coordinator</h3>
+  <p>Step 2 connects your app to the coordinator over MCP. Your app’s backend asks the coordinator what tools it has, then calls them when the AI decides to. Each call is a request and a response:</p>
+  <figure class="mcp-seq" aria-label="How your agent talks to the coordinator">
+    <div class="mcp-lanes"><span>Your app’s backend<small>in Lovable</small></span><span>Coordinator<small>this site, an MCP server</small></span></div>
+    <ol class="mcp-msgs">
+      <li class="mcp-req"><span class="mcp-label"><code>tools/list</code></span><span class="mcp-detail">What tools do you offer?</span></li>
+      <li class="mcp-res"><span class="mcp-label"><code>get_expectations</code>, <code>list_recipes</code>, <code>check_meal_plan</code>, <code>save_meal_plan</code></span><span class="mcp-detail">each with a description and its inputs</span></li>
+      <li class="mcp-req"><span class="mcp-label"><code>tools/call get_expectations</code></span><span class="mcp-detail">What must I do?</span></li>
+      <li class="mcp-res"><span class="mcp-label">the goal, the balance rules and the plan format</span></li>
+      <li class="mcp-req"><span class="mcp-label"><code>tools/call list_recipes</code> with <code>{"priced": true}</code></span></li>
+      <li class="mcp-res"><span class="mcp-label">the priced recipes, each with its cost per serving</span></li>
+      <li class="mcp-req"><span class="mcp-label"><code>tools/call check_meal_plan</code> with a draft plan</span></li>
+      <li class="mcp-res"><span class="mcp-label">the week’s cost, and each rule ✓ or ✗</span><span class="mcp-detail">the agent swaps dinners and checks again, then saves with <code>save_meal_plan</code></span></li>
+    </ol>
+    <figcaption class="small muted">Every request carries two headers: <code>Authorization: Bearer</code> + the class key (from the Lovable secret), and <code>X-Group: {{GROUP}}</code>. The AI model decides which tool to call; your backend sends the request and hands the answer back to the model.</figcaption>
+  </figure>
+  <div class="callout warn"><p><strong>The class key never goes in a prompt.</strong> Step 2 asks Lovable to create a secret. Lovable then shows a secure box where you paste the key. The prompts use your group name from <a href="#before-you-start">Before you start</a>: <code>{{GROUP}}</code>.</p></div>
 
   <section class="step" id="step-2">
     <h3 class="step-title"><span class="step-num">Step 2 of 5</span>Connect to the coordinator</h3>
@@ -82,7 +93,7 @@
       </div>
       <div class="prompt-body" id="q2" data-prompt="/prompts/planner/step-2.txt"></div>
     </div>
-    <p class="step-check"><strong>You should see:</strong> five coordinator tools, the brief from <code>get_expectations</code> (the goal, the balance rules and the plan format), and a table of priced recipes. If the table is empty, the class hasn’t saved recipes yet, or the <a href="/pricer">Pricer</a> is still working on them.</p>
+    <p class="step-check"><strong>You should see:</strong> four coordinator tools, the brief from <code>get_expectations</code> (the goal, the balance rules and the plan format), and a table of priced recipes. If the table is empty, the class hasn’t saved recipes yet, or the <a href="/pricer">Pricer</a> is still working on them.</p>
   </section>
   <section class="step" id="step-3">
     <h3 class="step-title"><span class="step-num">Step 3 of 5</span>Add the agent and show the week</h3>
@@ -94,7 +105,7 @@
       </div>
       <div class="prompt-body" id="q3" data-prompt="/prompts/planner/step-3.txt"></div>
     </div>
-    <p class="step-check"><strong>You should see:</strong> press the button, watch it list recipes and check drafts, and five dinners fill Monday to Friday, with the week’s cost against the budget and a ✓ or ✗ for each rule.</p>
+    <p class="step-check"><strong>You should see:</strong> press the button, watch it list recipes and check drafts, and five dinners fill Monday to Friday, with the week’s cost against the budget, a ✓ or ✗ for each rule, and the outcome: valid plan, no feasible plan, or run failed.</p>
   </section>
   <section class="step" id="step-4">
     <h3 class="step-title"><span class="step-num">Step 4 of 5</span>Save the plan to the coordinator</h3>
@@ -210,8 +221,7 @@
 
 <footer class="site-foot">
   <div class="wrap">
-    <div class="status-strip" id="status-strip" aria-live="polite"></div>
-    <div><a href="/admin" class="small">Admin</a></div>
+    <div><a href="/admin" class="small">Instructor admin</a></div>
   </div>
 </footer>
 <script src="/site.js"></script>

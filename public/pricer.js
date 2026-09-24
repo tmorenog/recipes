@@ -92,13 +92,8 @@
     $('prompt').readOnly = !on;
     $('prompt-kind').textContent = on ? 'Prompt · you can edit it' : 'Prompt';
     $('run-test').disabled = !on || test?.status === 'running';
-    $('test-hint').textContent = on
-      ? 'Uses the real AI and Kroger prices; a test takes a minute or two. One test at a time.'
-      : 'Sign in with the admin key above to run a test.';
-    $('reprice-all').disabled = !on;
-    $('clear-all').disabled = !on;
-    $('price-unpriced').disabled = !on;
-    $('admin-note').hidden = on;
+    // Students watch; the instructor's controls appear only once signed in.
+    for (const n of document.querySelectorAll('.instructor-only')) n.hidden = !on;
     if (overview) renderQueue();
   }
   function signOut(message) {
