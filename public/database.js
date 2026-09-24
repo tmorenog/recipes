@@ -80,7 +80,9 @@
     node.querySelector('.theme').textContent = r.theme;
     const link = node.querySelector('.name a');
     link.textContent = r.name;
-    if (safeUrl(r.source_url)) link.href = r.source_url;
+    // TheMealDB asks apps to link each meal to its page there.
+    if (/^\d+$/.test(r.meal_id)) link.href = `https://www.themealdb.com/meal/${r.meal_id}`;
+    else if (safeUrl(r.source_url)) link.href = r.source_url;
     node.querySelector('.meta').textContent = [r.cuisine, r.category, r.est_minutes && `${r.est_minutes} min`, r.est_servings && `serves ${r.est_servings}`]
       .filter(Boolean).join(' · ');
     node.querySelector('.why').textContent = r.why_chosen;

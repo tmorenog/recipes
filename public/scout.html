@@ -85,7 +85,7 @@ TheMealDB (free test key "1"). Read https://www.themealdb.com/AGENTS.md, https:/
 3. filter_by_category(category)
 4. filter_by_cuisine(area)
 5. get_recipe(meal_id): the full recipe (the filters only return id, name and photo)
-Each returns JSON, and an empty list (not an error) when nothing is found. Use only what the free key allows.
+Each returns JSON, and an empty list (not an error) when nothing is found ("meals": null). URL-encode what you search for. Use only what the free key allows.
 
 Our coordinator is an MCP server: {{SITE}}/api/mcp?agent=scout
 - Send the headers "Authorization: Bearer " + the COORDINATOR_KEY secret and "X-Group: {{GROUP}}" on every request.
@@ -122,7 +122,8 @@ Instructions for the model:
 
 - "Run Recipe Scout" starts a run with the theme and disables itself until the run ends.
 - "What the agent is doing" shows the steps live, one card per step: thoughts in plain text, tool calls with the tool name and inputs, results collapsed by default (click to see the JSON), errors and coordinator rejections in red. Show a counter like "12 / 25 tool calls" and the time left.
-- "Saved recipes" shows each recipe the coordinator accepted: photo, name, cuisine, estimated time and why_chosen.
+- "Saved recipes" shows each recipe the coordinator accepted: photo, name (linked to https://www.themealdb.com/meal/MEAL_ID), cuisine, estimated time and why_chosen.
+- Credit the source under the recipes: "Recipe data and imagery: TheMealDB" linked to https://www.themealdb.com/
 - Add a link "See it on the class database" to {{SITE}}/database
 - Keep a list of past runs so I can reopen any earlier trace.</div>
   </section>
@@ -187,7 +188,7 @@ Instructions for the model:
       <tr><td><code>meal_id</code></td><td>yes</td><td>TheMealDB’s <code>idMeal</code>, e.g. <code>"52772"</code></td></tr>
       <tr><td><code>name</code></td><td>yes</td><td><code>strMeal</code></td></tr>
       <tr><td><code>category</code>, <code>cuisine</code></td><td>no</td><td><code>strCategory</code>, <code>strArea</code></td></tr>
-      <tr><td><code>ingredients</code></td><td>yes</td><td>One item per <code>strIngredientN</code>: <code>name</code>, <code>amount</code> (a positive number, or <code>null</code> for “to taste”), <code>unit</code> (or <code>null</code> for things you count, like eggs), <code>raw</code> (<code>strMeasureN</code> as written)</td></tr>
+      <tr><td><code>ingredients</code></td><td>yes</td><td>One item per <code>strIngredientN</code>: <code>name</code>, <code>amount</code> (a positive number, or <code>null</code> for “to taste”), <code>unit</code> (or <code>null</code> for things you count, like eggs), <code>raw</code> (<code>strMeasureN</code> as written, or <code>""</code> when TheMealDB gives no measure)</td></tr>
       <tr><td><code>instructions</code></td><td>yes</td><td><code>strInstructions</code> (at least 20 characters)</td></tr>
       <tr><td><code>est_minutes</code>, <code>est_servings</code></td><td>yes</td><td>The agent’s estimates: whole numbers</td></tr>
       <tr><td><code>image_url</code>, <code>source_url</code></td><td>no</td><td><code>strMealThumb</code>, <code>strSource</code> (http/https, or <code>null</code>)</td></tr>

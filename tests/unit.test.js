@@ -124,3 +124,9 @@ test('MCP works with plain fetch: ?agent=scout shows only the Scout’s tools, a
 
   assert.equal((await rpc('?agent=chef', 'tools/list')).status, 400);
 });
+
+test('an ingredient without a measure is accepted, since TheMealDB has some', () => {
+  const r = recipe();
+  r.ingredients.push({ name: 'salt', amount: null, unit: null, raw: '' }, { name: 'pepper', amount: null, unit: null, raw: null });
+  assert.ok(recipeSchema.safeParse(r).success);
+});
