@@ -154,3 +154,10 @@ create table if not exists pricer_tests (
   created_at   timestamptz not null default now(),
   updated_at   timestamptz not null default now()
 );
+
+-- Never keep an API key that an error message quoted back (e.g. a mis-pasted
+-- ANTHROPIC_API_KEY). Runs on every deploy; cheap when there's nothing to fix.
+update pricer_tests set error = regexp_replace(error, 'sk-ant-[A-Za-z0-9_-]{8,}', 'sk-ant-[hidden]', 'g') where error ~ 'sk-ant-';
+update pricer_tests set steps = regexp_replace(steps::text, 'sk-ant-[A-Za-z0-9_-]{8,}', 'sk-ant-[hidden]', 'g')::jsonb where steps::text ~ 'sk-ant-';
+update pricer_steps set text = regexp_replace(text, 'sk-ant-[A-Za-z0-9_-]{8,}', 'sk-ant-[hidden]', 'g') where text ~ 'sk-ant-';
+update pricings set error = regexp_replace(error, 'sk-ant-[A-Za-z0-9_-]{8,}', 'sk-ant-[hidden]', 'g') where error ~ 'sk-ant-';

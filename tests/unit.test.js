@@ -146,3 +146,26 @@ test('every sample prompt on the agent pages has its text file, using only known
     }
   }
 });
+
+test('keys never reach stored messages, and a pasted command is not accepted as the AI key', async () => {
+  const { redact } = await import('../lib/secrets.js');
+  const { aiKeyLooksRight, pricerProblem, setPricerForTests } = await import('../lib/pricer.js');
+  const fake = `sk-ant-api03-${'A1b2_C3d4-'.repeat(8)}`;
+  const leaked = `Headers.append: "curl https://api.anthropic.com/v1/messages --header "x-api-key: ${fake}"" is an invalid header value.`;
+  assert.doesNotMatch(redact(leaked), /A1b2_C3d4/);
+  assert.equal(redact('ADMIN said hello-admin-secret', { ADMIN_KEY: 'hello-admin-secret' }), 'ADMIN said [hidden]');
+
+  assert.equal(aiKeyLooksRight(fake), true);
+  assert.equal(aiKeyLooksRight(`curl https://api.anthropic.com --header "x-api-key: ${fake}"`), false);
+  const saved = process.env.ANTHROPIC_API_KEY;
+  setPricerForTests({ model: null });
+  process.env.ANTHROPIC_API_KEY = `curl https://api.anthropic.com --header "x-api-key: ${fake}"`;
+  try {
+    assert.match(pricerProblem(), /must be only the key/);
+    process.env.ANTHROPIC_API_KEY = ` "${fake}" `;
+    assert.doesNotMatch(pricerProblem() ?? '', /must be only the key/, 'quotes and spaces around a real key are fine');
+  } finally {
+    if (saved === undefined) delete process.env.ANTHROPIC_API_KEY;
+    else process.env.ANTHROPIC_API_KEY = saved;
+  }
+});

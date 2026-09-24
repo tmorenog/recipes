@@ -202,6 +202,25 @@ for (const backend of BACKENDS) {
       assert.equal((await pricer()).body.prompt, DEFAULT_PROMPT, 'the saved prompt is unchanged');
     });
 
+    test('a key quoted in an error is hidden, including errors stored before this fix', async () => {
+      const key = `sk-ant-api03-${'Zz9_'.repeat(10)}`;
+      setPricerForTests({ model: async () => { throw new Error(`Headers.append: "x-api-key: ${key}" is an invalid header value.`); }, fetch: fakeFetch, auto: false });
+      await save('team-1', recipe({ meal_id: '9' }));
+      await runQueue();
+      const { body: p } = await pricer('?meal_id=9');
+      assert.equal(p.status, 'failed');
+      assert.doesNotMatch(JSON.stringify(p), /Zz9_/);
+
+      // An error stored by an earlier version is scrubbed by the schema (run on every deploy).
+      const { pool } = await backend.fresh();
+      await pool.query("insert into pricer_tests (ingredients, serves, prompt, status, error, steps) values ('[]', 4, 'p', 'failed', $1, $2)",
+        [`error with ${key}`, JSON.stringify([{ kind: 'error', text: `x-api-key: ${key}` }])]);
+      const { readFile } = await import('node:fs/promises');
+      await pool.query(await readFile(new URL('../schema.sql', import.meta.url), 'utf8'));
+      const { rows } = await pool.query('select error, steps from pricer_tests');
+      assert.doesNotMatch(JSON.stringify(rows), /Zz9_/);
+    });
+
     test('a model that stops without finishing is marked failed, with the reason', async () => {
       setPricerForTests({ model: async () => ({ stop_reason: 'end_turn', content: [{ type: 'text', text: 'Done, I think.' }] }), fetch: fakeFetch, auto: false });
       await save('team-1', recipe({ meal_id: '8' }));

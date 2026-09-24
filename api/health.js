@@ -6,7 +6,7 @@ import { TABLES_MISSING } from '../lib/store/errors.js';
 import { classKeySet } from '../lib/auth.js';
 import { adminKeySet } from '../lib/admin.js';
 import { krogerConfigured } from '../lib/kroger.js';
-import { pricerSettings } from '../lib/pricer.js';
+import { pricerSettings, aiKeyLooksRight, AI_KEY_WRONG } from '../lib/pricer.js';
 import { usdaKey } from '../lib/usda.js';
 import { json } from '../lib/http.js';
 
@@ -37,6 +37,7 @@ export async function GET() {
   if (!adminKeySet()) warnings.push('The Admin page is off: add ADMIN_KEY in Vercel, then redeploy.');
   const pricer = pricerSettings();
   if (!pricer.aiKey) warnings.push('The Pricer agent is off: add ANTHROPIC_API_KEY in Vercel, then redeploy.');
+  else if (!aiKeyLooksRight(pricer.aiKey)) warnings.push(AI_KEY_WRONG);
   if (!usdaKey()) warnings.push('The Meal Planner’s nutrition lookups (search_foods) use USDA’s shared DEMO_KEY, which runs out quickly: add USDA_API_KEY (free from api.data.gov) in Vercel.');
 
   return json(problems.length ? 503 : 200, {
@@ -45,7 +46,7 @@ export async function GET() {
     class_key: classKeySet(),
     admin_key: adminKeySet(),
     kroger: krogerConfigured(),
-    pricer: Boolean(pricer.aiKey),
+    pricer: Boolean(pricer.aiKey) && aiKeyLooksRight(pricer.aiKey),
     usda_key: Boolean(usdaKey()),
     problems,
     warnings,
