@@ -6,7 +6,7 @@
 //   POST /api/pricer?action=…           the instructor's controls, with Authorization: Bearer <ADMIN_KEY>
 //        price           body {"meal_id": "…"} prices that recipe (again) from scratch
 //        price-unpriced  prices every recipe without a price (cleared, or couldn't be priced)
-//        test            body {"ingredients": ["1 onion", …], "serves": 4, "prompt"?: "…"} runs the agent on a short
+//        test            body {"name": "…", "ingredients": ["1 onion", …], "serves": 4, "prompt"?: "…"} runs the agent on a short
 //                        list (with a draft of the instructions, if given); nothing is saved to the recipes
 //                        (one at a time, 30 an hour)
 //        prompt          body {"prompt": "…"} saves the agent's instructions; {"reset": true} goes back to the default
@@ -17,7 +17,7 @@ import { getStore } from '../lib/store/index.js';
 import { checkAdmin } from '../lib/admin.js';
 import { json, guarded } from '../lib/http.js';
 import { createHash } from 'node:crypto';
-import { pricerInfo, currentPrompt, DEFAULT_PROMPT, SAMPLE_INGREDIENTS, kickPricer, resumePricer, runQueue, startTest } from '../lib/pricer.js';
+import { pricerInfo, currentPrompt, DEFAULT_PROMPT, SAMPLE_RECIPE, SAMPLE_INGREDIENTS, kickPricer, resumePricer, runQueue, startTest } from '../lib/pricer.js';
 
 const md5 = (text) => createHash('md5').update(text).digest('hex');
 
@@ -41,7 +41,7 @@ export const GET = guarded(async (request) => {
   const pricings = (await store.listPricings({ limit: 300 })).map(({ prompt_md5, ...p }) => ({ ...p, prompt_current: prompt_md5 == null ? null : prompt_md5 === current }));
   const counts = Object.fromEntries(['unpriced', 'pending', 'pricing', 'priced', 'failed'].map((s) => [s, pricings.filter((p) => p.status === s).length]));
   const activity = await store.recentPricerSteps(40);
-  return json(200, { ...pricerInfo(), prompt, prompt_is_default: prompt === DEFAULT_PROMPT, default_prompt: DEFAULT_PROMPT, sample_ingredients: SAMPLE_INGREDIENTS, counts, pricings, activity });
+  return json(200, { ...pricerInfo(), prompt, prompt_is_default: prompt === DEFAULT_PROMPT, default_prompt: DEFAULT_PROMPT, sample_recipe: SAMPLE_RECIPE, sample_ingredients: SAMPLE_INGREDIENTS, counts, pricings, activity });
 });
 
 export const POST = guarded(async (request) => {

@@ -253,3 +253,6 @@ update pricings set meal_id = meal_id;
 -- A Pricer prompt saved before nutrition moved to the Meal Planner tells the
 -- agent to use USDA tools that no longer exist: drop it so the default applies.
 delete from pricer_config where key = 'prompt' and value ~* '(search_usda|usda_fdc_id)';
+
+-- A test run is priced as a named recipe.
+alter table pricer_tests add column if not exists name text;

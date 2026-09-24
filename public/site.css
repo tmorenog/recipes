@@ -554,3 +554,13 @@ details.trace > summary { cursor: pointer; padding: 8px 0; }
 /* Database cards: popularity */
 .card .tags { display: flex; flex-wrap: wrap; gap: 4px 6px; align-items: center; }
 .picks-count { font: 700 12px/1.6 var(--body); color: var(--accent); margin-right: 2px; }
+
+/* Pricer page, section 2: the same two columns as section 3 */
+.try-left { display: grid; gap: 14px; min-width: 0; }
+.try-left .try-input { margin: 0; }
+.try-run { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.try-layout .product-cards { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+.feed li:not(:has(.feed-recipe)) .feed-time { grid-row: auto; }
+
+.try-input input[type="text"] { width: 100%; box-sizing: border-box; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; font: 15px/1.4 var(--body); background: var(--surface); color: var(--ink); }
+.test-title { margin: 0 0 6px; font-size: 20px; }

@@ -196,7 +196,7 @@ for (const backend of BACKENDS) {
       log.length = 0;
 
       const draft = DEFAULT_PROMPT.replace('50 people', '20 people');
-      const started = await control('test', { ingredients: ['400g tin chickpeas', 'salt, to taste'], serves: 4, prompt: draft });
+      const started = await control('test', { name: 'Chickpea test', ingredients: ['400g tin chickpeas', 'salt, to taste'], serves: 4, prompt: draft });
       assert.equal(started.status, 202);
       let t;
       for (let i = 0; i < 50; i++) {
@@ -205,6 +205,8 @@ for (const backend of BACKENDS) {
         await new Promise((r) => setTimeout(r, 20));
       }
       assert.equal(t.id, started.body.id);
+      assert.equal(t.name, 'Chickpea test');
+      assert.match(t.steps[0].text, /Test run: pricing Chickpea test/);
       assert.equal(t.status, 'done');
       assert.equal(t.draft, true);
       assert.equal(log[0].system, draft, 'the test used the draft prompt');

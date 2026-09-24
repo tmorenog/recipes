@@ -70,17 +70,28 @@
 
   <h2 id="try"><span class="section-num">2</span>Try it on a sample list</h2>
   <p>See exactly what the Pricer does, with the real AI and real Kroger prices, on a short list. Nothing is saved to the recipes. The instructor runs tests (sign in above); everyone can watch the latest one here. A test uses the instructions in section 1, including changes not saved yet, so it’s the way to try a change before applying it.</p>
-  <div class="try-grid">
-    <div class="panel try-input">
-      <label for="test-lines"><strong>Ingredients</strong> <span class="small muted">one per line, as a recipe would list them</span></label>
-      <textarea id="test-lines" rows="7" spellcheck="false"></textarea>
-      <label class="small" for="test-serves">The list serves <input id="test-serves" type="number" min="1" max="100" value="4" style="width:4.5em"> people as written</label>
-      <button class="btn primary" type="button" id="run-test" disabled>Run the test</button>
-      <p class="small muted" id="test-hint">Sign in with the admin key above to run a test.</p>
+  <div class="carts-layout try-layout">
+    <div class="try-left">
+      <div class="panel try-input">
+        <label for="test-name"><strong>Recipe</strong></label>
+        <input id="test-name" type="text" maxlength="120" spellcheck="false">
+        <label for="test-lines"><strong>Ingredients</strong> <span class="small muted">one per line, as a recipe would list them</span></label>
+        <textarea id="test-lines" rows="6" spellcheck="false"></textarea>
+        <div class="try-run">
+          <label class="small" for="test-serves">The list serves <input id="test-serves" type="number" min="1" max="100" value="4" style="width:4.5em"> people as written</label>
+          <button class="btn primary" type="button" id="run-test" disabled>Run the test</button>
+        </div>
+        <p class="small muted" id="test-hint">Sign in with the admin key above to run a test.</p>
+      </div>
+      <div class="try-result" id="test-result" aria-live="polite">
+        <p class="empty small">No test yet. Run one to see the agent search Kroger and fill a cart.</p>
+      </div>
     </div>
-    <div class="try-result" id="test-result" aria-live="polite">
-      <p class="empty small">No test yet. Run one to see the agent search Kroger and fill a cart.</p>
-    </div>
+    <aside class="agent-feed" aria-live="polite">
+      <h3>What the agent is doing</h3>
+      <p class="agent-now" id="test-now"></p>
+      <ol class="feed" id="test-feed"></ol>
+    </aside>
   </div>
 
   <h2 id="carts"><span class="section-num">3</span>Price recipes selected by the Recipe Scout</h2>

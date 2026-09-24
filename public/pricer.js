@@ -126,10 +126,34 @@
   });
   $('signout').addEventListener('click', () => signOut());
 
+  // One step, in a few words, for the "What the agent is doing" panels.
+  function feedWhat(s) {
+    if (s.kind === 'tool_call') {
+      if (s.tool === 'search_kroger') return `→ searches Kroger for “${s.input?.term ?? ''}”`;
+      if (s.tool === 'finish') return '→ finishes the cart';
+      return `→ ${s.tool} ${Object.values(s.input || {}).filter((v) => typeof v !== 'object').slice(0, 3).join(', ')}`;
+    }
+    if (s.kind === 'tool_result') {
+      const o = s.output || {};
+      if (s.tool === 'search_kroger') return o.count ? `← ${o.count} products, e.g. ${o.products[0].description} ${money(o.products[0].promo_price_usd ?? o.products[0].price_usd)}` : '← no products found';
+      if (s.tool === 'record_ingredient') return `← line ${o.recorded}: buy ${o.packages_to_buy} for ${money(o.cost_to_buy_usd)}`;
+      if (s.tool === 'estimate_ingredient') return `← line ${o.estimated}: estimated ${money(o.cost_to_buy_usd)}`;
+      if (s.tool === 'skip_ingredient') return `← line ${o.skipped} skipped`;
+      return `← ${s.tool}`;
+    }
+    if (s.kind === 'final') return '✓ Finished the cart';
+    if (s.kind === 'error') return `✗ ${s.text}`;
+    return s.text;
+  }
+  const feedItem = (s, label) => el('li', { className: `feed-${s.kind}` },
+    el('span', { className: 'feed-time', textContent: time(s.at) }),
+    label,
+    el('span', { className: 'feed-what', textContent: feedWhat(s) }));
+
   // ---------------------------------------------------------------- 1. test runs
   async function runTest(useDraft) {
     const ingredients = $('test-lines').value.split('\n').map((l) => l.trim()).filter(Boolean);
-    const body = { ingredients, serves: Number($('test-serves').value) || 4 };
+    const body = { name: $('test-name').value.trim() || undefined, ingredients, serves: Number($('test-serves').value) || 4 };
     if (useDraft || promptDirty) body.prompt = $('prompt').value;
     $('run-test').disabled = true;
     const r = await control('test', body);
@@ -148,6 +172,10 @@
     try {
       test = await getJson(`/api/pricer?test=${encodeURIComponent(id)}`);
     } catch (e) {
+      if (e.status === 404) {
+        $('test-now').replaceChildren(el('span', { className: 'dot' }), 'Idle: no test yet.');
+        $('test-feed').replaceChildren(el('li', { className: 'muted small', textContent: 'The agent’s steps appear here while a test runs.' }));
+      }
       if (e.status !== 404) $('test-result').replaceChildren(el('p', { className: 'errors', textContent: e.message }));
       return;
     }
@@ -198,22 +226,34 @@
     const byLine = new Map((t.basket || []).map((e) => [e.line, e]));
     const running = t.status === 'running';
     const seconds = Math.round((new Date(t.updated_at) - new Date(t.created_at)) / 1000);
+    const title = el('h3', { className: 'test-title', textContent: t.name || 'Sample recipe' });
     const status = running
       ? el('p', { className: 'test-status running' }, pill('pricing'), ` Working… ${byLine.size} of ${t.ingredients.length} ingredients done`)
       : t.status === 'done'
         ? el('p', { className: 'test-status' }, pill('priced'), ` Finished in ${seconds} s · ${ago(t.created_at)}${t.draft ? ' · with unsaved instructions' : ''}`)
         : el('p', { className: 'test-status' }, pill('failed'), ` ${t.error || 'The test failed.'}`);
-    $('test-result').replaceChildren(
+    $('test-result').replaceChildren(...[
+      title,
       status,
       t.status === 'done' ? tiles(t.totals?.cart_usd, t.totals?.cost_used_usd, t.people, t.totals?.estimated_lines) : null,
       el('ul', { className: 'product-cards' }, t.ingredients.map((line, i) => productCard(line, byLine.get(i + 1), running ? 'Not yet…' : '–'))),
       t.summary ? el('p', { className: 'cart-summary' }, el('strong', { textContent: 'The agent’s summary: ' }), t.summary) : null,
-      trace(t.steps || [], { open: running, toolCalls: t.tool_calls }),
-    );
+    ].filter(Boolean));
+
+    // The agent's output for this test, on the right, newest first.
+    const now = running
+      ? `Pricing ${t.name || 'the sample recipe'}: ${byLine.size} of ${t.ingredients.length} ingredients done, ${t.tool_calls} tool calls so far.`
+      : t.status === 'done' ? `Finished ${t.name || 'the sample recipe'} in ${seconds} s with ${t.tool_calls} tool calls: cart ${money(t.totals?.cart_usd)} for ${t.people} people.`
+        : `Stopped: ${t.error || 'the test failed'}`;
+    $('test-now').replaceChildren(el('span', { className: `dot ${running ? 'on' : ''}` }), now);
+    const steps = [...(t.steps || [])].reverse();
+    $('test-feed').replaceChildren(...(steps.length ? steps.map((st) => feedItem(st, null)) : [el('li', { className: 'muted small', textContent: 'No steps yet.' })]));
     $('run-test').disabled = !key || running;
     if (!$('test-lines').dataset.touched && t.ingredients) $('test-lines').value = t.ingredients.join('\n');
+    if (!$('test-name').dataset.touched && t.name) $('test-name').value = t.name;
   }
   $('test-lines').addEventListener('input', () => { $('test-lines').dataset.touched = '1'; });
+  $('test-name').addEventListener('input', () => { $('test-name').dataset.touched = '1'; });
 
   // ---------------------------------------------------------------- 2. instructions
   function showPromptState() {
@@ -292,6 +332,7 @@
     if (!promptDirty && document.activeElement !== $('prompt')) $('prompt').value = o.prompt;
     showPromptState();
     if (!$('test-lines').value) $('test-lines').value = (o.sample_ingredients || []).join('\n');
+    if (!$('test-name').value) $('test-name').value = o.sample_recipe || '';
 
     const c = o.counts;
     $('counts').replaceChildren(...[['priced', 'priced'], ['pricing', 'being priced'], ['pending', 'waiting'], ['unpriced', 'not priced'], ['failed', 'couldn’t price']]
@@ -359,18 +400,8 @@
         : testRunning ? 'Running a test on the sample list (section 2).'
           : o.problem ? 'Stopped: see the message at the top of the page.' : 'Idle: nothing to price right now.';
     $('agent-now').replaceChildren(el('span', { className: `dot ${now.length || testRunning ? 'on' : ''}` }), line);
-    $('feed').replaceChildren(...(o.activity || []).map((s) => {
-      let what = '';
-      if (s.kind === 'tool_call') what = `→ ${s.tool} ${Object.values(s.input || {}).filter((v) => typeof v !== 'object').slice(0, 3).join(', ')}`;
-      else if (s.kind === 'tool_result') what = s.tool === 'search_kroger' ? `← ${s.output?.count ?? 0} products` : s.tool === 'record_ingredient' ? `← line ${s.output?.recorded}: ${s.output?.packages_to_buy} × for ${money(s.output?.cost_to_buy_usd)}` : s.tool === 'estimate_ingredient' ? `← line ${s.output?.estimated}: estimated ${money(s.output?.cost_to_buy_usd)}` : `← ${s.tool}`;
-      else if (s.kind === 'final') what = '✓ Finished the cart';
-      else if (s.kind === 'error') what = `✗ ${s.text}`;
-      else what = s.text;
-      return el('li', { className: `feed-${s.kind}` },
-        el('span', { className: 'feed-time', textContent: time(s.at) }),
-        el('button', { type: 'button', className: 'linklike feed-recipe', textContent: s.name || s.meal_id, onclick: () => { if (selected !== s.meal_id) toggle(s.meal_id); } }),
-        el('span', { className: 'feed-what', textContent: what }));
-    }));
+    $('feed').replaceChildren(...(o.activity || []).map((s) => feedItem(s,
+      el('button', { type: 'button', className: 'linklike feed-recipe', textContent: s.name || s.meal_id, onclick: () => { if (selected !== s.meal_id) toggle(s.meal_id); } }))));
     if (!(o.activity || []).length) $('feed').append(el('li', { className: 'muted small', textContent: 'No steps yet.' }));
   }
 
