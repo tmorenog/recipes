@@ -79,13 +79,13 @@ For now, build one page with:
     </div>
     <div class="prompt-body" id="p2">Create the tools the agent will use, in backend code. No AI yet.
 
-TheMealDB (free, no key). Base address https://www.themealdb.com/api/json/v1/1/ (details: https://www.themealdb.com/AGENTS.md)
-1. search_by_name(query) -> search.php?s=QUERY
-2. filter_by_ingredient(ingredient) -> filter.php?i=INGREDIENT
-3. filter_by_category(category) -> filter.php?c=CATEGORY. Valid categories: list.php?c=list
-4. filter_by_cuisine(area) -> filter.php?a=AREA. Valid cuisines: list.php?a=list
-5. get_recipe(meal_id) -> lookup.php?i=MEAL_ID. Returns the full recipe. The filter tools only return id, name and photo.
-Each returns JSON. Return an empty list (not an error) when TheMealDB finds nothing ("meals": null).
+TheMealDB (free test key "1"). Read https://www.themealdb.com/AGENTS.md, https://www.themealdb.com/SKILL.md and https://www.themealdb.com/documentation, and use them to implement exactly these five tools:
+1. search_by_name(query)
+2. filter_by_ingredient(ingredient)
+3. filter_by_category(category)
+4. filter_by_cuisine(area)
+5. get_recipe(meal_id): the full recipe (the filters only return id, name and photo)
+Each returns JSON, and an empty list (not an error) when nothing is found. Use only what the free key allows.
 
 Our coordinator is an MCP server: {{SITE}}/api/mcp?agent=scout
 - Send the headers "Authorization: Bearer " + the COORDINATOR_KEY secret and "X-Group: {{GROUP}}" on every request.
