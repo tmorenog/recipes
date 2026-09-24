@@ -90,3 +90,31 @@ test('health explains a missing database and keys, without showing values', asyn
     Object.assign(process.env, saved);
   }
 });
+
+test('MCP works with plain fetch: ?agent=scout shows only the Scout’s tools, and get_expectations explains the format', async () => {
+  const { CLASS_KEY } = await import('./helpers.js');
+  const rpc = (query, method, params) =>
+    handle(new Request(`http://x/api/mcp${query}`, {
+      method: 'POST',
+      headers: { authorization: `Bearer ${CLASS_KEY}`, 'x-group': 'team-1', 'content-type': 'application/json' },
+      body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, ...(params && { params }) }),
+    }));
+
+  const list = await rpc('?agent=scout', 'tools/list');
+  assert.equal(list.status, 200);
+  assert.deepEqual((await list.json()).result.tools.map((t) => t.name), ['get_expectations', 'save_recipe', 'list_recipes']);
+
+  const brief = JSON.parse((await (await rpc('?agent=scout', 'tools/call', { name: 'get_expectations', arguments: {} })).json()).result.content[0].text);
+  assert.equal(brief.agent, 'Recipe Scout');
+  assert.deepEqual(Object.keys(brief.recipe_format), Object.keys(recipeSchema.shape));
+  assert.match(brief.recipe_format.why_chosen, /^required/);
+  assert.match(brief.recipe_format.image_url, /^optional/);
+  assert.ok(recipeSchema.safeParse(brief.example).success, 'the example must pass the checks');
+
+  const planner = await (await rpc('?agent=planner', 'tools/list')).json();
+  assert.ok(!planner.result.tools.some((t) => t.name === 'save_recipe'));
+  const plannerBrief = JSON.parse((await (await rpc('', 'tools/call', { name: 'get_expectations', arguments: { agent: 'planner' } })).json()).result.content[0].text);
+  assert.equal(plannerBrief.agent, 'Meal Planner');
+
+  assert.equal((await rpc('?agent=chef', 'tools/list')).status, 400);
+});

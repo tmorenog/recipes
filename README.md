@@ -9,7 +9,7 @@ The hub for a two-agent class exercise. Groups build two AI agents in Lovable: a
 
 **API** (used by the students' agents)
 - **REST** under `/api/…` for Lovable backends. Same data, same rules, same error messages as MCP.
-- **MCP** at `/api/mcp` with six tools: `save_recipe`, `list_recipes`, `mark_processed`, `save_meal_plan`, `find_kroger_stores`, `search_kroger_products`.
+- **MCP** at `/api/mcp` with seven tools: `get_expectations`, `save_recipe`, `list_recipes`, `mark_processed`, `save_meal_plan`, `find_kroger_stores`, `search_kroger_products`.
 
 Everyone shares one class key. Each group also sends its chosen group name (header `X-Group`), so each recipe and plan records who made it. Kroger lookups use the instructor's Kroger credentials, so students need none.
 
@@ -74,8 +74,11 @@ Rules:
 
 Endpoint: `https://<your-site>.vercel.app/api/mcp`. Send the headers `Authorization: Bearer <class key>` and `X-Group: <group name>`.
 
+Add `?agent=scout` or `?agent=planner` to show only that agent's tools. Every answer is plain JSON, so an agent can use an MCP client or plain `POST` requests with the JSON-RPC methods `tools/list` and `tools/call`.
+
 | Tool | What it does |
 | --- | --- |
+| `get_expectations` | The agent's goal, steps and rules, and every field `save_recipe` or `save_meal_plan` accepts, with where its value comes from. Built from the same schemas that check each save, so agents don't need the format written into their code. Takes `agent` (`scout` or `planner`); defaults to the `?agent=` value. |
 | `save_recipe` | Saves one recipe under your group. |
 | `list_recipes` | Recipes from every group, newest first. Options: `status` (`new`, the default; `processed`; or `all`), `theme`, `group`, `limit` (default 50, max 500). |
 | `mark_processed` | Takes one `recipe_id`. Marks that recipe as used by your group, so it drops out of the `new` list. Marking it again changes nothing. |
@@ -178,6 +181,7 @@ TEST_DATABASE_URL=postgres://postgres@localhost:5432/recipes_test npm test
 | `lib/plans.js` | Meal plan rules, and the activity list |
 | `lib/kroger.js` | Kroger sign-in, store and product lookups, caching |
 | `lib/mcp.js` | The MCP tools |
+| `lib/expectations.js` | What `get_expectations` returns for each agent |
 | `lib/auth.js` | Checks the class key and reads the group name from `X-Group` |
 | `lib/store/` | The database queries (`postgres.js`) |
 | `lib/env.js`, `lib/db.js` | Finding the database connection string |

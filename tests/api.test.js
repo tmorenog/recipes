@@ -46,7 +46,7 @@ for (const backend of BACKENDS) {
       const client = await mcp();
       const { tools } = await client.listTools();
       assert.deepEqual(tools.map((t) => t.name).sort(), [
-        'find_kroger_stores', 'list_recipes', 'mark_processed', 'save_meal_plan', 'save_recipe', 'search_kroger_products',
+        'find_kroger_stores', 'get_expectations', 'list_recipes', 'mark_processed', 'save_meal_plan', 'save_recipe', 'search_kroger_products',
       ]);
       const save = tools.find((t) => t.name === 'save_recipe');
       assert.equal(save.inputSchema.additionalProperties, false);
