@@ -4,7 +4,7 @@ The hub for a two-agent class exercise. Groups build two AI agents in Lovable: a
 
 **Pages**
 - **Welcome** (`/`): what the exercise is, how the pieces fit, and a check that the class key works.
-- **Recipe Scout** (`/scout`) and **Meal Planner** (`/planner`): goals, copy-ready Lovable prompts (each agent connects to `/api/mcp?agent=…` and reads its rules from `get_expectations`) (with this site's address filled in), test checklists and troubleshooting.
+- **Recipe Scout** (`/scout`) and **Meal Planner** (`/planner`): goals, copy-ready Lovable prompts with this site's address filled in, test checklists and troubleshooting. Each agent connects to `/api/mcp?agent=…` and reads its rules from `get_expectations`.
 - **Database** (`/database`): every recipe, meal plan and attempt (including rejections and why), filterable by group. Updates every 15 seconds.
 
 **API** (used by the students' agents)
