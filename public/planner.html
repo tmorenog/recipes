@@ -45,7 +45,7 @@
   </div>
 
   <h2 id="build">Build it in Lovable</h2>
-  <p>Paste each step into Lovable <strong>one at a time</strong>, and check the result before moving on. As with the Scout, the app uses Lovable Cloud and Lovable’s built-in AI. The Kroger lookups go through the coordinator’s own Kroger account, so the only key you need is the class key.</p>
+  <p>Each step has a <strong>sample prompt</strong>. Copy it into Lovable as it is, or edit it to make the app your own, then check the result before moving on. As with the Scout, the app uses Lovable Cloud and Lovable’s built-in AI. The Kroger lookups go through the coordinator’s own Kroger account, so the only key you need is the class key.</p>
   <div class="callout warn"><p><strong>The class key never goes in a prompt.</strong> Step 1 asks Lovable to create a secret. Lovable then shows a secure box where you paste the key.</p></div>
   <div class="panel group-box">
     <label for="group-planner"><strong>Your group name</strong></label>
@@ -57,8 +57,9 @@
   <section class="prompt planner">
     <div class="prompt-head">
       <p class="prompt-title"><span class="where">Step 1 of 5</span>Create the app and store your key</p>
-      <button class="btn" type="button" data-copy="q1">Copy</button>
+      <button class="btn" type="button" data-copy="q1">Copy prompt</button>
     </div>
+    <p class="prompt-label">Sample prompt: copy it into Lovable as it is, or edit it first</p>
     <div class="prompt-body" id="q1">Build a web app called "Meal Planner" for a class exercise. It's an AI agent that plans 5 dinners from recipes stored in our class coordinator at {{SITE}}, priced at a real Kroger store.
 
 Enable Lovable Cloud so the app has a backend.
@@ -76,8 +77,9 @@ Build one page with:
   <section class="prompt planner">
     <div class="prompt-head">
       <p class="prompt-title"><span class="where">Step 2 of 5</span>Connect to the coordinator</p>
-      <button class="btn" type="button" data-copy="q2">Copy</button>
+      <button class="btn" type="button" data-copy="q2">Copy prompt</button>
     </div>
+    <p class="prompt-label">Sample prompt: copy it into Lovable as it is, or edit it first</p>
     <div class="prompt-body" id="q2">Our coordinator is an MCP server (Streamable HTTP) with every tool the agent needs to read recipes, look up Kroger prices and save the plan: {{SITE}}/api/mcp?agent=planner
 
 From backend code only, send the headers "Authorization: Bearer " + COORDINATOR_KEY and "X-Group: {{GROUP}}" on every request. Load its tools with tools/list and give them to the agent exactly as the server describes them: don't write the plan format or rules into our code. A result with "isError": true is a rejection to pass back to the agent, not a crash. During a run, reuse earlier search_kroger_products answers for the same term and store instead of asking again.
@@ -88,8 +90,9 @@ No AI yet. Test it: list the coordinator's tools, call get_expectations, list_re
   <section class="prompt planner">
     <div class="prompt-head">
       <p class="prompt-title"><span class="where">Step 3 of 5</span>Add the calculator tools</p>
-      <button class="btn" type="button" data-copy="q3">Copy</button>
+      <button class="btn" type="button" data-copy="q3">Copy prompt</button>
     </div>
+    <p class="prompt-label">Sample prompt: copy it into Lovable as it is, or edit it first</p>
     <div class="prompt-body" id="q3">Add two calculator tools in plain code, so the AI never does arithmetic itself.
 
 1. price_ingredient(amount, unit, package_size, package_price_usd): what a recipe's quantity costs. Parse package sizes like "16.9 fl oz", "3 lb", "12 ct" or "each", and convert between weight, volume and count units. Between volume and weight, assume 1 ml weighs 1 g and say so in "note". A null amount ("to taste") costs 0; a null unit means a count ("2 eggs"). If the units can't be converted, return an error instead of guessing. Return { fraction_of_package, cost_used_usd, packages_to_buy, cost_to_buy_usd, note }, with money rounded to cents.
@@ -102,8 +105,9 @@ Test price_ingredient with 2 tbsp olive oil from a "16.9 fl oz" bottle at 7.99 (
   <section class="prompt planner">
     <div class="prompt-head">
       <p class="prompt-title"><span class="where">Step 4 of 5</span>Add the agent loop</p>
-      <button class="btn" type="button" data-copy="q4">Copy</button>
+      <button class="btn" type="button" data-copy="q4">Copy prompt</button>
     </div>
+    <p class="prompt-label">Sample prompt: copy it into Lovable as it is, or edit it first</p>
     <div class="prompt-body" id="q4">Add the agent: a backend function run-planner that uses Lovable AI with tool calling, the coordinator's tools, our two calculators, and finish(summary). It takes the ZIP code, budget and people per meal from the page.
 
 - Run the tools the model asks for and send back the results until it calls finish, or until 80 tool calls or 5 minutes (constants I can change). Record why it stopped.
@@ -116,8 +120,9 @@ Instructions for the model (fill in PEOPLE, ZIP and BUDGET from the page):
   <section class="prompt planner">
     <div class="prompt-head">
       <p class="prompt-title"><span class="where">Step 5 of 5</span>Show the plan and the agent working</p>
-      <button class="btn" type="button" data-copy="q5">Copy</button>
+      <button class="btn" type="button" data-copy="q5">Copy prompt</button>
     </div>
+    <p class="prompt-label">Sample prompt: copy it into Lovable as it is, or edit it first</p>
     <div class="prompt-body" id="q5">Connect the page to run-planner.
 
 - "Plan my week" starts a run and is disabled until it ends.

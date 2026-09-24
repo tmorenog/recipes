@@ -44,13 +44,14 @@
   </div>
 
   <h2 id="build">Build it in Lovable, step by step</h2>
-  <p>Paste each step into Lovable <strong>one at a time</strong>, and check the result before moving on. Steps 1 to 3 build a working agent on its own. Step 4 connects it to the class coordinator. Your app uses Lovable Cloud for its backend and Lovable’s built-in AI for the agent, so the only key you need is the class key, in step 4.</p>
+  <p>Each step has a <strong>sample prompt</strong>. Copy it into Lovable as it is, or edit it to make the app your own, then check the result before moving on. Steps 1 to 3 build a working agent on its own. Step 4 connects it to the class coordinator. Your app uses Lovable Cloud for its backend and Lovable’s built-in AI for the agent, so the only key you need is the class key, in step 4.</p>
 
   <section class="prompt scout">
     <div class="prompt-head">
       <p class="prompt-title"><span class="where">Step 1 of 5</span>Create the app</p>
-      <button class="btn" type="button" data-copy="p1">Copy</button>
+      <button class="btn" type="button" data-copy="p1">Copy prompt</button>
     </div>
+    <p class="prompt-label">Sample prompt: copy it into Lovable as it is, or edit it first</p>
     <div class="prompt-body" id="p1">Build a web app called "Recipe Scout" for a class exercise: an AI agent that finds real recipes for a theme.
 
 Enable Lovable Cloud so the app has a backend.
@@ -65,8 +66,9 @@ For now, build one page with:
   <section class="prompt scout">
     <div class="prompt-head">
       <p class="prompt-title"><span class="where">Step 2 of 5</span>Search TheMealDB</p>
-      <button class="btn" type="button" data-copy="p2">Copy</button>
+      <button class="btn" type="button" data-copy="p2">Copy prompt</button>
     </div>
+    <p class="prompt-label">Sample prompt: copy it into Lovable as it is, or edit it first</p>
     <div class="prompt-body" id="p2">Create the tools the agent will use to find recipes, in backend code. No AI yet.
 
 Read https://www.themealdb.com/AGENTS.md and follow it, using the free key "1". Build five tools: search_by_name, filter_by_ingredient, filter_by_category, filter_by_cuisine and get_recipe. Each returns JSON, and an empty list when nothing is found.
@@ -78,8 +80,9 @@ Test each tool once and show me the results.</div>
   <section class="prompt scout">
     <div class="prompt-head">
       <p class="prompt-title"><span class="where">Step 3 of 5</span>Add the agent and show its choices</p>
-      <button class="btn" type="button" data-copy="p3">Copy</button>
+      <button class="btn" type="button" data-copy="p3">Copy prompt</button>
     </div>
+    <p class="prompt-label">Sample prompt: copy it into Lovable as it is, or edit it first</p>
     <div class="prompt-body" id="p3">Add the agent: a backend function run-scout that uses Lovable AI with tool calling, the five TheMealDB tools, and two more tools:
 - choose_recipe(meal_id, why_chosen): adds a recipe to this run's chosen recipes
 - finish(summary): ends the run
@@ -107,8 +110,9 @@ Connect the page: "Run Recipe Scout" starts a run with the theme. "What the agen
   <section class="prompt scout">
     <div class="prompt-head">
       <p class="prompt-title"><span class="where">Step 4 of 5</span>Save to the class coordinator</p>
-      <button class="btn" type="button" data-copy="p4">Copy</button>
+      <button class="btn" type="button" data-copy="p4">Copy prompt</button>
     </div>
+    <p class="prompt-label">Sample prompt: copy it into Lovable as it is, or edit it first</p>
     <div class="prompt-body" id="p4">Now save the chosen recipes to our class coordinator, so the Meal Planners can use them.
 
 Add a secret named COORDINATOR_KEY and ask me to enter its value. It is our class key. Only backend functions may use it: never put it in the page, the browser, or the code.
@@ -125,8 +129,9 @@ Then replace choose_recipe with the coordinator's save_recipe, rename "Chosen re
   <section class="prompt scout">
     <div class="prompt-head">
       <p class="prompt-title"><span class="where">Step 5 of 5</span>Show the agent working</p>
-      <button class="btn" type="button" data-copy="p5">Copy</button>
+      <button class="btn" type="button" data-copy="p5">Copy prompt</button>
     </div>
+    <p class="prompt-label">Sample prompt: copy it into Lovable as it is, or edit it first</p>
     <div class="prompt-body" id="p5">Improve the page:
 - "Run Recipe Scout" is disabled until the run ends.
 - "What the agent is doing" shows tool names and inputs, results collapsed (click for JSON), coordinator rejections in red, a counter like "12 / 25 tool calls" and the time left.
@@ -135,53 +140,6 @@ Then replace choose_recipe with the coordinator's save_recipe, rename "Chosen re
 - Keep a list of past runs so I can reopen any earlier trace.</div>
   </section>
   <p class="small muted step-check"><strong>You should see:</strong> a clear, live trace with a counter, rejections in red, and a list of past runs you can reopen.</p>
-
-  <h2 id="tweak">Tweak it</h2>
-  <p>Once it works, change how your agent behaves. Copy a tweak into Lovable as it is, or edit it first. Run the same theme before and after, and compare the traces.</p>
-  <div class="grid-2 tweaks">
-    <section class="prompt optional">
-      <div class="prompt-head">
-        <p class="prompt-title"><span class="where">After step 3</span>A tighter limit</p>
-        <button class="btn" type="button" data-copy="t1">Copy</button>
-      </div>
-      <div class="prompt-body" id="t1">Change the tool-call limit to 8. When the agent runs out, show a clear message in the trace saying how many recipes it managed to choose.</div>
-    </section>
-    <section class="prompt optional">
-      <div class="prompt-head">
-        <p class="prompt-title"><span class="where">After step 3</span>Plan before acting</p>
-        <button class="btn" type="button" data-copy="t2">Copy</button>
-      </div>
-      <div class="prompt-body" id="t2">Before its first tool call, have the agent write a short plan: which searches it will try and why. Show the plan at the top of the trace, and at the end show whether it stuck to it.</div>
-    </section>
-    <section class="prompt optional">
-      <div class="prompt-head">
-        <p class="prompt-title"><span class="where">After step 3</span>Show what it turned down</p>
-        <button class="btn" type="button" data-copy="t3">Copy</button>
-      </div>
-      <div class="prompt-body" id="t3">When the agent reads a recipe with get_recipe but doesn't choose it, have it say why in one sentence. Show these under the recipes as "Considered but not chosen".</div>
-    </section>
-    <section class="prompt optional">
-      <div class="prompt-head">
-        <p class="prompt-title"><span class="where">After step 3</span>Only quick recipes</p>
-        <button class="btn" type="button" data-copy="t4">Copy</button>
-      </div>
-      <div class="prompt-body" id="t4">Add a "Max time" dropdown next to the theme: any, 30, 45 or 60 minutes. Tell the agent to choose only recipes it estimates fit within that time, and to say how it estimated.</div>
-    </section>
-    <section class="prompt optional">
-      <div class="prompt-head">
-        <p class="prompt-title"><span class="where">After step 4</span>Learn from rejections</p>
-        <button class="btn" type="button" data-copy="t6">Copy</button>
-      </div>
-      <div class="prompt-body" id="t6">When the coordinator rejects a recipe, show its reasons next to that step in the trace, and mark whether the agent's next save fixed them. At the end of the run, show how many saves were rejected.</div>
-    </section>
-    <section class="prompt optional">
-      <div class="prompt-head">
-        <p class="prompt-title"><span class="where">After step 5</span>A stop button</p>
-        <button class="btn" type="button" data-copy="t5">Copy</button>
-      </div>
-      <div class="prompt-body" id="t5">Add a "Stop" button that ends the current run after the tool call in progress, and records "stopped by user" as the reason.</div>
-    </section>
-  </div>
 
   <h2 id="test">Test it</h2>
   <div class="grid-2">
@@ -201,7 +159,7 @@ Then replace choose_recipe with the coordinator's save_recipe, rename "Chosen re
         <li><strong>Run the same theme twice.</strong> Does it notice the duplicates and pick new recipes?</li>
         <li><strong>A contradiction:</strong> “vegan sushi with beef”. Does it explain the problem, or invent something?</li>
         <li><strong>Nothing to find:</strong> “Antarctic street food”. Does it widen its search sensibly?</li>
-        <li><strong>A tight limit:</strong> use the “tighter limit” tweak (8 tool calls). What does it do when it runs out?</li>
+        <li><strong>A tight limit:</strong> ask Lovable to set the limit to 8 tool calls. What does it do when it runs out?</li>
       </ul>
     </div>
   </div>

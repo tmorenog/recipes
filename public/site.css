@@ -140,7 +140,7 @@ pre.code {
 .prompt.planner .prompt-head { box-shadow: inset 4px 0 0 var(--planner); }
 .prompt.optional .prompt-head { box-shadow: inset 4px 0 0 var(--muted); }
 .step-check { margin: -8px 0 26px; }
-.tweaks .prompt { margin: 0; }
+.prompt-label { margin: 0; padding: 10px 16px 0; font: 600 12px/1.4 var(--mono); color: var(--muted); letter-spacing: .02em; }
 
 .btn {
   display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px; cursor: pointer;
