@@ -124,3 +124,13 @@ create table if not exists pricer_config (
   value       text not null,
   updated_at  timestamptz not null default now()
 );
+
+-- Sample prompts the instructor edited on the Recipe Scout and Meal Planner
+-- pages. A step with no row shows its text file (public/prompts/…).
+create table if not exists prompt_overrides (
+  agent       text not null check (agent in ('scout', 'planner')),
+  step        int  not null check (step between 1 and 20),
+  text        text not null,
+  updated_at  timestamptz not null default now(),
+  primary key (agent, step)
+);

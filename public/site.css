@@ -418,3 +418,11 @@ h2 .count { font: 500 15px var(--mono); color: var(--muted); margin-left: 6px; }
 .card .price.price-failed { background: var(--bad-bg); color: var(--bad-ink); }
 
 .meal .mwhy { margin-top: 2px; font-size: 13px; color: var(--muted); font-style: italic; }
+
+/* Editing a sample prompt (instructor only) */
+.prompt-editor .prompt-edit { min-height: 260px; border-bottom: 1px solid var(--line); }
+.prompt-edit-note { margin: 8px 16px 0; }
+.prompt-edit-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 16px 14px; }
+.prompt-edit-bar .bad { color: var(--bad-ink); }
+.prompt-head > .btn { margin-left: auto; }
+.prompt-head > .btn + .btn { margin-left: 6px; }

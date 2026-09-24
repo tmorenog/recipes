@@ -28,23 +28,120 @@
   };
   fill();
 
-  // Sample prompts live in text files under /prompts/, so the instructor can
-  // edit them without touching the pages: <div data-prompt="/prompts/...txt">.
-  for (const box of document.querySelectorAll('[data-prompt]')) {
-    const path = box.dataset.prompt;
-    box.textContent = 'Loading the prompt…';
-    fetch(path, { cache: 'no-cache' })
-      .then((res) => (res.ok ? res.text() : Promise.reject(new Error(res.status))))
-      .then((text) => {
-        const node = document.createTextNode(text.trim());
-        box.replaceChildren(node);
-        slots.push({ node, template: node.nodeValue });
-        fill();
-      })
-      .catch(() => {
-        box.replaceChildren('This prompt didn’t load. Reload the page, or open ', Object.assign(document.createElement('a'), { href: path, textContent: path }), '.');
-      });
+  // Sample prompts: the text files under /prompts/ (<div data-prompt="/prompts/scout/step-2.txt">),
+  // unless the instructor edited a step on the page; edits come from /api/prompts.
+  const boxes = [...document.querySelectorAll('[data-prompt]')].map((box) => {
+    const [, agent, step] = box.dataset.prompt.match(/\/prompts\/(\w+)\/step-(\d+)\.txt$/) || [];
+    return { box, agent, step: Number(step), file: box.dataset.prompt, slot: null, template: null, edited: false };
+  });
+  const setPrompt = (p, template) => {
+    p.template = template;
+    const node = document.createTextNode(template);
+    p.box.replaceChildren(node);
+    if (p.slot) p.slot.node = node;
+    else slots.push((p.slot = { node, template }));
+    p.slot.template = template;
+    fill();
+  };
+  const agents = [...new Set(boxes.map((p) => p.agent).filter(Boolean))];
+  const editsFor = Object.fromEntries(agents.map((a) => [a, fetch(`/api/prompts?agent=${a}`, { cache: 'no-store' })
+    .then((res) => (res.ok ? res.json() : { steps: {} }))
+    .then((body) => body.steps || {})
+    .catch(() => ({}))]));
+  const loadPrompt = async (p) => {
+    p.box.textContent = 'Loading the prompt…';
+    const edit = p.agent ? (await editsFor[p.agent])[p.step] : undefined;
+    if (edit) { p.edited = true; return setPrompt(p, edit.trim()); }
+    p.edited = false;
+    try {
+      const res = await fetch(p.file, { cache: 'no-cache' });
+      if (!res.ok) throw new Error(res.status);
+      setPrompt(p, (await res.text()).trim());
+    } catch {
+      p.box.replaceChildren('This prompt didn’t load. Reload the page, or open ', Object.assign(document.createElement('a'), { href: p.file, textContent: p.file }), '.');
+    }
+  };
+  const promptsLoaded = Promise.all(boxes.map(loadPrompt));
+
+  // The instructor, signed in with the admin key (on the Admin or Pricer page,
+  // kept for this browser tab), can edit each step's prompt here.
+  let adminKey = '';
+  try { adminKey = sessionStorage.getItem('rc-admin-key') || ''; } catch { /* storage unavailable */ }
+  if (adminKey && boxes.some((p) => p.agent)) {
+    Promise.all([promptsLoaded, fetch('/api/admin/check', { headers: { authorization: `Bearer ${adminKey}` }, cache: 'no-store' })])
+      .then(([, res]) => { if (res.ok) boxes.filter((p) => p.agent).forEach(addEditor); })
+      .catch(() => {});
   }
+
+  function addEditor(p) {
+    const frame = p.box.closest('.prompt');
+    const head = frame?.querySelector('.prompt-head');
+    if (!head) return;
+    const make = (tag, props) => Object.assign(document.createElement(tag), props);
+    const label = head.querySelector('.prompt-kind');
+    const showLabel = () => { if (label) label.textContent = p.edited ? 'Sample prompt · edited by the instructor' : 'Sample prompt'; };
+    showLabel();
+    const editBtn = make('button', { type: 'button', className: 'btn', textContent: 'Edit' });
+    head.querySelector('[data-copy]')?.before(editBtn);
+
+    const area = make('textarea', { className: 'prompt-edit', rows: 12, spellcheck: true });
+    const note = make('p', { className: 'small muted prompt-edit-note', textContent: 'Write {{SITE}} for this site’s address and {{GROUP}} for the group name; students see them filled in.' });
+    const msg = make('span', { className: 'small', role: 'status' });
+    const save = make('button', { type: 'button', className: 'btn primary', textContent: 'Save' });
+    const reset = make('button', { type: 'button', className: 'btn', textContent: 'Back to the default' });
+    const cancel = make('button', { type: 'button', className: 'btn', textContent: 'Cancel' });
+    const bar = make('div', { className: 'prompt-edit-bar' });
+    bar.append(save, reset, cancel, msg);
+    const editor = make('div', { className: 'prompt-editor' });
+    editor.append(area, note, bar);
+    editor.hidden = true;
+    p.box.after(editor);
+
+    const open = (on) => {
+      editor.hidden = !on;
+      p.box.hidden = on;
+      editBtn.hidden = on;
+      reset.hidden = !p.edited;
+      msg.textContent = '';
+      if (on) { area.value = p.template || ''; area.focus(); }
+    };
+    const send = async (body) => {
+      msg.textContent = 'Saving…';
+      const res = await fetch('/api/prompts', {
+        method: 'POST',
+        headers: { authorization: `Bearer ${adminKey}`, 'content-type': 'application/json' },
+        body: JSON.stringify({ agent: p.agent, step: p.step, ...body }),
+      });
+      const out = await res.json().catch(() => ({}));
+      if (!res.ok) { msg.textContent = (out.errors || [`HTTP ${res.status}`]).join(' '); msg.className = 'small bad'; return null; }
+      msg.className = 'small';
+      return out;
+    };
+    editBtn.addEventListener('click', () => open(true));
+    cancel.addEventListener('click', () => open(false));
+    save.addEventListener('click', async () => {
+      const out = await send({ text: area.value });
+      if (!out) return;
+      p.edited = true;
+      setPrompt(p, out.text);
+      showLabel();
+      open(false);
+    });
+    reset.addEventListener('click', async () => {
+      if (!reset.dataset.armed) {
+        reset.dataset.armed = '1';
+        reset.textContent = 'Click again to go back to the text file';
+        setTimeout(() => { delete reset.dataset.armed; reset.textContent = 'Back to the default'; }, 4000);
+        return;
+      }
+      if (!(await send({ reset: true }))) return;
+      editsFor[p.agent] = Promise.resolve({});
+      await loadPrompt(p);
+      showLabel();
+      open(false);
+    });
+  }
+
   for (const a of document.querySelectorAll('a[href*="%7B%7BSITE%7D%7D"], a[href*="{{SITE}}"]')) {
     a.href = a.getAttribute('href').replace(/%7B%7BSITE%7D%7D|\{\{SITE\}\}/g, SITE);
   }

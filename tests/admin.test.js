@@ -149,3 +149,31 @@ for (const backend of BACKENDS) {
     });
   });
 }
+
+describe('edited sample prompts', { skip: BACKENDS[0].skip }, () => {
+  test('the admin edits a step’s prompt; everyone reads it; reset goes back to the file', async () => {
+    await BACKENDS[0].fresh();
+    const promptsApi = await import('../api/prompts.js');
+    const read = async (agent) => (await promptsApi.GET(new Request(`http://x/api/prompts?agent=${agent}`))).json();
+    const write = (body, key = process.env.ADMIN_KEY) =>
+      promptsApi.POST(new Request('http://x/api/prompts', { method: 'POST', headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' }, body: JSON.stringify(body) }));
+
+    assert.deepEqual((await read('scout')).steps, {});
+    assert.equal((await promptsApi.GET(new Request('http://x/api/prompts?agent=chef'))).status, 400);
+
+    const text = 'Build a web app called "Recipe Finder" for {{GROUP}} at {{SITE}}.';
+    assert.equal((await write({ agent: 'scout', step: 1, text }, 'wrong')).status, 401);
+    assert.equal((await write({ agent: 'scout', step: 1, text: 'short' })).status, 400);
+    const bad = await write({ agent: 'scout', step: 1, text: 'Use {{KEY}} to sign in to the coordinator.' });
+    assert.equal(bad.status, 400);
+    assert.match((await bad.json()).errors[0], /Unknown placeholder \{\{KEY\}\}/);
+
+    assert.equal((await write({ agent: 'scout', step: 1, text })).status, 200);
+    assert.equal((await write({ agent: 'planner', step: 3, text: `${text} (planner)` })).status, 200);
+    assert.deepEqual((await read('scout')).steps, { 1: text });
+    assert.deepEqual(Object.keys((await read('planner')).steps), ['3']);
+
+    assert.equal((await write({ agent: 'scout', step: 1, reset: true })).status, 200);
+    assert.deepEqual((await read('scout')).steps, {});
+  });
+});
