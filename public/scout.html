@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Recipe Scout · Recipe Coordinator</title>
-<meta name="description" content="Instructions and Lovable prompts for Agent 1, the Recipe Scout.">
+<meta name="description" content="Step-by-step Lovable prompts for Agent 1, the Recipe Scout.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=JetBrains+Mono:wght@400;500&family=Source+Sans+3:wght@400;600&display=swap">
@@ -43,76 +43,145 @@
     </ul>
   </div>
 
-  <h2 id="build">Build it in Lovable</h2>
-  <p>Paste these prompts into Lovable <strong>one at a time</strong>, and check the result before moving on. Your app uses Lovable Cloud for its backend and Lovable’s built-in AI for the agent, so the only key you need is the class key.</p>
-  <div class="callout warn"><p><strong>The class key never goes in a prompt.</strong> Prompt 1 asks Lovable to create a secret. Lovable then shows a secure box where you paste the key.</p></div>
-  <div class="panel group-box">
-    <label for="group-scout"><strong>Your group name</strong></label>
-    <p class="small muted" style="margin:4px 0 10px">Pick one name for your group and use it for both agents, e.g. <code>team-3</code>. It labels everything your agents save.</p>
-    <input class="group-input" id="group-scout" type="text" placeholder="e.g. team-3" autocomplete="off" spellcheck="false">
-    <p class="group-note small" aria-live="polite"></p>
-  </div>
+  <h2 id="build">Build it in Lovable, step by step</h2>
+  <p>Paste each step into Lovable <strong>one at a time</strong>, and check the result before moving on. Steps 1 to 3 build a working agent on its own. Step 4 connects it to the class coordinator. Your app uses Lovable Cloud for its backend and Lovable’s built-in AI for the agent, so the only key you need is the class key, in step 4.</p>
 
   <section class="prompt scout">
     <div class="prompt-head">
-      <p class="prompt-title"><span class="where">Prompt 1 of 4</span>Create the app and store your key</p>
+      <p class="prompt-title"><span class="where">Step 1 of 5</span>Create the app</p>
       <button class="btn" type="button" data-copy="p1">Copy</button>
     </div>
-    <div class="prompt-body" id="p1">Build a web app called "Recipe Scout" for a class exercise. It's an AI agent that finds real recipes for a theme and saves them to our class coordinator at {{SITE}}.
+    <div class="prompt-body" id="p1">Build a web app called "Recipe Scout" for a class exercise: an AI agent that finds real recipes for a theme.
 
 Enable Lovable Cloud so the app has a backend.
-
-Add a secret named COORDINATOR_KEY and ask me to enter its value. It is our class key. Only backend functions may use it: never put it in the page, the browser, or the code.
-
-Our group name is {{GROUP}}.
 
 For now, build one page with:
 - a text box for the theme, with the examples "cheap weeknight vegetarian dinners", "comfort food for a rainy day" and "15-minute lunches" as clickable chips
 - a "Run Recipe Scout" button
-- two empty panels side by side: "What the agent is doing" and "Saved recipes"</div>
+- two empty panels side by side: "What the agent is doing" and "Chosen recipes"</div>
   </section>
+  <p class="small muted step-check"><strong>You should see:</strong> the page with the theme box, the example chips, the button and two empty panels. Nothing happens yet when you press the button.</p>
 
   <section class="prompt scout">
     <div class="prompt-head">
-      <p class="prompt-title"><span class="where">Prompt 2 of 4</span>Add the tools</p>
+      <p class="prompt-title"><span class="where">Step 2 of 5</span>Search TheMealDB</p>
       <button class="btn" type="button" data-copy="p2">Copy</button>
     </div>
-    <div class="prompt-body" id="p2">Create the tools the agent will use, in backend code. No AI yet.
+    <div class="prompt-body" id="p2">Create the tools the agent will use to find recipes, in backend code. No AI yet.
 
-TheMealDB: read https://www.themealdb.com/AGENTS.md and follow it, using the free key "1". Build five tools: search_by_name, filter_by_ingredient, filter_by_category, filter_by_cuisine and get_recipe.
+Read https://www.themealdb.com/AGENTS.md and follow it, using the free key "1". Build five tools: search_by_name, filter_by_ingredient, filter_by_category, filter_by_cuisine and get_recipe. Each returns JSON, and an empty list when nothing is found.
 
-Our coordinator is an MCP server (Streamable HTTP) at {{SITE}}/api/mcp?agent=scout. Send the headers "Authorization: Bearer " + COORDINATOR_KEY and "X-Group: {{GROUP}}" on every request. Load its tools with tools/list and give them to the agent exactly as the server describes them: don't write the recipe format into our code. A result with "isError": true is a rejection to pass back to the agent, not a crash.
-
-Test the five TheMealDB tools once each, then list the coordinator's tools and call get_expectations. Show me the results. Don't call save_recipe yet.</div>
+Test each tool once and show me the results.</div>
   </section>
+  <p class="small muted step-check"><strong>You should see:</strong> five test results from TheMealDB. The filters return only an id, a name and a photo; <code>get_recipe</code> returns the full recipe with ingredients, measures and instructions.</p>
 
   <section class="prompt scout">
     <div class="prompt-head">
-      <p class="prompt-title"><span class="where">Prompt 3 of 4</span>Add the agent loop</p>
+      <p class="prompt-title"><span class="where">Step 3 of 5</span>Add the agent and show its choices</p>
       <button class="btn" type="button" data-copy="p3">Copy</button>
     </div>
-    <div class="prompt-body" id="p3">Add the agent: a backend function run-scout that uses Lovable AI with tool calling and all the tools above, plus finish(summary).
+    <div class="prompt-body" id="p3">Add the agent: a backend function run-scout that uses Lovable AI with tool calling, the five TheMealDB tools, and two more tools:
+- choose_recipe(meal_id, why_chosen): adds a recipe to this run's chosen recipes
+- finish(summary): ends the run
 
+How it runs:
 - Run the tools the model asks for and send back the results until it calls finish, or until 25 tool calls or 2 minutes (constants I can change). Record why it stopped.
-- Save every step (thought, tool call, result, error) to a table agent_steps as it happens, so the page can show them live.
+- Save every step (thought, tool call, result, error) to a table agent_steps as it happens.
 
 Instructions for the model:
-"You are Recipe Scout. First call get_expectations and follow it exactly. Find recipes with the TheMealDB tools and save them with save_recipe. If a save is rejected, fix every reason and try again. Call finish with a short summary when you're done."</div>
+"You are Recipe Scout. Find 5 real recipes on TheMealDB that fit the theme. Search in several ways, and call get_recipe to read the full recipe before choosing it. Never invent a recipe. Choose varied recipes, and call choose_recipe for each with one sentence on why it fits. Call finish when you have 5, or explain why the theme can't be met."
+
+Connect the page: "Run Recipe Scout" starts a run with the theme. "What the agent is doing" shows each step live. "Chosen recipes" shows each chosen recipe with its photo, name, cuisine and why it was chosen.</div>
   </section>
+  <p class="small muted step-check"><strong>You should see:</strong> press the button, watch the searches and look-ups appear one by one, and five recipe cards with photos fill “Chosen recipes”. Try a couple of themes before moving on.</p>
+
+  <h3 id="coordinator">Before step 4: your group name and the class key</h3>
+  <div class="panel group-box">
+    <label for="group-scout"><strong>Your group name</strong></label>
+    <p class="small muted" style="margin:4px 0 10px">Pick one name for your group and use it for both agents, e.g. <code>team-3</code>. It labels everything your agents save. Steps 4 and 5 fill it in.</p>
+    <input class="group-input" id="group-scout" type="text" placeholder="e.g. team-3" autocomplete="off" spellcheck="false">
+    <p class="group-note small" aria-live="polite"></p>
+  </div>
+  <div class="callout warn"><p><strong>The class key never goes in a prompt.</strong> Step 4 asks Lovable to create a secret. Lovable then shows a secure box where you paste the key.</p></div>
 
   <section class="prompt scout">
     <div class="prompt-head">
-      <p class="prompt-title"><span class="where">Prompt 4 of 4</span>Show the agent working</p>
+      <p class="prompt-title"><span class="where">Step 4 of 5</span>Save to the class coordinator</p>
       <button class="btn" type="button" data-copy="p4">Copy</button>
     </div>
-    <div class="prompt-body" id="p4">Connect the page to run-scout.
+    <div class="prompt-body" id="p4">Now save the chosen recipes to our class coordinator, so the Meal Planners can use them.
 
-- "Run Recipe Scout" starts a run and is disabled until it ends.
-- "What the agent is doing" shows the steps live: tool name and inputs, results collapsed (click for JSON), rejections in red, a counter like "12 / 25 tool calls" and the time left.
-- "Saved recipes" shows each accepted recipe: photo, name, cuisine, time and why_chosen. Link and credit TheMealDB as AGENTS.md asks.
-- Link "See it on the class database" to {{SITE}}/database
+Add a secret named COORDINATOR_KEY and ask me to enter its value. It is our class key. Only backend functions may use it: never put it in the page, the browser, or the code.
+
+The coordinator is an MCP server (Streamable HTTP) at {{SITE}}/api/mcp?agent=scout. Send the headers "Authorization: Bearer " + COORDINATOR_KEY and "X-Group: {{GROUP}}" on every request. Load its tools with tools/list and give them to the agent exactly as the server describes them: don't write the recipe format into our code. A result with "isError": true is a rejection to pass back to the agent, not a crash.
+
+First, list the coordinator's tools and call get_expectations. Show me the results.
+
+Then replace choose_recipe with the coordinator's save_recipe, rename "Chosen recipes" to "Saved recipes", and change the model's instructions to:
+"You are Recipe Scout. First call get_expectations and follow it exactly. Find recipes with the TheMealDB tools and save them with save_recipe. If a save is rejected, fix every reason and try again. Call finish with a short summary when you're done."</div>
+  </section>
+  <p class="small muted step-check"><strong>You should see:</strong> three coordinator tools and the brief from <code>get_expectations</code>: the goal, the rules and the recipe format. Then a run that starts with <code>get_expectations</code> and ends with five saved recipes on the <a href="/database">Database page</a> under your group.</p>
+
+  <section class="prompt scout">
+    <div class="prompt-head">
+      <p class="prompt-title"><span class="where">Step 5 of 5</span>Show the agent working</p>
+      <button class="btn" type="button" data-copy="p5">Copy</button>
+    </div>
+    <div class="prompt-body" id="p5">Improve the page:
+- "Run Recipe Scout" is disabled until the run ends.
+- "What the agent is doing" shows tool names and inputs, results collapsed (click for JSON), coordinator rejections in red, a counter like "12 / 25 tool calls" and the time left.
+- "Saved recipes": link and credit TheMealDB as AGENTS.md asks.
+- Add a link "See it on the class database" to {{SITE}}/database
 - Keep a list of past runs so I can reopen any earlier trace.</div>
   </section>
+  <p class="small muted step-check"><strong>You should see:</strong> a clear, live trace with a counter, rejections in red, and a list of past runs you can reopen.</p>
+
+  <h2 id="tweak">Tweak it</h2>
+  <p>Once it works, change how your agent behaves. Copy a tweak into Lovable as it is, or edit it first. Run the same theme before and after, and compare the traces.</p>
+  <div class="grid-2 tweaks">
+    <section class="prompt optional">
+      <div class="prompt-head">
+        <p class="prompt-title"><span class="where">After step 3</span>A tighter limit</p>
+        <button class="btn" type="button" data-copy="t1">Copy</button>
+      </div>
+      <div class="prompt-body" id="t1">Change the tool-call limit to 8. When the agent runs out, show a clear message in the trace saying how many recipes it managed to choose.</div>
+    </section>
+    <section class="prompt optional">
+      <div class="prompt-head">
+        <p class="prompt-title"><span class="where">After step 3</span>Plan before acting</p>
+        <button class="btn" type="button" data-copy="t2">Copy</button>
+      </div>
+      <div class="prompt-body" id="t2">Before its first tool call, have the agent write a short plan: which searches it will try and why. Show the plan at the top of the trace, and at the end show whether it stuck to it.</div>
+    </section>
+    <section class="prompt optional">
+      <div class="prompt-head">
+        <p class="prompt-title"><span class="where">After step 3</span>Show what it turned down</p>
+        <button class="btn" type="button" data-copy="t3">Copy</button>
+      </div>
+      <div class="prompt-body" id="t3">When the agent reads a recipe with get_recipe but doesn't choose it, have it say why in one sentence. Show these under the recipes as "Considered but not chosen".</div>
+    </section>
+    <section class="prompt optional">
+      <div class="prompt-head">
+        <p class="prompt-title"><span class="where">After step 3</span>Only quick recipes</p>
+        <button class="btn" type="button" data-copy="t4">Copy</button>
+      </div>
+      <div class="prompt-body" id="t4">Add a "Max time" dropdown next to the theme: any, 30, 45 or 60 minutes. Tell the agent to choose only recipes it estimates fit within that time, and to say how it estimated.</div>
+    </section>
+    <section class="prompt optional">
+      <div class="prompt-head">
+        <p class="prompt-title"><span class="where">After step 4</span>Learn from rejections</p>
+        <button class="btn" type="button" data-copy="t6">Copy</button>
+      </div>
+      <div class="prompt-body" id="t6">When the coordinator rejects a recipe, show its reasons next to that step in the trace, and mark whether the agent's next save fixed them. At the end of the run, show how many saves were rejected.</div>
+    </section>
+    <section class="prompt optional">
+      <div class="prompt-head">
+        <p class="prompt-title"><span class="where">After step 5</span>A stop button</p>
+        <button class="btn" type="button" data-copy="t5">Copy</button>
+      </div>
+      <div class="prompt-body" id="t5">Add a "Stop" button that ends the current run after the tool call in progress, and records "stopped by user" as the reason.</div>
+    </section>
+  </div>
 
   <h2 id="test">Test it</h2>
   <div class="grid-2">
@@ -132,7 +201,7 @@ Instructions for the model:
         <li><strong>Run the same theme twice.</strong> Does it notice the duplicates and pick new recipes?</li>
         <li><strong>A contradiction:</strong> “vegan sushi with beef”. Does it explain the problem, or invent something?</li>
         <li><strong>Nothing to find:</strong> “Antarctic street food”. Does it widen its search sensibly?</li>
-        <li><strong>A tight limit:</strong> set the limit to 8 tool calls. What does it do when it runs out?</li>
+        <li><strong>A tight limit:</strong> use the “tighter limit” tweak (8 tool calls). What does it do when it runs out?</li>
       </ul>
     </div>
   </div>
