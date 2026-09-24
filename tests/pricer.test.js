@@ -252,12 +252,14 @@ for (const backend of BACKENDS) {
       setPricerForTests({ model: scriptedModel([]) });
       assert.equal(await runQueue(), 0, 'cleared recipes are not priced until asked');
 
-      // Anyone can price one recipe, or all the unpriced ones.
-      assert.equal((await control('price', { meal_id: '11' }, 'no-key')).status, 200);
+      // Only the instructor prices on request.
+      assert.equal((await control('price', { meal_id: '11' }, 'no-key')).status, 401);
+      assert.equal((await control('price-unpriced', {}, 'no-key')).status, 401);
+      assert.equal((await control('price', { meal_id: '11' })).status, 200);
       await runQueue();
       q = (await pricer()).body;
       assert.deepEqual([q.counts.unpriced, q.counts.priced], [1, 1]);
-      assert.equal((await control('price-unpriced', {}, 'no-key')).body.queued, 1);
+      assert.equal((await control('price-unpriced')).body.queued, 1);
       setPricerForTests({ model: scriptedModel([]) });
       await runQueue();
       assert.equal((await pricer()).body.counts.priced, 2);

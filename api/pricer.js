@@ -3,17 +3,16 @@
 //   GET  /api/pricer                    every recipe and its price, and the agent's latest steps   (anyone)
 //   GET  /api/pricer?meal_id=…          one recipe: its shopping cart and every step               (anyone)
 //   GET  /api/pricer?test=latest|<id>   the latest (or one) test run                              (anyone)
-//   POST /api/pricer?action=…
-//     anyone:
+//   POST /api/pricer?action=…           the instructor's controls, with Authorization: Bearer <ADMIN_KEY>
 //        price           body {"meal_id": "…"} prices that recipe (again) from scratch
 //        price-unpriced  prices every recipe without a price (cleared, or couldn't be priced)
-//     instructor, with Authorization: Bearer <ADMIN_KEY>:
-//        prompt          body {"prompt": "…"} saves the agent's instructions; {"reset": true} goes back to the default
 //        test            body {"ingredients": ["1 onion", …], "serves": 4, "prompt"?: "…"} runs the agent on a short
 //                        list (with a draft of the instructions, if given); nothing is saved to the recipes
 //                        (one at a time, 30 an hour)
+//        prompt          body {"prompt": "…"} saves the agent's instructions; {"reset": true} goes back to the default
 //        clear-all       body {"confirm": "CLEAR"} removes every price (recipes stay unpriced until asked)
 //        reprice-all     body {"confirm": "REPRICE"} prices every recipe again
+// New recipes are priced automatically after each save; nobody needs to press anything for that.
 import { getStore } from '../lib/store/index.js';
 import { checkAdmin } from '../lib/admin.js';
 import { json, guarded } from '../lib/http.js';
@@ -45,8 +44,6 @@ export const GET = guarded(async (request) => {
   return json(200, { ...pricerInfo(), prompt, prompt_is_default: prompt === DEFAULT_PROMPT, default_prompt: DEFAULT_PROMPT, sample_ingredients: SAMPLE_INGREDIENTS, counts, pricings, activity });
 });
 
-const OPEN = new Set(['price', 'price-unpriced']);
-
 export const POST = guarded(async (request) => {
   const url = new URL(request.url);
   const action = url.searchParams.get('action') || '';
@@ -56,10 +53,8 @@ export const POST = guarded(async (request) => {
   } catch {
     body = {};
   }
-  if (!OPEN.has(action)) {
-    const auth = checkAdmin(request);
-    if (!auth.ok) return json(auth.status, { errors: [auth.error] });
-  }
+  const auth = checkAdmin(request);
+  if (!auth.ok) return json(auth.status, { errors: [auth.error] });
   const store = getStore();
   switch (action) {
     case 'prompt': {

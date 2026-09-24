@@ -43,7 +43,7 @@
 
   <div class="panel instructor-bar" id="signin">
     <form class="keycheck" id="signin-form" autocomplete="off">
-      <label class="small" for="admin-key" style="flex-basis:100%"><strong>Instructor tools:</strong> run tests, edit the agent’s instructions, reprice or clear all recipes. Sign in with the admin key <span class="muted">(ADMIN_KEY in Vercel; kept in this browser tab only)</span>.</label>
+      <label class="small" for="admin-key" style="flex-basis:100%"><strong>Instructor tools:</strong> run tests, edit the agent’s instructions, and price, reprice or clear recipes. Sign in with the admin key <span class="muted">(ADMIN_KEY in Vercel; kept in this browser tab only)</span>.</label>
       <input id="admin-key" type="password" placeholder="Paste the admin key" spellcheck="false">
       <button class="btn primary" type="submit">Sign in</button>
     </form>
@@ -88,19 +88,19 @@
     <p><strong>When does the agent run?</strong></p>
     <ul>
       <li><strong>By itself</strong>, as soon as a Scout saves a recipe. The recipe joins the queue and is priced within a few minutes; the agent works on one or two recipes at a time, a minute or two each.</li>
-      <li><strong>When you ask:</strong> <em>Price</em> or <em>Reprice</em> next to a recipe, or <em>Price unpriced recipes</em> for all the ones without a price.</li>
-      <li>After <em>Clear all prices</em>, nothing is priced again until someone asks.</li>
+      <li><strong>When the instructor asks</strong> (signed in above): <em>Price</em> or <em>Reprice</em> next to a recipe, <em>Price unpriced recipes</em>, or <em>Reprice all</em>.</li>
+      <li>After <em>Clear all prices</em>, nothing is priced again until the instructor asks.</li>
     </ul>
   </div>
   <div class="carts-bar">
     <p class="counts" id="counts" aria-live="polite"></p>
     <div class="row-actions">
-      <button class="btn primary small-btn" type="button" id="price-unpriced">Price unpriced recipes</button>
+      <button class="btn primary small-btn" type="button" id="price-unpriced" disabled title="Instructor only">Price unpriced recipes</button>
       <button class="btn small-btn" type="button" id="reprice-all" data-confirm="Click again: every recipe is priced again" title="Instructor only">Reprice all</button>
       <button class="btn danger small-btn" type="button" id="clear-all" data-confirm="Click again to remove every price" title="Instructor only">Clear all prices</button>
     </div>
   </div>
-  <p class="small muted" id="admin-note">Reprice all and Clear all prices are for the instructor: sign in above to use them.</p>
+  <p class="small muted" id="admin-note">Everyone can watch; pricing buttons are for the instructor (sign in above). New recipes are priced automatically.</p>
   <div class="carts-layout">
     <section class="recipe-list" id="queue" aria-label="Recipes"></section>
     <aside class="agent-feed" aria-live="polite">

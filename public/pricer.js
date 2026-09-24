@@ -97,6 +97,7 @@
       : 'Sign in with the admin key above to run a test.';
     $('reprice-all').disabled = !on;
     $('clear-all').disabled = !on;
+    $('price-unpriced').disabled = !on;
     $('admin-note').hidden = on;
     if (overview) renderQueue();
   }
@@ -319,7 +320,7 @@
           p.prompt_current === false ? el('span', { className: 'pill older', textContent: 'older instructions' }) : null)
         : el('div', { className: 'rl-price' }, pill(p.status),
           el('small', { textContent: p.status === 'pricing' ? `${p.lines_done ?? 0} of ${p.lines ?? '?'} ingredients` : p.status === 'pending' ? 'in the queue' : p.status === 'failed' ? (p.error || '').slice(0, 70) : 'not in the queue' }));
-      const canPrice = p.status !== 'pricing' && p.status !== 'pending' && !busy.has(p.meal_id);
+      const canPrice = Boolean(key) && p.status !== 'pricing' && p.status !== 'pending' && !busy.has(p.meal_id);
       const label = p.status === 'priced' || p.status === 'failed' ? 'Reprice' : 'Price';
       const open = p.meal_id === selected;
       const row = el('article', { className: `rl-row status-${p.status}${open ? ' open' : ''}` },
@@ -328,7 +329,7 @@
           el('div', { className: 'rl-name' }, el('strong', { textContent: p.name || `Recipe ${p.meal_id}` }), el('small', { className: 'muted', textContent: (p.groups || []).join(', ') })),
           price,
           el('div', { className: 'rl-actions' },
-            el('button', { type: 'button', className: 'btn small-btn', textContent: busy.has(p.meal_id) ? 'Queued…' : p.status === 'pending' ? 'Queued' : p.status === 'pricing' ? 'Pricing…' : label, disabled: !canPrice, onclick: () => priceOne(p.meal_id) }),
+            key ? el('button', { type: 'button', className: 'btn small-btn', textContent: busy.has(p.meal_id) ? 'Queued…' : p.status === 'pending' ? 'Queued' : p.status === 'pricing' ? 'Pricing…' : label, disabled: !canPrice, onclick: () => priceOne(p.meal_id) }) : null,
             el('button', { type: 'button', className: 'btn small-btn linklike-btn', textContent: open ? 'Hide cart' : 'Cart', 'aria-expanded': String(open), onclick: () => toggle(p.meal_id) }),
           ),
         ),
