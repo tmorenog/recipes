@@ -282,4 +282,17 @@
   });
 
   if (key) signIn(key);
+  // ---------------------------------------------------------------- Kroger
+  $('kroger-check').addEventListener('click', async () => {
+    const out = $('kroger-result');
+    out.textContent = 'Checking…';
+    out.className = 'small';
+    const r = await api('GET', 'kroger-check');
+    if (!r.ok) { out.textContent = r.errors.join(' '); out.className = 'small bad'; return; }
+    const b = r.body;
+    out.textContent = b.ok
+      ? `Works: signed in to ${new URL(b.server).host} and found ${b.stores_found} store${b.stores_found === 1 ? '' : 's'} near 45202.`
+      : b.errors.join(' ');
+    out.className = `small ${b.ok ? 'good' : 'bad'}`;
+  });
 })();

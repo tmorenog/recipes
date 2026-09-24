@@ -2,6 +2,7 @@
 //   Authorization: Bearer <ADMIN_KEY>
 //
 //   GET  /api/admin/check                   is the admin key right?
+//   GET  /api/admin/kroger-check            can the coordinator sign in to Kroger and find a store?
 //   GET  /api/admin/backup                  everything, as one JSON file
 //   POST /api/admin/restore                 body: a backup file; replaces everything
 //   POST /api/admin/reset                   body: {"confirm": "RESET"}; deletes everything
@@ -13,6 +14,7 @@
 // vercel.json rewrites /api/admin/{action} to this function with ?action=.
 import * as admin from '../lib/admin.js';
 import { json, guarded } from '../lib/http.js';
+import { checkKroger } from '../lib/kroger.js';
 
 function route(request) {
   const url = new URL(request.url);
@@ -31,6 +33,7 @@ export const GET = guarded(async (request) => {
   if (no) return no;
   const { action } = route(request);
   if (action === 'check') return json(200, { ok: true });
+  if (action === 'kroger-check') return json(200, await checkKroger());
   if (action === 'backup') {
     const data = await admin.backup();
     const stamp = data.exported_at.slice(0, 16).replace(/[:T]/g, '-');

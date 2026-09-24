@@ -29,6 +29,7 @@ You need a Vercel account and this repository on GitHub. Everything else happens
    | `CLASS_KEY` | A password for the whole class, e.g. from `openssl rand -hex 8`. Give it to every group. |
    | `ADMIN_KEY` | A different password, only for you: it opens the Admin page. |
    | `KROGER_CLIENT_ID`, `KROGER_CLIENT_SECRET` | From your app at [developer.kroger.com](https://developer.kroger.com) (product scope). Needed for the Pricer’s prices; everything else works without them. |
+   | `KROGER_API_BASE` (optional) | Only if your Kroger keys need a specific server: `https://api-ce.kroger.com/v1` (certification) or `https://api.kroger.com/v1`. Without it, production is tried first, then certification. The Admin page’s **Test Kroger** button shows which one works. |
    | `ANTHROPIC_API_KEY` | From [console.anthropic.com](https://console.anthropic.com). Runs the Pricer agent. |
    | `USDA_API_KEY` | Free from [api.data.gov/signup](https://api.data.gov/signup/). Nutrition for the Pricer; without it the shared, heavily limited `DEMO_KEY` is used. |
    | `PRICER_ZIP` (optional) | The ZIP code of the class’s Kroger store. Default `45202`. |

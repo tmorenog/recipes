@@ -67,7 +67,7 @@ test('explains bad input and Kroger problems in plain words', async () => {
   resetKroger();
   const rejected = await findStores({ zip: '45209' }, stubKroger({ tokenStatus: 401 }).fetchImpl);
   assert.equal(rejected.status, 503);
-  assert.match(rejected.errors[0], /check KROGER_CLIENT_ID/);
+  assert.match(rejected.errors[0], /Check KROGER_CLIENT_ID/);
 
   resetKroger();
   const limited = await searchProducts({ term: 'milk', store_id: '01400943' }, stubKroger({ productStatus: 429 }).fetchImpl);
@@ -77,4 +77,30 @@ test('explains bad input and Kroger problems in plain words', async () => {
   delete process.env.KROGER_CLIENT_ID;
   const off = await findStores({ zip: '45209' }, fetchImpl);
   assert.match(off.errors[0], /not set up yet/);
+});
+
+test('uses Kroger’s certification server when the keys only work there, and says why sign-in failed', async () => {
+  const seen = [];
+  const fetchImpl = async (url, init = {}) => {
+    seen.push(new URL(url).host);
+    const json = (status, body) => new Response(JSON.stringify(body), { status });
+    if (url.endsWith('/connect/oauth2/token')) {
+      if (url.includes('api-ce.')) return json(200, { access_token: 'ce-token', expires_in: 1800 });
+      return json(401, { error: 'unauthorized', error_description: 'invalid credentials' });
+    }
+    if (url.includes('/locations')) {
+      assert.equal(init.headers.authorization, 'Bearer ce-token');
+      return json(200, { data: [{ locationId: '1', name: 'Kroger', address: {} }] });
+    }
+    return json(404, {});
+  };
+  process.env.KROGER_CLIENT_ID = '  client-id\n'; // pasted with a space and a line break
+  const found = await findStores({ zip: '45209' }, fetchImpl);
+  assert.equal(found.ok, true);
+  assert.deepEqual(seen, ['api.kroger.com', 'api-ce.kroger.com', 'api-ce.kroger.com']);
+
+  resetKroger();
+  const refusing = async (url) => new Response(JSON.stringify({ error: 'unauthorized', error_description: 'invalid credentials' }), { status: 401 });
+  const res = await findStores({ zip: '45209' }, refusing);
+  assert.match(res.errors[0], /api\.kroger\.com said “unauthorized: invalid credentials”; api-ce\.kroger\.com said/);
 });

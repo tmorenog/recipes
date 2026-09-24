@@ -426,3 +426,6 @@ h2 .count { font: 500 15px var(--mono); color: var(--muted); margin-left: 6px; }
 .prompt-edit-bar .bad { color: var(--bad-ink); }
 .prompt-head > .btn { margin-left: auto; }
 .prompt-head > .btn + .btn { margin-left: 6px; }
+
+#kroger-result.good { color: var(--good-ink); }
+#kroger-result.bad { color: var(--bad-ink); }

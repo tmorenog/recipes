@@ -49,6 +49,13 @@
       <p class="small" style="margin-top:0">While you’re signed in here, every step on the <a href="/scout">Recipe Scout</a> and <a href="/planner">Meal Planner</a> pages has an <strong>Edit</strong> button: change a sample prompt, save it, and every student sees the new version. <strong>Back to the default</strong> returns a step to its original text. The Pricer agent’s own instructions are on the <a href="/pricer">Pricer page</a>.</p>
     </div>
 
+    <h2>Kroger</h2>
+    <div class="panel">
+      <p class="small" style="margin-top:0">The Pricer signs in to Kroger with <code>KROGER_CLIENT_ID</code> and <code>KROGER_CLIENT_SECRET</code>. This checks that they work and that Kroger finds a store.</p>
+      <button class="btn" type="button" id="kroger-check">Test Kroger</button>
+      <p class="small" id="kroger-result" aria-live="polite"></p>
+    </div>
+
     <h2>Backup and restore</h2>
     <div class="grid-2">
       <div class="panel">
