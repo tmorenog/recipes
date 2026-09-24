@@ -17,6 +17,7 @@
     node.append(...children.filter((c) => c != null && c !== false));
     return node;
   };
+  const safeUrl = (u) => (typeof u === 'string' && /^https?:\/\//i.test(u) ? u : null);
   const money = (n) => (n == null ? '–' : `$${Number(n).toFixed(2)}`);
   const when = (iso) => new Date(iso).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
 
@@ -84,6 +85,7 @@
     try { sessionStorage.setItem(STORE, key); } catch { /* ignore */ }
     $('signin').hidden = true;
     $('admin').hidden = false;
+    describeSample();
     await load();
   }
 
@@ -158,22 +160,41 @@
       if (res.ok) toast(`Deleted “${r.name}”.`); else toast(res.errors.join('; '), true);
       await load();
     });
+    const src = safeUrl(r.image_url);
+    const groups = r.picked_by?.length ? r.picked_by : [r.group];
+    const themes = [...new Set((r.picks?.length ? r.picks : [{ theme: r.theme }]).map((p) => p.theme))];
     return el('tr', {},
-      el('td', {}, el('strong', { textContent: r.name }), el('div', { className: 'small muted mono', textContent: r.id })),
-      el('td', { textContent: r.group }),
-      el('td', { textContent: r.theme }),
+      el('td', {}, el('div', { className: 'admin-recipe' },
+        src ? el('img', { src: /themealdb\.com\/images\/media\/meals\/[^/]+\.(jpg|png)$/i.test(src) ? `${src}/small` : src, alt: '', loading: 'lazy' }) : el('span', { className: 'thumb-blank' }),
+        el('div', {}, el('strong', { textContent: r.name }), el('div', { className: 'small muted', textContent: [r.cuisine, r.category, `meal ${r.meal_id}`].filter(Boolean).join(' · ') }),
+          el('div', { className: 'small muted mono', textContent: r.id })))),
+      el('td', {}, el('div', { className: 'small', textContent: groups.join(', ') }), el('div', { className: 'small muted', textContent: themes.join(' · ') })),
+      el('td', {}, priceText(r)),
       el('td', {}, el('span', { className: `pill ${r.status}`, textContent: r.status === 'new' ? 'New' : `Processed${r.processed_by ? ` by ${r.processed_by}` : ''}` })),
       el('td', { className: 'nowrap', textContent: when(r.created_at) }),
       el('td', {}, el('div', { className: 'row-actions' }, edit, flip, del)));
   }
 
+  const PRICE_TEXT = { unpriced: 'Not priced', pending: 'Waiting', pricing: 'Being priced', failed: 'Couldn’t price' };
+  function priceText(r) {
+    const p = r.pricing || { status: 'pending' };
+    if (p.status !== 'priced') return el('span', { className: `pill price-${p.status}`, textContent: PRICE_TEXT[p.status] || p.status });
+    return el('div', {}, el('strong', { textContent: `${money(p.cost_per_serving_usd)}` }), el('span', { className: 'small', textContent: ' a serving' }),
+      el('div', { className: 'small muted', textContent: `cart ${money(p.cart_usd)} for ${p.people}` }),
+      p.estimated ? el('span', { className: 'pill estimated', style: 'margin-left:0', textContent: 'Includes estimates', title: `${p.estimated_lines} line${p.estimated_lines === 1 ? '' : 's'} estimated, not Kroger prices` }) : null);
+  }
+
   function renderRecipes() {
     const group = $('f-group').value;
     const q = $('f-search').value.trim().toLowerCase();
-    const groups = [...new Set(data.recipes.map((r) => r.group))].sort();
+    const price = $('f-price').value;
+    const priced = (r) => r.pricing?.status === 'priced';
+    const groups = [...new Set(data.recipes.flatMap((r) => r.picked_by?.length ? r.picked_by : [r.group]))].sort();
     const current = group;
     $('f-group').replaceChildren(new Option('All groups', ''), ...groups.map((g) => new Option(g, g, false, g === current)));
-    const shown = data.recipes.filter((r) => (!group || r.group === group) && (!q || `${r.name} ${r.theme}`.toLowerCase().includes(q)));
+    const shown = data.recipes.filter((r) => (!group || (r.picked_by?.length ? r.picked_by : [r.group]).includes(group))
+      && (!q || `${r.name} ${(r.picks || []).map((p) => p.theme).join(' ')} ${r.theme}`.toLowerCase().includes(q))
+      && (!price || (price === 'priced' ? priced(r) : price === 'estimated' ? priced(r) && r.pricing.estimated : !priced(r))));
     $('n-recipes').textContent = `${shown.length} of ${data.recipes.length}`;
     $('recipes').replaceChildren(...shown.flatMap((r) => (editing === r.id ? [recipeRow(r), editor(r)] : [recipeRow(r)])));
     if (!shown.length) $('recipes').append(el('tr', {}, el('td', { colSpan: 6, className: 'muted', textContent: data.recipes.length ? 'No recipes match.' : 'No recipes yet.' })));
@@ -207,6 +228,7 @@
 
   $('f-group').addEventListener('change', renderRecipes);
   $('f-search').addEventListener('input', renderRecipes);
+  $('f-price').addEventListener('change', renderRecipes);
 
   // ---------------------------------------------------------------- backup
   $('backup').addEventListener('click', async () => {
@@ -280,6 +302,25 @@
     if (res.ok) toast('Everything was deleted. The database is empty.'); else toast(res.errors.join('; '), true);
     await load();
   });
+
+  // ---------------------------------------------------------------- sample database
+  $('sample-word').addEventListener('input', () => { $('load-sample').disabled = $('sample-word').value.trim() !== 'SAMPLE'; });
+  $('load-sample').addEventListener('click', async () => {
+    $('load-sample').disabled = true;
+    const prices = $('sample-prices').checked;
+    const res = await api('POST', 'load-sample', { body: { confirm: 'SAMPLE', prices } });
+    $('sample-word').value = '';
+    if (res.ok) {
+      toast(`Loaded the sample database: ${res.body.counts.recipes} recipes, ${prices ? 'with ready-made (estimated) prices' : 'queued for the Pricer'}.`);
+    } else {
+      toast(res.errors.join('; '), true);
+    }
+    await load();
+  });
+  async function describeSample() {
+    const r = await api('GET', 'sample');
+    if (r.ok) $('sample-what').textContent = `${r.body.recipes} real TheMealDB recipes picked by ${r.body.groups.length} groups (${r.body.groups.join(', ')}), ${r.body.picks - r.body.recipes} of them by two groups`;
+  }
 
   if (key) signIn(key);
   // ---------------------------------------------------------------- Kroger

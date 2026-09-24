@@ -147,6 +147,28 @@ for (const backend of BACKENDS) {
       assert.equal((await admin('POST', 'restore', { body: 'not json' })).status, 400);
       assert.equal((await listAll()).length, 2, 'nothing was replaced');
     });
+
+    test('loads the fixed sample database, with or without ready-made prices', async () => {
+      await saveRecipes('team-9', 1);
+      assert.equal((await admin('POST', 'load-sample', { body: {} })).status, 400, 'needs the confirm word');
+      assert.equal((await admin('GET', 'sample')).body.recipes, 20);
+
+      const res = await admin('POST', 'load-sample', { body: { confirm: 'SAMPLE' } });
+      assert.equal(res.status, 200, JSON.stringify(res.body));
+      const first = await listAll();
+      assert.equal(first.length, 20);
+      assert.ok(!first.some((r) => r.group === 'team-9'), 'everything was replaced');
+      assert.ok(first.every((r) => r.pricing.status === 'priced' && r.pricing.estimated && r.pricing.cost_per_serving_usd > 0));
+      assert.ok(first.some((r) => r.pick_count > 1), 'some recipes were picked by two groups');
+
+      // Loading again gives exactly the same recipes.
+      await admin('POST', 'load-sample', { body: { confirm: 'SAMPLE' } });
+      const key = (r) => [r.id, r.meal_id, r.name, r.pick_count, r.pricing.cost_per_serving_usd];
+      assert.deepEqual((await listAll()).map(key).sort(), first.map(key).sort());
+
+      await admin('POST', 'load-sample', { body: { confirm: 'SAMPLE', prices: false } });
+      assert.ok((await listAll()).every((r) => r.pricing.status === 'pending'), 'the Pricer prices them');
+    });
   });
 }
 

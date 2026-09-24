@@ -6,6 +6,8 @@
 //   GET  /api/admin/backup                  everything, as one JSON file
 //   POST /api/admin/restore                 body: a backup file; replaces everything
 //   POST /api/admin/reset                   body: {"confirm": "RESET"}; deletes everything
+//   GET  /api/admin/sample                  what the sample database holds
+//   POST /api/admin/load-sample             body: {"confirm": "SAMPLE", "prices": true}; replaces everything with it
 //   POST /api/admin/recipe?id=…             body: fields to change
 //   POST /api/admin/delete-recipe?id=…
 //   POST /api/admin/delete-plan?id=…
@@ -34,6 +36,7 @@ export const GET = guarded(async (request) => {
   const { action } = route(request);
   if (action === 'check') return json(200, { ok: true });
   if (action === 'kroger-check') return json(200, await checkKroger());
+  if (action === 'sample') return json(200, admin.sampleSummary());
   if (action === 'backup') {
     const data = await admin.backup();
     const stamp = data.exported_at.slice(0, 16).replace(/[:T]/g, '-');
@@ -60,6 +63,7 @@ export const POST = guarded(async (request) => {
       return reply(await admin.restore(input));
     }
     case 'reset': return reply(await admin.reset(await body()));
+    case 'load-sample': return reply(await admin.loadSample(await body()));
     case 'recipe': return reply(await admin.updateRecipe(id, await body()));
     case 'delete-recipe': return reply(await admin.deleteRecipe(id));
     case 'delete-plan': return reply(await admin.deletePlan(id));

@@ -151,10 +151,10 @@
     el('span', { className: 'feed-what', textContent: feedWhat(s) }));
 
   // ---------------------------------------------------------------- 1. test runs
-  async function runTest(useDraft) {
+  async function runTest() {
     const ingredients = $('test-lines').value.split('\n').map((l) => l.trim()).filter(Boolean);
     const body = { name: $('test-name').value.trim() || undefined, ingredients, serves: Number($('test-serves').value) || 4 };
-    if (useDraft || promptDirty) body.prompt = $('prompt').value;
+    if (promptDirty) body.prompt = $('prompt').value; // unsaved instructions are tried as they are
     $('run-test').disabled = true;
     const r = await control('test', body);
     if (!r.ok) {
@@ -165,8 +165,7 @@
     await loadTest(r.body.id);
     schedule();
   }
-  $('run-test').addEventListener('click', () => runTest(false));
-  $('test-draft').addEventListener('click', () => runTest(true));
+  $('run-test').addEventListener('click', runTest);
 
   async function loadTest(id = 'latest') {
     try {
@@ -180,29 +179,6 @@
       return;
     }
     renderTest();
-  }
-
-  // One card per ingredient: the product the agent chose, with its picture.
-  function productCard(line, e, pendingText) {
-    if (!e) return el('li', { className: 'product-card waiting' }, el('div', { className: 'pc-img blank' }), el('div', { className: 'pc-body' }, el('p', { className: 'pc-line', textContent: line }), el('p', { className: 'muted small', textContent: pendingText })));
-    if (e.status === 'skipped') {
-      return el('li', { className: 'product-card skipped' }, el('div', { className: 'pc-img blank', textContent: '—' }),
-        el('div', { className: 'pc-body' }, el('p', { className: 'pc-line', textContent: line }), el('p', { className: 'muted small', textContent: `Not bought: ${e.reason}` })));
-    }
-    const p = e.product;
-    const img = safeUrl(p.image_url);
-    return el('li', { className: `product-card${e.status === 'estimated' ? ' estimated' : ''}` },
-      img ? el('img', { className: 'pc-img', src: img, alt: '', loading: 'lazy' }) : el('div', { className: 'pc-img blank' }),
-      el('div', { className: 'pc-body' },
-        el('p', { className: 'pc-line', textContent: line }),
-        el('p', { className: 'pc-product' }, p.description, p.on_sale ? el('span', { className: 'pill sale', textContent: 'On sale' }) : null,
-          e.status === 'estimated' ? el('span', { className: 'pill estimated', textContent: 'Estimated price', title: e.reason || '' }) : null),
-        el('p', { className: 'small muted', textContent: [p.size, p.brand].filter(Boolean).join(' · ') }),
-        el('p', { className: 'pc-price' }, el('strong', { textContent: `${e.packages} × ${money(p.price_usd)} = ${money(e.cost_to_buy_usd)}` })),
-        el('p', { className: 'small muted', textContent: `Uses ${num(e.amount_used, 2)} ${e.unit_used} · ${money(e.cost_used_usd)} worth${e.note ? ` · ${e.note}` : ''}` }),
-        e.status === 'estimated' ? el('p', { className: 'small estimated-why', textContent: `Not from Kroger: ${e.reason}` }) : null,
-      ),
-    );
   }
 
   function tiles(cart, used, people, estimated = 0) {
@@ -236,8 +212,10 @@
       title,
       status,
       t.status === 'done' ? tiles(t.totals?.cart_usd, t.totals?.cost_used_usd, t.people, t.totals?.estimated_lines) : null,
-      el('ul', { className: 'product-cards' }, t.ingredients.map((line, i) => productCard(line, byLine.get(i + 1), running ? 'Not yet…' : '–'))),
       t.summary ? el('p', { className: 'cart-summary' }, el('strong', { textContent: 'The agent’s summary: ' }), t.summary) : null,
+      cartTable(t.ingredients.map((line) => ({ name: line })), byLine, {
+        running, priced: t.status === 'done', people: t.people, toBuy: t.totals?.cart_usd, used: t.totals?.cost_used_usd,
+      }),
     ].filter(Boolean));
 
     // The agent's output for this test, on the right, newest first.
@@ -266,28 +244,11 @@
     promptDirty = $('prompt').value !== overview?.prompt;
     showPromptState();
   });
-  async function savePrompt({ reprice }) {
+  $('save-prompt').addEventListener('click', async () => {
     const r = await control('prompt', { prompt: $('prompt').value });
     if (!r.ok) return toast(r.errors.join(' '), true);
     promptDirty = false;
-    if (reprice) {
-      const q = await control('reprice-all', { confirm: 'REPRICE' });
-      toast(q.ok ? `Saved. ${q.body.queued} recipe${q.body.queued === 1 ? ' is' : 's are'} queued to be priced again with these instructions.` : q.errors.join(' '), !q.ok);
-      $('carts').scrollIntoView({ behavior: 'smooth', block: 'start' });
-    } else {
-      toast('Saved. Recipes priced from now on use these instructions.');
-    }
-    refresh();
-  }
-  $('save-prompt').addEventListener('click', () => savePrompt({ reprice: false }));
-  $('save-reprice').addEventListener('click', (e) => { if (confirmed(e.currentTarget)) savePrompt({ reprice: true }); });
-  $('reset-prompt').addEventListener('click', async (e) => {
-    if (!confirmed(e.currentTarget)) return;
-    const r = await control('prompt', { reset: true });
-    if (!r.ok) return toast(r.errors.join(' '), true);
-    promptDirty = false;
-    $('prompt').value = r.body.prompt;
-    toast('Back to the default instructions.');
+    toast('Saved. Recipes priced from now on use these instructions; Reprice all (section 3) applies them to the rest.');
     refresh();
   });
 
@@ -447,15 +408,14 @@
     return `Couldn’t be priced: ${(d.error || 'unknown reason').replace(/\.$/, '')}.`;
   }
 
-  // One recipe's cart and steps, shown under its row.
-  function detailBody(d) {
-    const r = d.recipe || {};
-    const lines = r.ingredients || [];
-    const byLine = new Map((d.basket || []).map((e) => [e.line, e]));
+  // The cart as a table, one row per ingredient line: used for the recipes'
+  // carts and for the test on the sample list.
+  function cartTable(lines, byLine, { running, priced, people, toBuy, used }) {
     const rows = lines.map((ing, i) => {
       const e = byLine.get(i + 1);
-      const what = el('td', {}, el('strong', { textContent: ing.name }), el('br'), el('span', { className: 'small muted', textContent: ing.raw || 'no amount' }));
-      if (!e) return el('tr', { className: 'waiting' }, el('td', { textContent: String(i + 1) }), what, el('td', { colSpan: 4, className: 'muted', textContent: d.status === 'pricing' ? 'Not yet…' : '–' }));
+      const what = el('td', {}, el('strong', { textContent: ing.name }), ing.raw !== undefined ? el('br') : null,
+        ing.raw !== undefined ? el('span', { className: 'small muted', textContent: ing.raw || 'no amount' }) : null);
+      if (!e) return el('tr', { className: 'waiting' }, el('td', { textContent: String(i + 1) }), what, el('td', { colSpan: 4, className: 'muted', textContent: running ? 'Not yet…' : '–' }));
       if (e.status === 'skipped') return el('tr', { className: 'skipped' }, el('td', { textContent: String(i + 1) }), what, el('td', { colSpan: 4, className: 'muted' }, 'Not bought: ', e.reason));
       const p = e.product;
       const img = safeUrl(p.image_url);
@@ -471,16 +431,24 @@
         el('td', { className: 'num' }, `${num(e.amount_used, 2)} ${e.unit_used}`, el('br'), el('span', { className: 'small muted', textContent: `${money(e.cost_used_usd)} used` })),
       );
     });
+    return el('div', { className: 'table-wrap cart' }, el('table', {},
+      el('thead', {}, el('tr', {}, ...['#', 'Ingredient', 'Kroger product', 'Buy', 'Line total', 'Recipe uses'].map((h) => el('th', { textContent: h })))),
+      el('tbody', {}, rows),
+      priced ? el('tfoot', {}, el('tr', {}, el('td', {}), el('td', { colSpan: 3, textContent: `Cart for ${people} people` }),
+        el('td', { className: 'num' }, el('strong', { textContent: money(toBuy) })), el('td', { className: 'num', textContent: `${money(used)} used` }))) : null));
+  }
+
+  // One recipe's cart and steps, shown under its row.
+  function detailBody(d) {
+    const r = d.recipe || {};
+    const lines = r.ingredients || [];
+    const byLine = new Map((d.basket || []).map((e) => [e.line, e]));
     return [
       el('p', { className: 'detail-status' }, pill(d.status), ' ', statusSentence(d, lines.length),
         /^\d+$/.test(d.meal_id) ? el('a', { className: 'small', href: `https://www.themealdb.com/meal/${d.meal_id}`, target: '_blank', rel: 'noopener', textContent: ' Recipe on TheMealDB' }) : null),
       d.status === 'priced' ? tiles(d.to_buy_usd, d.total_cost_usd, d.people, (d.basket || []).filter((x) => x.status === 'estimated').length) : null,
       d.summary ? el('p', { className: 'cart-summary' }, el('strong', { textContent: 'The agent’s summary: ' }), d.summary) : null,
-      el('div', { className: 'table-wrap cart' }, el('table', {},
-        el('thead', {}, el('tr', {}, ...['#', 'Ingredient', 'Kroger product', 'Buy', 'Line total', 'Recipe uses'].map((h) => el('th', { textContent: h })))),
-        el('tbody', {}, rows),
-        d.status === 'priced' ? el('tfoot', {}, el('tr', {}, el('td', {}), el('td', { colSpan: 3, textContent: `Cart for ${d.people} people` }),
-          el('td', { className: 'num' }, el('strong', { textContent: money(d.to_buy_usd) })), el('td', { className: 'num', textContent: `${money(d.total_cost_usd)} used` }))) : null)),
+      cartTable(lines, byLine, { running: d.status === 'pricing', priced: d.status === 'priced', people: d.people, toBuy: d.to_buy_usd, used: d.total_cost_usd }),
       trace(d.steps, { open: d.status === 'pricing', toolCalls: d.tool_calls }),
     ].filter(Boolean);
   }

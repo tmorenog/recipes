@@ -53,7 +53,7 @@
   <p class="toast" id="toast" role="status" aria-live="polite" hidden></p>
 
   <h2 id="instructions"><span class="section-num">1</span>Its instructions</h2>
-  <p>The prompt the agent follows: how many people the cart feeds, how to choose products, and when to skip an ingredient. Try a change on a sample list in section 2 before saving it. Saving changes it for recipes priced from then on; <strong>Save and re-price every recipe</strong> also applies it to the recipes already priced.</p>
+  <p>The prompt the agent follows: how many people the cart feeds, how to choose products, and when to skip an ingredient. A test in section 2 uses what’s in the box, saved or not, so you can try a change before saving it. Saved instructions apply to recipes priced from then on; <strong>Reprice all</strong> in section 3 applies them to the rest.</p>
   <div class="prompt pricer">
     <div class="prompt-head">
       <p class="prompt-kind" id="prompt-kind">Prompt</p>
@@ -62,10 +62,7 @@
     <textarea class="prompt-edit" id="prompt" rows="16" spellcheck="true" readonly aria-label="The Pricer agent's prompt"></textarea>
   </div>
   <div class="row-actions prompt-actions" id="prompt-actions" hidden>
-    <button class="btn" type="button" id="test-draft">Test these instructions</button>
     <button class="btn primary" type="button" id="save-prompt">Save</button>
-    <button class="btn primary" type="button" id="save-reprice" data-confirm="Click again: every recipe will be priced again">Save and re-price every recipe</button>
-    <button class="btn" type="button" id="reset-prompt" data-confirm="Click again to go back to the default">Back to the default</button>
   </div>
 
   <h2 id="try"><span class="section-num">2</span>Try it on a sample list</h2>

@@ -13,8 +13,11 @@
     group: params.get('group') || '',
     theme: params.get('theme') || '',
     status: params.get('status') || '',
+    price: params.get('price') || '',
+    sort: params.get('sort') || 'newest',
     result: params.get('result') || '',
   };
+  const openRows = new Set(); // recipes whose details are showing
   const data = { recipes: [], plans: [], activity: [] };
   let lastOk = null;
 
@@ -47,7 +50,8 @@
   function syncUrl() {
     const p = new URLSearchParams();
     if (state.view !== 'recipes') p.set('view', state.view);
-    for (const k of ['group', 'theme', 'status', 'result']) if (state[k]) p.set(k, state[k]);
+    for (const k of ['group', 'theme', 'status', 'price', 'result']) if (state[k]) p.set(k, state[k]);
+    if (state.view === 'recipes' && state.sort !== 'newest') p.set('sort', state.sort);
     history.replaceState(null, '', p.toString() ? `?${p}` : location.pathname);
   }
 
@@ -58,76 +62,98 @@
   }
 
   // ---------------------------------------------------------------- recipes
-  function recipeCard(r) {
-    const node = $('recipe-card').content.firstElementChild.cloneNode(true);
-    node.dataset.id = r.id;
-    node.classList.toggle('is-processed', r.status === 'processed');
-    const photo = node.querySelector('.photo');
-    const img = photo.querySelector('img');
-    const src = safeUrl(r.image_url);
-    if (src) {
-      img.src = src;
-      img.alt = r.name;
-      img.addEventListener('error', () => { img.remove(); photo.classList.add('noimg'); }, { once: true });
+  const PRICE_TEXT = { unpriced: 'Not priced', pending: 'Waiting to be priced', pricing: 'Being priced…', failed: 'Couldn’t be priced' };
+
+  // The Pricer's result: cost per serving, whether any of it is estimated, or where it's up to.
+  function priceCell(r) {
+    const p = r.pricing || { status: 'pending' };
+    const cell = el('div', { className: 'db-price', role: 'cell' });
+    if (p.status === 'priced') {
+      cell.append(
+        el('a', { className: 'db-money', href: `/pricer#${encodeURIComponent(r.meal_id)}`, title: 'See the cart on the Pricer page' },
+          el('strong', { textContent: money(p.cost_per_serving_usd) }), el('span', { textContent: ' a serving' })),
+        el('small', { className: 'muted', textContent: `cart ${money(p.cart_usd)} for ${p.people}${p.priced_at ? ` · ${ago(p.priced_at)}` : ''}` }),
+        p.estimated
+          ? el('span', { className: 'pill estimated', textContent: 'Includes estimates', title: `${p.estimated_lines} line${p.estimated_lines === 1 ? '' : 's'} estimated, not Kroger prices` })
+          : el('span', { className: 'pill price-priced', textContent: 'Kroger prices' }),
+      );
     } else {
-      img.remove();
-      photo.classList.add('noimg');
+      cell.append(el('span', { className: `pill price-${p.status}`, textContent: PRICE_TEXT[p.status] || p.status }));
     }
-    const pill = node.querySelector('.pill');
-    pill.textContent = r.status === 'new' ? 'New' : 'Processed';
-    pill.classList.add(r.status);
-    // Each recipe is stored once; every group that picked it is shown (its popularity).
-    const groups = r.picked_by?.length ? r.picked_by : [r.group];
-    const themes = [...new Set((r.picks || []).map((p) => p.theme))];
-    node.querySelector('.chip').replaceWith(
-      ...(groups.length > 1 ? [el('span', { className: 'picks-count', textContent: `Picked by ${groups.length} groups` })] : []),
-      ...groups.map(chip),
-    );
-    node.querySelector('.theme').textContent = (themes.length ? themes : [r.theme]).join(' · ');
-    const link = node.querySelector('.name a');
-    link.textContent = r.name;
+    return cell;
+  }
+
+  function recipeRow(r) {
+    const src = safeUrl(r.image_url);
+    const thumb = src
+      ? el('img', { className: 'db-thumb', src: /themealdb\.com\/images\/media\/meals\/[^/]+\.(jpg|png)$/i.test(src) ? `${src}/small` : src, alt: '', loading: 'lazy' })
+      : el('span', { className: 'db-thumb blank', textContent: 'No photo' });
+    thumb.addEventListener?.('error', () => thumb.replaceWith(el('span', { className: 'db-thumb blank', textContent: 'No photo' })), { once: true });
+
+    const link = el('a', { textContent: r.name, target: '_blank', rel: 'noopener' });
     // TheMealDB asks apps to link each meal to its page there.
     if (/^\d+$/.test(r.meal_id)) link.href = `https://www.themealdb.com/meal/${r.meal_id}`;
     else if (safeUrl(r.source_url)) link.href = r.source_url;
-    node.querySelector('.meta').textContent = [r.cuisine, r.category, r.est_minutes && `${r.est_minutes} min`, r.est_servings && `serves ${r.est_servings}`]
-      .filter(Boolean).join(' · ');
-    const whys = (r.picks || []).filter((p) => p.why_chosen);
-    node.querySelector('.why').textContent = whys.length > 1 ? whys.map((p) => `${p.group}: ${p.why_chosen}`).join('  ·  ') : r.why_chosen;
-    // What the Pricer agent found: the cost per serving, or where it's up to.
-    const p = r.pricing || { status: 'pending' };
-    const price = node.querySelector('.price');
-    price.href = `/pricer#${encodeURIComponent(r.meal_id)}`;
-    price.className = `price price-${p.status}`;
-    price.textContent = p.status === 'priced'
-      ? `$${p.cost_per_serving_usd.toFixed(2)} a serving${p.estimated ? ' · includes estimated prices' : ''}`
-      : { unpriced: 'Not priced', pending: 'Waiting to be priced', pricing: 'Being priced…', failed: 'Couldn’t be priced' }[p.status] || p.status;
+    const meta = [r.cuisine, r.category, r.est_minutes && `${r.est_minutes} min`, r.est_servings && `serves ${r.est_servings}`].filter(Boolean).join(' · ');
+
+    // Each recipe is stored once; every group that picked it is shown (its popularity).
+    const groups = r.picked_by?.length ? r.picked_by : [r.group];
+    const themes = [...new Set((r.picks?.length ? r.picks : [{ theme: r.theme }]).map((p) => p.theme))];
+    const open = openRows.has(r.id);
+    const toggle = el('button', { type: 'button', className: 'btn small-btn linklike-btn', textContent: open ? 'Hide' : 'Details', 'aria-expanded': String(open) });
+    toggle.addEventListener('click', () => { if (open) openRows.delete(r.id); else openRows.add(r.id); render(); });
+
+    const row = el('div', { className: `db-row${r.status === 'processed' ? ' is-processed' : ''}${open ? ' open' : ''}`, role: 'row' },
+      thumb,
+      el('div', { className: 'db-name', role: 'cell' }, el('strong', {}, link), el('small', { className: 'muted', textContent: meta })),
+      el('div', { className: 'db-picks', role: 'cell' },
+        el('span', { className: 'db-count', textContent: groups.length === 1 ? '1 group' : `${groups.length} groups` }),
+        el('span', { className: 'db-chips' }, ...groups.map(chip)),
+        el('small', { className: 'muted', textContent: themes.join(' · ') })),
+      priceCell(r),
+      el('div', { className: 'db-status', role: 'cell' },
+        el('span', { className: `pill ${r.status}`, textContent: r.status === 'new' ? 'New' : 'Processed' }),
+        r.status === 'processed' ? el('small', { className: 'muted', textContent: `by ${r.processed_by || 'unknown'}${r.processed_at ? ` · ${ago(r.processed_at)}` : ''}` }) : null),
+      el('div', { className: 'db-saved small muted', role: 'cell', textContent: ago(r.created_at) }),
+      el('div', { className: 'db-actions', role: 'cell' }, toggle));
+    if (!open) return row;
+
+    const picks = r.picks?.length ? r.picks : [{ group: r.group, theme: r.theme, why_chosen: r.why_chosen }];
     const ings = r.ingredients || [];
-    node.querySelector('.ingredients summary').textContent = `${ings.length} ingredient${ings.length === 1 ? '' : 's'}`;
-    node.querySelector('.ingredients ul').replaceChildren(
-      ...ings.map((i) => el('li', { textContent: i.raw && !i.raw.toLowerCase().includes(i.name.toLowerCase()) ? `${i.name}: ${i.raw}` : i.raw || i.name })),
-    );
-    const note = node.querySelector('.processed-note');
-    if (r.status === 'processed') note.textContent = `Processed by ${r.processed_by || 'unknown'} ${r.processed_at ? ago(r.processed_at) : ''}`;
-    else note.remove();
-    return node;
+    row.append(el('div', { className: 'db-detail' },
+      el('div', {},
+        el('h3', { textContent: 'Why the groups picked it' }),
+        el('ul', { className: 'db-whys' }, ...picks.map((p) => el('li', {}, chip(p.group), ` ${p.why_chosen} `, el('span', { className: 'muted small', textContent: `(${p.theme})` })))),
+        el('p', { className: 'small' },
+          el('a', { href: `/pricer#${encodeURIComponent(r.meal_id)}`, textContent: 'Cart on the Pricer page' }),
+          link.href ? ' · ' : '', link.href ? el('a', { href: link.href, target: '_blank', rel: 'noopener', textContent: 'Recipe on TheMealDB' }) : '',
+          el('span', { className: 'muted mono', textContent: ` · id ${r.id}` }))),
+      el('div', {},
+        el('h3', { textContent: `${ings.length} ingredient${ings.length === 1 ? '' : 's'}` }),
+        el('ul', { className: 'db-ings' }, ...ings.map((i) => el('li', {}, el('span', { textContent: i.name }), el('span', { className: 'muted', textContent: i.raw || '' })))))));
+    return row;
   }
 
+  const SORTS = {
+    newest: (a, b) => new Date(b.created_at) - new Date(a.created_at),
+    popular: (a, b) => (b.pick_count ?? 1) - (a.pick_count ?? 1) || SORTS.newest(a, b),
+    cheapest: (a, b) => (a.pricing?.cost_per_serving_usd ?? Infinity) - (b.pricing?.cost_per_serving_usd ?? Infinity) || SORTS.newest(a, b),
+    name: (a, b) => a.name.localeCompare(b.name),
+  };
+
   function renderRecipes() {
+    const priced = (r) => r.pricing?.status === 'priced';
     const shown = data.recipes.filter(
       (r) => (!state.group || (r.picked_by || [r.group]).includes(state.group))
         && (!state.theme || (r.picks || [{ theme: r.theme }]).some((p) => p.theme === state.theme))
-        && (!state.status || r.status === state.status),
-    );
-    const open = new Set([...$('recipes').querySelectorAll('details[open]')].map((d) => d.closest('.card').dataset.id));
-    $('recipes').replaceChildren(
-      ...shown.map((r) => {
-        const node = recipeCard(r);
-        if (open.has(r.id)) node.querySelector('details').open = true;
-        return node;
-      }),
-    );
+        && (!state.status || r.status === state.status)
+        && (!state.price || (state.price === 'priced' ? priced(r) : state.price === 'estimated' ? priced(r) && r.pricing.estimated : !priced(r))),
+    ).sort(SORTS[state.sort] || SORTS.newest);
+    $('recipes').replaceChildren(...shown.map(recipeRow));
     const fresh = data.recipes.filter((r) => r.status === 'new').length;
-    $('shown').textContent = `${shown.length} of ${data.recipes.length} recipes · ${fresh} new`;
+    const nPriced = data.recipes.filter(priced).length;
+    $('shown').textContent = `${shown.length} of ${data.recipes.length} recipes · ${nPriced} priced · ${fresh} new`;
+    document.querySelector('.db-head').hidden = !shown.length;
     return [shown.length, data.recipes.length ? 'No recipes match these filters.' : 'No recipes yet. They appear here as soon as a Scout saves one.'];
   }
 
@@ -298,7 +324,9 @@
   });
   $('f-group').addEventListener('change', (e) => { state.group = e.target.value; syncUrl(); render(); });
   $('f-theme').addEventListener('change', (e) => { state.theme = e.target.value; syncUrl(); render(); });
-  for (const name of ['status', 'result']) {
+  $('f-sort').value = SORTS[state.sort] ? state.sort : 'newest';
+  $('f-sort').addEventListener('change', (e) => { state.sort = e.target.value; syncUrl(); render(); });
+  for (const name of ['status', 'price', 'result']) {
     for (const radio of document.querySelectorAll(`input[name="${name}"]`)) {
       radio.checked = radio.value === state[name];
       radio.addEventListener('change', () => { state[name] = radio.value; syncUrl(); render(); });

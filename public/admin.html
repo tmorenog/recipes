@@ -29,7 +29,7 @@
 <main class="wrap">
   <p class="eyebrow">For the instructor</p>
   <h1>Admin</h1>
-  <p class="lede" style="margin-top:10px">Fix or remove records, back up the database, and restore it from a backup if something goes wrong.</p>
+  <p class="lede" style="margin-top:10px">Fix or remove records, back up the database, and restore it from a backup or load a ready-made sample if something goes wrong.</p>
 
   <section class="panel narrow" id="signin" style="margin-top:28px">
     <form class="keycheck" id="signin-form" autocomplete="off">
@@ -76,16 +76,27 @@
         <ul class="errors" id="restore-errors"></ul>
       </div>
     </div>
+    <div class="panel sample-panel" id="sample">
+      <h3 style="margin-top:0">Load the sample database</h3>
+      <p class="small">If something goes wrong in class, replace <strong>everything</strong> with a ready-made database, always the same: <span id="sample-what">20 real TheMealDB recipes picked by five groups</span>. No meal plans or activity. Download a backup first if you want to keep what’s there.</p>
+      <label class="small check"><input type="checkbox" id="sample-prices" checked> Include ready-made prices, so the Meal Planners can start at once. They’re labelled as estimates, not Kroger prices; unticked, the Pricer prices the recipes with Kroger in the next few minutes.</label>
+      <div class="confirm-row">
+        <label class="small" for="sample-word">Type <code>SAMPLE</code> to confirm</label>
+        <input id="sample-word" type="text" autocomplete="off" spellcheck="false">
+        <button class="btn danger" type="button" id="load-sample" disabled>Replace everything with the sample</button>
+      </div>
+    </div>
     <p class="small muted">Neon also keeps its own history of the database. If a backup file isn’t enough, open the database from Vercel’s Storage tab (“Open in Neon”) and use its restore feature to go back to a point in time.</p>
 
     <h2>Recipes <span class="count" id="n-recipes"></span></h2>
     <div class="filters">
       <label class="field"><span>Group</span><select id="f-group"><option value="">All groups</option></select></label>
       <label class="field"><span>Search</span><input id="f-search" type="search" placeholder="Name or theme"></label>
+      <label class="field"><span>Price</span><select id="f-price"><option value="">All</option><option value="priced">Priced</option><option value="estimated">With estimates</option><option value="unpriced">Not priced</option></select></label>
     </div>
     <div class="table-wrap admin-table">
       <table>
-        <thead><tr><th>Recipe</th><th>Group</th><th>Theme</th><th>Status</th><th>Saved</th><th></th></tr></thead>
+        <thead><tr><th>Recipe</th><th>Picked by</th><th>Price</th><th>Meal Planner</th><th>Saved</th><th></th></tr></thead>
         <tbody id="recipes"></tbody>
       </table>
     </div>

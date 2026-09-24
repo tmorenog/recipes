@@ -42,13 +42,28 @@
     <label class="field"><span>Group</span><select id="f-group"><option value="">All groups</option></select></label>
     <label class="field" data-for="recipes"><span>Theme</span><select id="f-theme"><option value="">All themes</option></select></label>
     <fieldset class="field seg-field" data-for="recipes">
-      <legend>Status</legend>
+      <legend>Price</legend>
+      <div class="seg">
+        <label><input type="radio" name="price" value="" checked><span>All</span></label>
+        <label><input type="radio" name="price" value="priced"><span>Priced</span></label>
+        <label><input type="radio" name="price" value="estimated"><span>Estimated</span></label>
+        <label><input type="radio" name="price" value="unpriced"><span>Not priced</span></label>
+      </div>
+    </fieldset>
+    <fieldset class="field seg-field" data-for="recipes">
+      <legend>Meal Planner</legend>
       <div class="seg">
         <label><input type="radio" name="status" value="" checked><span>All</span></label>
         <label><input type="radio" name="status" value="new"><span>New</span></label>
         <label><input type="radio" name="status" value="processed"><span>Processed</span></label>
       </div>
     </fieldset>
+    <label class="field" data-for="recipes"><span>Sort</span><select id="f-sort">
+      <option value="newest">Newest first</option>
+      <option value="popular">Most picked</option>
+      <option value="cheapest">Cheapest a serving</option>
+      <option value="name">Name</option>
+    </select></label>
     <fieldset class="field seg-field" data-for="activity" hidden>
       <legend>Result</legend>
       <div class="seg">
@@ -61,7 +76,12 @@
   </div>
 
   <section id="view-recipes" role="tabpanel" aria-labelledby="tab-recipes">
-    <ul class="cards" id="recipes"></ul>
+    <div class="db-list" role="table" aria-label="Recipes">
+      <div class="db-row db-head" role="row">
+        <span role="columnheader"></span><span role="columnheader">Recipe</span><span role="columnheader">Picked by</span><span role="columnheader">Price</span><span role="columnheader">Meal Planner</span><span role="columnheader">Saved</span><span role="columnheader"></span>
+      </div>
+      <div id="recipes" role="rowgroup"></div>
+    </div>
     <p class="small muted">Recipe data and imagery: <a href="https://www.themealdb.com/" target="_blank" rel="noopener">TheMealDB</a></p>
   </section>
   <section id="view-plans" role="tabpanel" aria-labelledby="tab-plans" hidden>
@@ -78,20 +98,6 @@
   <p class="empty" id="empty" hidden></p>
 </main>
 
-<template id="recipe-card">
-  <li class="card">
-    <div class="photo"><img alt="" loading="lazy"><span class="pill"></span></div>
-    <div class="body">
-      <p class="tags"><span class="chip"></span><span class="theme"></span></p>
-      <h2 class="name"><a target="_blank" rel="noopener"></a></h2>
-      <p class="meta"></p>
-      <p><a class="price"></a></p>
-      <p class="why"></p>
-      <details class="ingredients"><summary></summary><ul></ul></details>
-      <p class="processed-note"></p>
-    </div>
-  </li>
-</template>
 
 <footer class="site-foot">
   <div class="wrap">
