@@ -38,7 +38,7 @@
     <p style="margin-top:0"><strong>Your Planner is done when:</strong> you enter a budget, press a button, watch it work step by step, and a Monday-to-Friday plan appears in your app and on the <a href="/database">Database page</a> under your group.</p>
     <ul class="checklist">
       <li>It uses only recipes the class saved, with the prices the <a href="/pricer">Pricer</a> worked out.</li>
-      <li>It estimates each dinner’s nutrition from the ingredients, using USDA data from the coordinator.</li>
+      <li>It estimates each dinner’s nutrition from the ingredients, and says these are estimates.</li>
       <li>It considers popularity: recipes picked by more groups are ones the class likes.</li>
       <li>It learns the rules from the coordinator (<code>get_expectations</code>) instead of having them written into its code.</li>
       <li>It checks its plan with the coordinator, and improves it until the rules pass or it can explain why they can’t.</li>
@@ -74,7 +74,7 @@
 
   <section class="step" id="step-2">
     <h3 class="step-title"><span class="step-num">Step 2 of 5</span>Connect to the coordinator</h3>
-    <p class="step-what">Connects your app to the class coordinator, which has the recipes with their prices, USDA nutrition data, and the rules for a good plan. No AI yet.</p>
+    <p class="step-what">Connects your app to the class coordinator, which has the recipes with their prices and the rules for a good plan. No AI yet.</p>
     <div class="prompt planner">
       <div class="prompt-head">
         <p class="prompt-kind">Sample prompt</p>
@@ -147,12 +147,11 @@
   <details class="panel" id="how">
     <summary><strong>How it works</strong></summary>
     <p>Recipes reach your Planner in two steps. The Scouts save recipes to the coordinator. Then the <a href="/pricer">Pricer</a>, an agent that runs on the coordinator, prices each one at Kroger. Your Planner estimates nutrition, chooses and explains; the coordinator adds up costs and checks the rules.</p>
-    <p class="small"><code>{{SITE}}/api/mcp?agent=planner</code> offers the Planner five tools. Every request carries <code>Authorization: Bearer &lt;class key&gt;</code> and <code>X-Group: {{GROUP}}</code>.</p>
+    <p class="small"><code>{{SITE}}/api/mcp?agent=planner</code> offers the Planner four tools. Every request carries <code>Authorization: Bearer &lt;class key&gt;</code> and <code>X-Group: {{GROUP}}</code>.</p>
     <div class="table-wrap"><table>
       <tr><th>Tool</th><th>Does</th></tr>
       <tr><td><code>get_expectations</code></td><td>The goal, the steps, the balance rules and the plan format</td></tr>
       <tr><td><code>list_recipes</code></td><td>The class’s recipes, each stored once, with their ingredients, <code>pick_count</code> and <code>picked_by</code> (how many groups chose it: its popularity). With <code>{"priced": true}</code>, only priced ones, each with <code>pricing.cost_per_serving_usd</code> and <code>pricing.estimated</code></td></tr>
-      <tr><td><code>search_foods</code></td><td>USDA nutrition per 100 g for a plain food, e.g. “chickpeas canned”, to estimate each dinner’s nutrition</td></tr>
       <tr><td><code>check_meal_plan</code></td><td>Checks a draft without saving: the week’s cost per person, and every rule with ✓ or ✗</td></tr>
       <tr><td><code>save_meal_plan</code></td><td>Saves the plan with its numbers and rule checks</td></tr>
     </table></div>
@@ -167,7 +166,7 @@
       <li>No category (e.g. Beef, Chicken) more than 2 times</li>
       <li>At least one vegetarian or vegan dinner</li>
     </ul>
-    <p class="small muted">Classroom rules, not dietary advice. Nutrition is your agent’s estimate, grounded in USDA data from <code>search_foods</code>. Discuss as a group whether you’d change them; the model’s instructions can add rules of your own.</p>
+    <p class="small muted">Classroom rules, not dietary advice. Nutrition is your agent’s own estimate from each recipe’s ingredients. Discuss as a group whether you’d change them; the model’s instructions can add rules of your own.</p>
   </details>
 
   <details class="panel" id="format">
@@ -189,7 +188,7 @@
       <tr><td><code>400</code> about <code>X-Group</code></td><td>“Send the header X-Group: {{GROUP}} on every request to the coordinator.”</td></tr>
       <tr><td>“isn’t priced yet”</td><td>The Pricer hasn’t finished that recipe. Ask Lovable to call <code>list_recipes</code> with <code>{"priced": true}</code>, or check the <a href="/pricer">Pricer page</a>.</td></tr>
       <tr><td>No priced recipes</td><td>The Scouts haven’t saved any yet, or the Pricer is still working. Look at the <a href="/pricer">Pricer page</a>.</td></tr>
-      <tr><td>Nutrition numbers look made up</td><td>“Before estimating nutrition, look up the main ingredients with search_foods and scale them to one serving.”</td></tr>
+      <tr><td>Nutrition numbers look made up</td><td>“Estimate nutrition from each ingredient’s amount, divided by the recipe’s servings, and show your working in the trace.”</td></tr>
       <tr><td>The agent adds up costs itself</td><td>“Make sure the agent uses check_meal_plan for every total, and shows the coordinator’s numbers.”</td></tr>
       <tr><td>A CORS error in the browser console</td><td>The page is calling the coordinator directly. “Move every call to the coordinator into a backend function.”</td></tr>
     </table></div>

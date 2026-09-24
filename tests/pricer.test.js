@@ -14,7 +14,7 @@ process.env.KROGER_CLIENT_SECRET = 'test-secret';
 process.env.ADMIN_KEY = 'admin-key-for-tests';
 
 const reply = (body) => new Response(JSON.stringify(body), { status: 200, headers: { 'content-type': 'application/json' } });
-const calls = { kroger: 0, usda: 0 };
+const calls = { kroger: 0 };
 async function fakeFetch(url) {
   const u = String(url);
   if (u.includes('/connect/oauth2/token')) return reply({ access_token: 't', expires_in: 1800 });
@@ -24,22 +24,6 @@ async function fakeFetch(url) {
   if (u.includes('/products')) {
     calls.kroger += 1;
     return reply({ data: [{ productId: '0001', description: 'Kroger Garbanzo Beans', brand: 'Kroger', items: [{ size: '15.5 oz', price: { regular: 0.99, promo: 0 } }], images: [] }] });
-  }
-  if (u.includes('api.nal.usda.gov')) {
-    calls.usda += 1;
-    return reply({
-      foods: [{
-        fdcId: 173756,
-        description: 'Chickpeas, canned, drained',
-        foodCategory: 'Legumes',
-        foodNutrients: [
-          { nutrientNumber: '208', unitName: 'KCAL', value: 139 },
-          { nutrientNumber: '203', unitName: 'G', value: 7 },
-          { nutrientNumber: '291', unitName: 'G', value: 6 },
-          { nutrientNumber: '307', unitName: 'MG', value: 246 },
-        ],
-      }],
-    });
   }
   throw new Error(`unexpected fetch ${u}`);
 }
@@ -92,7 +76,6 @@ for (const backend of BACKENDS) {
       dbPoolRef = db.pool;
       resetKroger();
       calls.kroger = 0;
-      calls.usda = 0;
     });
 
     test('a saved recipe is queued, priced into a cart for 50 people, and shown with every step', async () => {

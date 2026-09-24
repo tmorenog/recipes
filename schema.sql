@@ -256,3 +256,10 @@ delete from pricer_config where key = 'prompt' and value ~* '(search_usda|usda_f
 
 -- A test run is priced as a named recipe.
 alter table pricer_tests add column if not exists name text;
+
+-- The Meal Planner no longer has a nutrition look-up tool (search_foods): the
+-- agent estimates nutrition itself. Take it out of step prompts edited on the site.
+update prompt_overrides set
+  text = regexp_replace(regexp_replace(text, '\s*Also call search_foods[^\n]*?show me the result\.', '', 'g'), ',? and USDA nutrition data', '', 'g'),
+  updated_at = now()
+where agent = 'planner' and text ~ '(search_foods|USDA nutrition data)';

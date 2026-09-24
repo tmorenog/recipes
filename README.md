@@ -31,7 +31,6 @@ You need a Vercel account and this repository on GitHub. Everything else happens
    | `KROGER_CLIENT_ID`, `KROGER_CLIENT_SECRET` | From your app at [developer.kroger.com](https://developer.kroger.com) (product scope). Needed for the Pricer’s prices; everything else works without them. |
    | `KROGER_API_BASE` (optional) | Only if your Kroger keys need a specific server: `https://api-ce.kroger.com/v1` (certification) or `https://api.kroger.com/v1`. Without it, production is tried first, then certification. The Admin page’s **Test Kroger** button shows which one works. |
    | `ANTHROPIC_API_KEY` | From [console.anthropic.com](https://console.anthropic.com). Runs the Pricer agent. |
-   | `USDA_API_KEY` | Free from [api.data.gov/signup](https://api.data.gov/signup/). Nutrition lookups for the Meal Planner (`search_foods`); without it the shared, heavily limited `DEMO_KEY` is used. |
    | `PRICER_ZIP` (optional) | The ZIP code of the class’s Kroger store. Default `45202`. |
    | `PRICER_MODEL` (optional) | The Claude model the Pricer uses. Default `claude-haiku-4-5` (the cheapest); set e.g. `claude-sonnet-5` for more careful product choices at a higher cost. |
 
@@ -59,7 +58,7 @@ The Pricer’s result is stored on each recipe (`price_status`, `cost_per_servin
 
 Each TheMealDB recipe is stored once. When another group saves a recipe that’s already there, their pick (group, theme, why) is added to it instead of a copy (`recipe_picks`). Recipes carry `pick_count`, `picked_by` and `picks`; the Meal Planner can use popularity when choosing. A group picking the same recipe twice for the same theme gets a `409`. Duplicates saved by earlier versions are merged on the next deploy, and plans are pointed at the kept copy.
 
-Nutrition is the Meal Planner’s job: its agent estimates each dinner’s nutrition per serving, using the coordinator’s `search_foods` tool (USDA FoodData Central, `USDA_API_KEY`).
+Nutrition is the Meal Planner’s job: its agent estimates each dinner’s nutrition per serving from the recipe’s ingredients. The coordinator checks those estimates against the balance rules.
 
 A run starts in the background after each save. The Pricer and Database pages restart it if recipes are waiting or a run stopped part-way, and a stopped run carries on where it left off.
 
@@ -211,7 +210,6 @@ TEST_DATABASE_URL=postgres://postgres@localhost:5432/recipes_test npm test
 | `lib/expectations.js` | What `get_expectations` returns for each agent |
 | `lib/pricer.js` | The Pricer agent: its prompt, tools, loop and queue |
 | `lib/units.js` | Package sizes and unit conversion for the Pricer |
-| `lib/usda.js` | USDA nutrition lookups (the Meal Planner’s `search_foods`) |
 | `api/pricer.js`, `public/pricer.html`, `public/pricer.js` | The Pricer page and its API |
 | `public/prompts/` | The sample prompt for each step, one text file per step |
 | `api/prompts.js` | Sample prompts edited on the site |
