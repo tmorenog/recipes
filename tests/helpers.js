@@ -25,7 +25,7 @@ export const BACKENDS = [
     skip: TEST_DB ? false : 'set TEST_DATABASE_URL to run the Postgres tests',
     async fresh() {
       pool ??= new pg.Pool({ ...poolConfig(TEST_DB), max: 3 });
-      await pool.query('drop table if exists prompt_overrides, pricer_config, pricer_steps, pricer_cache, pricings, recipes, activity, plans cascade');
+      await pool.query('drop table if exists pricer_tests, prompt_overrides, pricer_config, pricer_steps, pricer_cache, pricings, recipes, activity, plans cascade');
       await pool.query(await schema());
       setStore(postgresStore(pool));
       return {
@@ -72,19 +72,23 @@ export function mealPlan(ids, overrides = {}) {
   return {
     budget_usd: 20,
     summary: 'Five balanced dinners from several cuisines, under budget.',
-    meals: ids.map((recipe_id, i) => ({ day: DAYS[i], recipe_id, why: 'Cheap and filling.' })),
+    meals: ids.map((recipe_id, i) => ({
+      day: DAYS[i],
+      recipe_id,
+      why: 'Cheap and filling.',
+      nutrition_per_serving: { calories: 550, protein_g: 25, fiber_g: 8, sodium_mg: 700 },
+    })),
     ...overrides,
   };
 }
 
-// Marks recipes as priced by the Pricer, as if it had run: per serving, for 50 people.
-export async function markPriced(pool, recipeIds, perServing = () => ({})) {
+// Marks recipes as priced by the Pricer, as if it had run: cost per serving, for 50 people.
+export async function markPriced(pool, recipeIds, costPerServing = () => 2) {
   for (const [i, id] of recipeIds.entries()) {
-    const n = { cost: 2, calories: 550, protein_g: 25, fiber_g: 8, sodium_mg: 700, ...perServing(i) };
     await pool.query(
-      `update pricings set status = 'priced', people = 50, total_cost_usd = $2, to_buy_usd = $2, nutrition_total = $3
+      `update pricings set status = 'priced', people = 50, total_cost_usd = $2, to_buy_usd = $2
        where meal_id = (select meal_id from recipes where id = $1)`,
-      [id, n.cost * 50, JSON.stringify({ calories: n.calories * 50, protein_g: n.protein_g * 50, fiber_g: n.fiber_g * 50, sodium_mg: n.sodium_mg * 50 })],
+      [id, costPerServing(i) * 50],
     );
   }
 }

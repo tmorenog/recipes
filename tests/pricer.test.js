@@ -1,5 +1,5 @@
 // The Pricer agent, end to end against Postgres, with a scripted model and
-// fake Kroger and USDA answers: saving a recipe queues it, a run fills the
+// fake Kroger answers: saving a recipe queues it, a run fills the
 // shopping cart, and the page's API shows the cart and every step.
 import { describe, test, beforeEach, after } from 'node:test';
 import assert from 'node:assert/strict';
@@ -51,11 +51,11 @@ function scriptedModel(log) {
     log.push(params);
     const turn = params.messages.filter((m) => m.role === 'assistant').length;
     const content = [
-      [{ type: 'text', text: 'Searching for chickpeas.' }, toolUse('a', 'search_kroger', { term: 'canned chickpeas' }), toolUse('b', 'search_usda', { query: 'chickpeas canned' })],
+      [{ type: 'text', text: 'Searching for chickpeas.' }, toolUse('a', 'search_kroger', { term: 'canned chickpeas' })],
       // First a product it never searched for, to see the error come back.
-      [toolUse('c', 'record_ingredient', { line: 1, kroger_product_id: '9999', amount_used: 5000, unit_used: 'g', grams: 5000, usda_fdc_id: 173756 })],
+      [toolUse('c', 'record_ingredient', { line: 1, kroger_product_id: '9999', amount_used: 5000, unit_used: 'g' })],
       [
-        toolUse('d', 'record_ingredient', { line: 1, kroger_product_id: '0001', amount_used: 5000, unit_used: 'g', grams: 5000, usda_fdc_id: 173756 }),
+        toolUse('d', 'record_ingredient', { line: 1, kroger_product_id: '0001', amount_used: 5000, unit_used: 'g' }),
         toolUse('e', 'skip_ingredient', { line: 2, reason: 'to taste, no amount' }),
       ],
       [toolUse('f', 'finish', { people: 50, summary: 'Twelve cans of chickpeas feed 50 people. Salt was skipped.' })],
@@ -115,7 +115,6 @@ for (const backend of BACKENDS) {
       assert.equal(chickpeas.packages, 12); // 5000 g ÷ 15.5 oz cans = 11.4, so 12 cans
       assert.equal(chickpeas.cost_to_buy_usd, 11.88);
       assert.equal(chickpeas.product.description, 'Kroger Garbanzo Beans');
-      assert.equal(chickpeas.nutrition.calories, 6950);
       assert.equal(salt.status, 'skipped');
       assert.equal(p.to_buy_usd, 11.88);
       assert.equal(p.total_cost_usd, 11.26); // 11.38 cans' worth at $0.99
@@ -134,7 +133,6 @@ for (const backend of BACKENDS) {
         cart_usd: 11.88,
         cost_used_usd: 11.26,
         cost_per_serving_usd: 0.23,
-        nutrition_per_serving: { calories: 139, protein_g: 7, fiber_g: 6, sodium_mg: 246 },
       });
 
       queue = (await pricer()).body;
@@ -142,7 +140,7 @@ for (const backend of BACKENDS) {
       assert.deepEqual(queue.pricings[0].groups.sort(), ['team-1', 'team-2']);
     });
 
-    test('Kroger and USDA searches are made once for the class', async () => {
+    test('Kroger searches are made once for the class', async () => {
       setPricerForTests({ model: scriptedModel([]), fetch: fakeFetch, auto: false });
       await save('team-1', recipe({ meal_id: '1' }));
       await runQueue();
@@ -150,7 +148,6 @@ for (const backend of BACKENDS) {
       await save('team-1', recipe({ meal_id: '2' }));
       await runQueue();
       assert.equal(calls.kroger, 1);
-      assert.equal(calls.usda, 1);
     });
 
     test('the instructor edits the prompt, and prices a recipe again with it', async () => {
@@ -177,6 +174,34 @@ for (const backend of BACKENDS) {
       assert.equal((await control('reprice-all', { confirm: 'REPRICE' })).body.queued, 1);
     });
 
+    test('the instructor test-runs the agent on a short list, with a draft prompt, without touching the recipes', async () => {
+      const log = [];
+      setPricerForTests({ model: scriptedModel(log), fetch: fakeFetch, auto: false });
+      assert.equal((await control('test', { ingredients: ['400g tin chickpeas', 'salt, to taste'] }, 'wrong-key')).status, 401);
+      assert.equal((await control('test', { ingredients: [] })).status, 400);
+
+      const draft = DEFAULT_PROMPT.replace('50 people', '20 people');
+      const started = await control('test', { ingredients: ['400g tin chickpeas', 'salt, to taste'], serves: 4, prompt: draft });
+      assert.equal(started.status, 202);
+      let t;
+      for (let i = 0; i < 50; i++) {
+        t = (await pricer('?test=latest')).body;
+        if (t.status !== 'running') break;
+        await new Promise((r) => setTimeout(r, 20));
+      }
+      assert.equal(t.id, started.body.id);
+      assert.equal(t.status, 'done');
+      assert.equal(t.draft, true);
+      assert.equal(log[0].system, draft, 'the test used the draft prompt');
+      assert.match(log[0].messages[0].content, /1\. 400g tin chickpeas\n2\. salt, to taste/);
+      assert.equal(t.basket[0].packages, 12);
+      assert.equal(t.totals.cart_usd, 11.88);
+      assert.ok(t.steps.some((st) => st.kind === 'tool_call' && st.tool === 'search_kroger'));
+      assert.equal(t.steps.at(-1).kind, 'final');
+      assert.equal((await pricer()).body.pricings.length, 0, 'no recipe was priced');
+      assert.equal((await pricer()).body.prompt, DEFAULT_PROMPT, 'the saved prompt is unchanged');
+    });
+
     test('a model that stops without finishing is marked failed, with the reason', async () => {
       setPricerForTests({ model: async () => ({ stop_reason: 'end_turn', content: [{ type: 'text', text: 'Done, I think.' }] }), fetch: fakeFetch, auto: false });
       await save('team-1', recipe({ meal_id: '8' }));
@@ -191,9 +216,8 @@ for (const backend of BACKENDS) {
 }
 
 test('cart totals buy whole packages per product, even when two lines share one', () => {
-  const line = (n, id, fraction, price, cost) => ({ line: n, status: 'bought', product: { id, price_usd: price }, fraction, cost_used_usd: cost, nutrition: { calories: 10, protein_g: 1, fiber_g: 0, sodium_mg: 5 } });
-  const t = totals([line(1, 'onions', 0.6, 3.49, 2.09), line(2, 'onions', 0.6, 3.49, 2.09), { line: 3, status: 'skipped', cost_used_usd: 0, nutrition: null }]);
+  const line = (n, id, fraction, price, cost) => ({ line: n, status: 'bought', product: { id, price_usd: price }, fraction, cost_used_usd: cost });
+  const t = totals([line(1, 'onions', 0.6, 3.49, 2.09), line(2, 'onions', 0.6, 3.49, 2.09), { line: 3, status: 'skipped', cost_used_usd: 0 }]);
   assert.equal(t.total, 4.18);
   assert.equal(t.toBuy, 6.98); // 1.2 bags → 2 bags
-  assert.equal(t.nutrition.calories, 20);
 });

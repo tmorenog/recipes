@@ -31,7 +31,7 @@ You need a Vercel account and this repository on GitHub. Everything else happens
    | `KROGER_CLIENT_ID`, `KROGER_CLIENT_SECRET` | From your app at [developer.kroger.com](https://developer.kroger.com) (product scope). Needed for the Pricer’s prices; everything else works without them. |
    | `KROGER_API_BASE` (optional) | Only if your Kroger keys need a specific server: `https://api-ce.kroger.com/v1` (certification) or `https://api.kroger.com/v1`. Without it, production is tried first, then certification. The Admin page’s **Test Kroger** button shows which one works. |
    | `ANTHROPIC_API_KEY` | From [console.anthropic.com](https://console.anthropic.com). Runs the Pricer agent. |
-   | `USDA_API_KEY` | Free from [api.data.gov/signup](https://api.data.gov/signup/). Nutrition for the Pricer; without it the shared, heavily limited `DEMO_KEY` is used. |
+   | `USDA_API_KEY` | Free from [api.data.gov/signup](https://api.data.gov/signup/). Nutrition lookups for the Meal Planner (`search_foods`); without it the shared, heavily limited `DEMO_KEY` is used. |
    | `PRICER_ZIP` (optional) | The ZIP code of the class’s Kroger store. Default `45202`. |
    | `PRICER_MODEL` (optional) | The Claude model the Pricer uses. Default `claude-opus-5`; `claude-haiku-4-5` is cheaper. |
 
@@ -45,11 +45,17 @@ Each group picks its own group name (like `team-3`) and sends it with every requ
 
 ## The Pricer agent
 
-The Pricer runs on the coordinator. When a Scout saves a recipe, the Pricer builds the Kroger shopping cart needed to cook it (for 50 people by default) and works out its nutrition from USDA FoodData Central. The AI chooses products and amounts; code works out packages, costs and nutrition. Each TheMealDB recipe is priced once for the whole class, and Kroger and USDA answers are remembered.
+The Pricer (agent 2) runs on the coordinator and only prices. When a Scout saves a recipe, the Pricer builds the Kroger shopping cart needed to cook it (for 50 people by default): the AI chooses products and amounts, and code works out packages, the cart total and the cost per serving. Each TheMealDB recipe is priced once for the whole class, and Kroger searches are remembered.
 
-The **Pricer page** (`/pricer`) shows the queue, each recipe’s cart, and every step the agent took. Signed in with the admin key, you can edit the agent’s prompt (for example, the number of people), price a recipe again, retry failed ones, or re-price everything.
+The **Pricer page** (`/pricer`) has three parts:
 
-Each recipe from `list_recipes` / `GET /api/recipes` carries a `pricing` object: `status` (`pending`, `pricing`, `priced` or `failed`) and, once priced, `people`, `cart_usd`, `cost_used_usd`, `cost_per_serving_usd` and `nutrition_per_serving`.
+1. **Try it on a sample list**: signed in with the admin key, run the agent on a short ingredient list (real AI, real Kroger) and watch its steps and the products it picks. Nothing is saved to the recipes.
+2. **Its instructions**: edit the agent’s prompt (e.g. the number of people), test the draft with part 1, then **Save** or **Save and re-price every recipe**.
+3. **Recipe carts**: every recipe, grouped by stage (waiting, being priced, priced, couldn’t price), with when it was priced and whether with the current instructions; each recipe’s cart and every step the agent took.
+
+Each recipe from `list_recipes` / `GET /api/recipes` carries a `pricing` object: `status` (`pending`, `pricing`, `priced` or `failed`) and, once priced, `people`, `cart_usd`, `cost_used_usd` and `cost_per_serving_usd`.
+
+Nutrition is the Meal Planner’s job: its agent estimates each dinner’s nutrition per serving, using the coordinator’s `search_foods` tool (USDA FoodData Central, `USDA_API_KEY`).
 
 A run starts in the background after each save. The Pricer and Database pages restart it if recipes are waiting or a run stopped part-way, and a stopped run carries on where it left off.
 
@@ -149,7 +155,7 @@ curl -X POST https://<your-site>.vercel.app/api/recipes \
 ```
 
 ### Meal plans
-A plan is `{ budget_usd, summary, meals }`: the budget in US dollars per person for the week, and five dinners, each `{ day, recipe_id, why }`. The coordinator fills in each dinner’s cost and nutrition per serving from the Pricer and adds up the week, so no number in a plan comes from the AI.
+A plan is `{ budget_usd, summary, meals }`: the budget in US dollars per person for the week, and five dinners, each `{ day, recipe_id, why, nutrition_per_serving }` (the agent’s estimate). The coordinator fills in each dinner’s cost per serving from the Pricer and adds up the week, so no cost in a plan comes from the AI.
 
 Rejected (nothing saved): a day missing or repeated (Monday to Friday, each once), a recipe used twice, an unknown `recipe_id`, or a recipe that isn’t priced yet.
 
@@ -200,7 +206,8 @@ TEST_DATABASE_URL=postgres://postgres@localhost:5432/recipes_test npm test
 | `lib/mcp.js` | The MCP tools |
 | `lib/expectations.js` | What `get_expectations` returns for each agent |
 | `lib/pricer.js` | The Pricer agent: its prompt, tools, loop and queue |
-| `lib/units.js`, `lib/usda.js` | Package sizes and unit conversion; USDA nutrition |
+| `lib/units.js` | Package sizes and unit conversion for the Pricer |
+| `lib/usda.js` | USDA nutrition lookups (the Meal Planner’s `search_foods`) |
 | `api/pricer.js`, `public/pricer.html`, `public/pricer.js` | The Pricer page and its API |
 | `public/prompts/` | The sample prompt for each step, one text file per step |
 | `api/prompts.js` | Sample prompts edited on the site |

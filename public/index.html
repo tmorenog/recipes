@@ -18,8 +18,8 @@
       <ul class="tabs">
         <li><a href="/" aria-current="page">Welcome</a></li>
         <li><a href="/scout"><span class="num">1</span>Recipe Scout</a></li>
-        <li><a href="/pricer">Pricer</a></li>
-        <li><a href="/planner"><span class="num">2</span>Meal Planner</a></li>
+        <li><a href="/pricer"><span class="num">2</span>Pricer</a></li>
+        <li><a href="/planner"><span class="num">3</span>Meal Planner</a></li>
         <li><a href="/database">Database</a></li>
       </ul>
     </nav>
@@ -51,27 +51,45 @@
   </ol>
   <p><a class="btn primary" href="/scout">Start building</a></p>
 
+  <h2 id="architecture">How the system fits together</h2>
+  <div class="arch">
+    <div class="arch-flow" aria-label="Agents pass their work through the coordinator">
+      <div class="arch-agent scout"><span class="num">1</span><strong>Recipe Scout</strong><small>built in Lovable</small></div>
+      <div class="arch-arrow">saves recipes →</div>
+      <div class="arch-hub"><strong>Coordinator</strong><small>this site · shared database · checks every save</small>
+        <div class="arch-inside"><span class="num">2</span><strong>Pricer</strong><small>runs here, prices each new recipe</small></div>
+      </div>
+      <div class="arch-arrow">← reads priced recipes, saves a plan</div>
+      <div class="arch-agent planner"><span class="num">3</span><strong>Meal Planner</strong><small>built in Lovable</small></div>
+    </div>
+    <div class="grid-3 arch-notes">
+      <div><h3>Agents never talk to each other directly</h3><p class="small">Each one reads what it needs from the coordinator’s database and saves its results there. That’s why each agent can be built, tested and replaced on its own.</p></div>
+      <div><h3>They connect over MCP</h3><p class="small">The coordinator is an MCP server: an agent asks it which tools it offers (save a recipe, list recipes, check a plan…) and what the rules are, instead of having them written into its code.</p></div>
+      <div><h3>The coordinator is the referee</h3><p class="small">It checks every save and explains what’s wrong, keeps the class’s results in one place, and shows them on the <a href="/database">Database page</a>.</p></div>
+    </div>
+  </div>
+
   <h2 id="agents">The agents in the system</h2>
   <p>Each agent does one job and passes its results on through the coordinator. The system is useful at every stage: whatever your group gets working adds to what the class has built.</p>
   <div class="grid-3 agent-cards">
     <div class="panel scout">
-      <span class="agent-tag scout">Start here</span>
+      <span class="agent-tag scout">1 · Start here</span>
       <h3>Recipe Scout</h3>
       <p class="small">Takes a theme like “cheap weeknight dinners”, searches a real recipe database, chooses recipes that fit, and saves them to the coordinator.</p>
       <p class="small muted">Shows how an agent uses tools, follows rules it reads from a server, and fixes its mistakes.</p>
       <p><a class="btn primary" href="/scout">Build the Recipe Scout</a></p>
     </div>
     <div class="panel pricer">
-      <span class="agent-tag pricer">Already running</span>
+      <span class="agent-tag pricer">2 · Already running</span>
       <h3>Pricer</h3>
-      <p class="small">Runs on the coordinator. Whenever a recipe is saved, it builds the Kroger shopping cart to cook it and works out its nutrition. You don’t build it: watch it work.</p>
+      <p class="small">Runs on the coordinator. Whenever a recipe is saved, it builds the Kroger shopping cart to cook it and finds what it costs. You don’t build it: watch it work.</p>
       <p class="small muted">Shows an agent working in the background, handing its results to others.</p>
       <p><a class="btn" href="/pricer">Watch the Pricer</a></p>
     </div>
     <div class="panel planner">
-      <span class="agent-tag planner">If there’s time</span>
+      <span class="agent-tag planner">3 · If there’s time</span>
       <h3>Meal Planner</h3>
-      <p class="small">Takes a budget and the priced recipes, and plans five dinners, Monday to Friday, that are nutritious, varied and cheap.</p>
+      <p class="small">Takes a budget and the priced recipes, estimates their nutrition, and plans five dinners, Monday to Friday, that are nutritious, varied and cheap.</p>
       <p class="small muted">Shows an agent weighing trade-offs and checking its work before it saves.</p>
       <p><a class="btn" href="/planner">See the Meal Planner</a></p>
     </div>

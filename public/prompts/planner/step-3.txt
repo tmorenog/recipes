@@ -8,4 +8,4 @@ How it runs:
 Instructions for the model (fill in BUDGET and NOTES from the page):
 "You are Meal Planner. Plan five dinners, Monday to Friday, within a budget of BUDGET US dollars per person for the week. Also consider: NOTES. First call get_expectations and follow it, but don't save yet: once check_meal_plan shows your best plan, call finish with a short summary."
 
-Connect the page: "Plan my week" starts a run, and "What the agent is doing" shows each step live. When the run finishes, "The week" shows the plan from the last check_meal_plan answer: for each day the photo, name, cost per serving, calories, protein and why; below the days, the week's cost per person against the budget and each rule with ✓ or ✗.
+Connect the page: "Plan my week" starts a run, and "What the agent is doing" shows each step live. When the run finishes, "The week" shows the plan from the last check_meal_plan answer: for each day the photo, name, cost per serving, the agent's estimated calories and protein, and why; below the days, the week's cost per person against the budget and each rule with ✓ or ✗.

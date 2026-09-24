@@ -18,8 +18,8 @@
       <ul class="tabs">
         <li><a href="/">Welcome</a></li>
         <li><a href="/scout"><span class="num">1</span>Recipe Scout</a></li>
-        <li><a href="/pricer">Pricer</a></li>
-        <li><a href="/planner" aria-current="page"><span class="num">2</span>Meal Planner</a></li>
+        <li><a href="/pricer"><span class="num">2</span>Pricer</a></li>
+        <li><a href="/planner" aria-current="page"><span class="num">3</span>Meal Planner</a></li>
         <li><a href="/database">Database</a></li>
       </ul>
     </nav>
@@ -28,7 +28,7 @@
 
 <main class="wrap">
   <div class="page-head">
-    <span class="agent-tag planner">Agent 2</span>
+    <span class="agent-tag planner">Agent 3</span>
     <h1>Build the Meal Planner</h1>
     <p class="lede">An agent that takes a budget, reads the recipes the class has found, and plans five dinners, Monday to Friday, that are nutritious, varied and cheap. It shows the week and saves the plan to the coordinator.</p>
   </div>
@@ -37,10 +37,11 @@
   <div class="panel narrow">
     <p style="margin-top:0"><strong>Your Planner is done when:</strong> you enter a budget, press a button, watch it work step by step, and a Monday-to-Friday plan appears in your app and on the <a href="/database">Database page</a> under your group.</p>
     <ul class="checklist">
-      <li>It uses only recipes the class saved, with the prices and nutrition the <a href="/pricer">Pricer</a> worked out.</li>
+      <li>It uses only recipes the class saved, with the prices the <a href="/pricer">Pricer</a> worked out.</li>
+      <li>It estimates each dinner’s nutrition from the ingredients, using USDA data from the coordinator.</li>
       <li>It learns the rules from the coordinator (<code>get_expectations</code>) instead of having them written into its code.</li>
       <li>It checks its plan with the coordinator, and improves it until the rules pass or it can explain why they can’t.</li>
-      <li>The maths is done by the coordinator, never guessed by the AI.</li>
+      <li>Costs are added up by the coordinator, never guessed by the AI.</li>
       <li>You can see every step it took.</li>
     </ul>
   </div>
@@ -72,7 +73,7 @@
 
   <section class="step" id="step-2">
     <h3 class="step-title"><span class="step-num">Step 2 of 5</span>Connect to the coordinator</h3>
-    <p class="step-what">Connects your app to the class coordinator, which has the recipes with their prices and nutrition, and the rules for a good plan. No AI yet.</p>
+    <p class="step-what">Connects your app to the class coordinator, which has the recipes with their prices, USDA nutrition data, and the rules for a good plan. No AI yet.</p>
     <div class="prompt planner">
       <div class="prompt-head">
         <p class="prompt-kind">Sample prompt</p>
@@ -80,11 +81,11 @@
       </div>
       <div class="prompt-body" id="q2" data-prompt="/prompts/planner/step-2.txt"></div>
     </div>
-    <p class="step-check"><strong>You should see:</strong> four coordinator tools, the brief from <code>get_expectations</code> (the goal, the balance rules and the plan format), and a table of priced recipes. If the table is empty, the class hasn’t saved recipes yet, or the <a href="/pricer">Pricer</a> is still working on them.</p>
+    <p class="step-check"><strong>You should see:</strong> five coordinator tools, the brief from <code>get_expectations</code> (the goal, the balance rules and the plan format), and a table of priced recipes. If the table is empty, the class hasn’t saved recipes yet, or the <a href="/pricer">Pricer</a> is still working on them.</p>
   </section>
   <section class="step" id="step-3">
     <h3 class="step-title"><span class="step-num">Step 3 of 5</span>Add the agent and show the week</h3>
-    <p class="step-what">Adds the AI. The model reads the recipes, drafts five dinners, asks the coordinator to check them, and improves the plan. The week appears in your app, not saved yet.</p>
+    <p class="step-what">Adds the AI. The model reads the recipes, estimates their nutrition, drafts five dinners, asks the coordinator to check them, and improves the plan. The week appears in your app, not saved yet.</p>
     <div class="prompt planner">
       <div class="prompt-head">
         <p class="prompt-kind">Sample prompt</p>
@@ -144,12 +145,13 @@
   <h2 id="reference">Reference</h2>
   <details class="panel" id="how">
     <summary><strong>How it works</strong></summary>
-    <p>Recipes reach your Planner in two steps. The Scouts save recipes to the coordinator. Then the <a href="/pricer">Pricer</a>, an agent that runs on the coordinator, prices each one at Kroger and works out its nutrition. Your Planner only chooses and explains: the coordinator adds up costs and checks the rules.</p>
-    <p class="small"><code>{{SITE}}/api/mcp?agent=planner</code> offers the Planner four tools. Every request carries <code>Authorization: Bearer &lt;class key&gt;</code> and <code>X-Group: {{GROUP}}</code>.</p>
+    <p>Recipes reach your Planner in two steps. The Scouts save recipes to the coordinator. Then the <a href="/pricer">Pricer</a>, an agent that runs on the coordinator, prices each one at Kroger. Your Planner estimates nutrition, chooses and explains; the coordinator adds up costs and checks the rules.</p>
+    <p class="small"><code>{{SITE}}/api/mcp?agent=planner</code> offers the Planner five tools. Every request carries <code>Authorization: Bearer &lt;class key&gt;</code> and <code>X-Group: {{GROUP}}</code>.</p>
     <div class="table-wrap"><table>
       <tr><th>Tool</th><th>Does</th></tr>
       <tr><td><code>get_expectations</code></td><td>The goal, the steps, the balance rules and the plan format</td></tr>
-      <tr><td><code>list_recipes</code></td><td>The class’s recipes. With <code>{"priced": true}</code>, only priced ones, each with <code>pricing.cost_per_serving_usd</code> and <code>pricing.nutrition_per_serving</code></td></tr>
+      <tr><td><code>list_recipes</code></td><td>The class’s recipes, with their ingredients. With <code>{"priced": true}</code>, only priced ones, each with <code>pricing.cost_per_serving_usd</code></td></tr>
+      <tr><td><code>search_foods</code></td><td>USDA nutrition per 100 g for a plain food, e.g. “chickpeas canned”, to estimate each dinner’s nutrition</td></tr>
       <tr><td><code>check_meal_plan</code></td><td>Checks a draft without saving: the week’s cost per person, and every rule with ✓ or ✗</td></tr>
       <tr><td><code>save_meal_plan</code></td><td>Saves the plan with its numbers and rule checks</td></tr>
     </table></div>
@@ -164,7 +166,7 @@
       <li>No category (e.g. Beef, Chicken) more than 2 times</li>
       <li>At least one vegetarian or vegan dinner</li>
     </ul>
-    <p class="small muted">Classroom rules, not dietary advice. Nutrition comes from USDA data for the products the Pricer chose, so it’s an estimate. Discuss as a group whether you’d change them; the model’s instructions can add rules of your own.</p>
+    <p class="small muted">Classroom rules, not dietary advice. Nutrition is your agent’s estimate, grounded in USDA data from <code>search_foods</code>. Discuss as a group whether you’d change them; the model’s instructions can add rules of your own.</p>
   </details>
 
   <details class="panel" id="format">
@@ -173,9 +175,9 @@
       <tr><th>Field</th><th>What goes in it</th></tr>
       <tr><td><code>budget_usd</code></td><td>The budget: US dollars per person for the whole week</td></tr>
       <tr><td><code>summary</code></td><td>How the five dinners balance nutrition, variety and cost, and any trade-offs</td></tr>
-      <tr><td><code>meals</code></td><td>Exactly 5: <code>day</code> (Monday to Friday, each once), <code>recipe_id</code> (a priced recipe from <code>list_recipes</code>, each once) and <code>why</code> (one sentence)</td></tr>
+      <tr><td><code>meals</code></td><td>Exactly 5: <code>day</code> (Monday to Friday, each once), <code>recipe_id</code> (a priced recipe from <code>list_recipes</code>, each once), <code>why</code> (one sentence) and <code>nutrition_per_serving</code> (your estimate: <code>calories</code>, <code>protein_g</code>, <code>fiber_g</code>, <code>sodium_mg</code>)</td></tr>
     </table></div>
-    <p class="small muted">That’s all the agent sends. The coordinator adds each dinner’s cost and nutrition from the Pricer, the week’s total, and the rule checks. A plan that breaks a balance rule is still saved, with the rule marked ✗.</p>
+    <p class="small muted">That’s all the agent sends. The coordinator adds each dinner’s cost from the Pricer, the week’s total, and the rule checks. A plan that breaks a balance rule is still saved, with the rule marked ✗.</p>
   </details>
 
   <details class="panel" id="help">
@@ -186,6 +188,7 @@
       <tr><td><code>400</code> about <code>X-Group</code></td><td>“Send the header X-Group: {{GROUP}} on every request to the coordinator.”</td></tr>
       <tr><td>“isn’t priced yet”</td><td>The Pricer hasn’t finished that recipe. Ask Lovable to call <code>list_recipes</code> with <code>{"priced": true}</code>, or check the <a href="/pricer">Pricer page</a>.</td></tr>
       <tr><td>No priced recipes</td><td>The Scouts haven’t saved any yet, or the Pricer is still working. Look at the <a href="/pricer">Pricer page</a>.</td></tr>
+      <tr><td>Nutrition numbers look made up</td><td>“Before estimating nutrition, look up the main ingredients with search_foods and scale them to one serving.”</td></tr>
       <tr><td>The agent adds up costs itself</td><td>“Make sure the agent uses check_meal_plan for every total, and shows the coordinator’s numbers.”</td></tr>
       <tr><td>A CORS error in the browser console</td><td>The page is calling the coordinator directly. “Move every call to the coordinator into a backend function.”</td></tr>
     </table></div>

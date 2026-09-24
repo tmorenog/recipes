@@ -134,3 +134,23 @@ create table if not exists prompt_overrides (
   updated_at  timestamptz not null default now(),
   primary key (agent, step)
 );
+
+-- The instructor's test runs of the Pricer on a short ingredient list
+-- (Pricer page). Nothing here touches the recipes.
+create table if not exists pricer_tests (
+  id           uuid primary key default gen_random_uuid(),
+  status       text not null default 'running' check (status in ('running', 'done', 'failed')),
+  ingredients  jsonb not null,
+  serves       int  not null,
+  prompt       text not null,
+  draft        boolean not null default false,  -- tried with unsaved instructions
+  steps        jsonb not null default '[]'::jsonb,
+  basket       jsonb not null default '[]'::jsonb,
+  totals       jsonb,
+  people       int,
+  summary      text,
+  error        text,
+  tool_calls   int not null default 0,
+  created_at   timestamptz not null default now(),
+  updated_at   timestamptz not null default now()
+);

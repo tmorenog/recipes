@@ -46,7 +46,7 @@ for (const backend of BACKENDS) {
       const client = await mcp();
       const { tools } = await client.listTools();
       assert.deepEqual(tools.map((t) => t.name).sort(), [
-        'check_meal_plan', 'find_kroger_stores', 'get_expectations', 'list_recipes', 'mark_processed', 'save_meal_plan', 'save_recipe', 'search_kroger_products',
+        'check_meal_plan', 'find_kroger_stores', 'get_expectations', 'list_recipes', 'mark_processed', 'save_meal_plan', 'save_recipe', 'search_foods', 'search_kroger_products',
       ]);
       const save = tools.find((t) => t.name === 'save_recipe');
       assert.equal(save.inputSchema.additionalProperties, false);
@@ -179,7 +179,7 @@ for (const backend of BACKENDS) {
       assert.equal(early.isError, true);
       assert.match(early.content[0].text, /isn’t priced yet/);
 
-      await markPriced(db.pool, ids, (i) => ({ cost: [1.5, 2.25, 3, 2, 4][i], ...(i === 3 && { protein_g: 12 }) }));
+      await markPriced(db.pool, ids, (i) => [1.5, 2.25, 3, 2, 4][i]);
       const priced = out(await tool('list_recipes', { priced: true }));
       assert.equal(priced.count, 5);
       assert.equal(priced.recipes.find((r) => r.id === ids[0]).pricing.cost_per_serving_usd, 1.5);
@@ -194,8 +194,9 @@ for (const backend of BACKENDS) {
       assert.match((await tool('save_meal_plan', mealPlan(ids.slice(0, 4)))).content[0].text, /meals needs exactly 5 items/);
       assert.match((await tool('save_meal_plan', { ...mealPlan(ids), meals: mealPlan(ids).meals.map((m) => ({ ...m, day: 'Saturday' })) })).content[0].text, /day must be one of: Monday/);
 
-      // A draft: the week costs 12.75 per person; Thursday is short of protein.
-      const checked = out(await tool('check_meal_plan', mealPlan(ids, { budget_usd: 12 })));
+      // A draft: the week costs 12.75 per person; the planner estimates Thursday is short of protein.
+      const lowProtein = (plan) => { plan.meals[3].nutrition_per_serving.protein_g = 12; return plan; };
+      const checked = out(await tool('check_meal_plan', lowProtein(mealPlan(ids, { budget_usd: 12 }))));
       assert.equal(checked.week_cost_per_person_usd, 12.75);
       assert.equal(checked.all_rules_passed, false);
       const failed = checked.checks.filter((c) => !c.passed);
@@ -203,7 +204,7 @@ for (const backend of BACKENDS) {
       assert.match(failed[1].detail, /Thursday/);
       assert.equal((await db.plans()).length, 0, 'checking saves nothing');
 
-      const saved = out(await tool('save_meal_plan', mealPlan(ids, { budget_usd: 15 })));
+      const saved = out(await tool('save_meal_plan', lowProtein(mealPlan(ids, { budget_usd: 15 }))));
       assert.equal(saved.saved, true);
       assert.deepEqual(saved.checks.filter((c) => !c.passed).map((c) => c.rule), ['Every dinner has at least 20 g protein per serving']);
       const [row] = await db.plans();

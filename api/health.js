@@ -37,7 +37,7 @@ export async function GET() {
   if (!adminKeySet()) warnings.push('The Admin page is off: add ADMIN_KEY in Vercel, then redeploy.');
   const pricer = pricerSettings();
   if (!pricer.aiKey) warnings.push('The Pricer agent is off: add ANTHROPIC_API_KEY in Vercel, then redeploy.');
-  if (!usdaKey()) warnings.push('Nutrition uses USDA’s shared DEMO_KEY, which runs out quickly: add USDA_API_KEY (free from api.data.gov) in Vercel.');
+  if (!usdaKey()) warnings.push('The Meal Planner’s nutrition lookups (search_foods) use USDA’s shared DEMO_KEY, which runs out quickly: add USDA_API_KEY (free from api.data.gov) in Vercel.');
 
   return json(problems.length ? 503 : 200, {
     ok: problems.length === 0,
