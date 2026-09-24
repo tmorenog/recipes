@@ -1,11 +1,12 @@
-// Setup check used by the site footer and the Database page: is a database connected, do the tables
-// exist, is the class key set? Shows setting names, never values.
-import { getStore, configuredBackend } from '../lib/store/index.js';
-import { TABLES_MISSING_SUPABASE, TABLES_MISSING_POSTGRES } from '../lib/store/errors.js';
-import { databaseSettingNames } from '../lib/env.js';
+// Setup check used by the site footer, the Database page and the Admin page:
+// is a database connected, do the tables exist, are the keys set?
+// Reports yes/no only, never the values.
+import { getStore, databaseConnected, NOT_CONNECTED } from '../lib/store/index.js';
+import { TABLES_MISSING } from '../lib/store/errors.js';
 import { classKeySet } from '../lib/auth.js';
-import { json } from '../lib/http.js';
+import { adminKeySet } from '../lib/admin.js';
 import { krogerConfigured } from '../lib/kroger.js';
+import { json } from '../lib/http.js';
 
 export async function GET() {
   const problems = [];
@@ -13,23 +14,15 @@ export async function GET() {
     problems.push('CLASS_KEY is not set: add it in Vercel (Settings → Environment Variables), then redeploy. Changes only take effect in new deployments.');
   }
 
-  const seen = databaseSettingNames();
-  const backend = configuredBackend();
   let database = 'not connected';
-
-  if (!backend) {
-    problems.push(
-      seen.length
-        ? `The database settings are incomplete (found ${seen.join(', ')}). Easiest fix: in Vercel, open Storage, create a Postgres database, connect it to this project, and redeploy. The tables are then created automatically.`
-        : 'No database is connected: in Vercel, open Storage, create a Postgres database, connect it to this project, and redeploy. The tables are then created automatically.',
-    );
+  if (!databaseConnected()) {
+    problems.push(NOT_CONNECTED);
   } else {
     try {
-      if (await getStore().tablesExist()) {
-        database = 'ready';
-      } else {
+      if (await getStore().tablesExist()) database = 'ready';
+      else {
         database = 'no tables';
-        problems.push(backend === 'supabase' ? TABLES_MISSING_SUPABASE : TABLES_MISSING_POSTGRES);
+        problems.push(TABLES_MISSING);
       }
     } catch (e) {
       database = 'unreachable';
@@ -37,18 +30,17 @@ export async function GET() {
     }
   }
 
-  const warnings = krogerConfigured()
-    ? []
-    : ['Kroger prices are off: add KROGER_CLIENT_ID and KROGER_CLIENT_SECRET in Vercel, then redeploy. The Meal Planner needs them.'];
+  const warnings = [];
+  if (!krogerConfigured()) warnings.push('Kroger prices are off: add KROGER_CLIENT_ID and KROGER_CLIENT_SECRET in Vercel, then redeploy. The Meal Planner needs them.');
+  if (!adminKeySet()) warnings.push('The Admin page is off: add ADMIN_KEY in Vercel, then redeploy.');
 
   return json(problems.length ? 503 : 200, {
     ok: problems.length === 0,
-    kroger: krogerConfigured(),
-    warnings,
-    backend,
     database,
-    database_settings_seen: seen,
     class_key: classKeySet(),
+    admin_key: adminKeySet(),
+    kroger: krogerConfigured(),
     problems,
+    warnings,
   });
 }

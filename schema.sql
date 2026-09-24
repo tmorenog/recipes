@@ -1,9 +1,5 @@
--- Recipes database. Safe to run any number of times.
---
--- With Supabase: open your project, go to SQL Editor, paste this whole file
--- and click Run.
--- With a Postgres connection string: `npm run db:setup` runs it (and Vercel
--- runs that on every deploy).
+-- Recipes database. Safe to run any number of times: every deploy runs it
+-- (`npm run db:setup`), creating or updating the tables.
 
 create extension if not exists pgcrypto;
 
@@ -43,13 +39,16 @@ create table if not exists activity (
   id          bigint generated always as identity primary key,
   at          timestamptz not null default now(),
   group_name  text,
-  channel     text not null check (channel in ('mcp', 'rest')),
+  channel     text not null,
   action      text not null,
   ok          boolean not null,
   detail      text,
   input       jsonb
 );
 create index if not exists activity_at_idx on activity (at desc);
+-- Where an action came from: an agent over MCP or REST, or the admin page.
+alter table activity drop constraint if exists activity_channel_check;
+alter table activity add constraint activity_channel_check check (channel in ('mcp', 'rest', 'admin'));
 
 -- Meal plans saved by the Meal Planner agents. Meals and the shopping list
 -- are stored with the plan, so saving a plan is a single write.
@@ -66,23 +65,3 @@ create table if not exists plans (
   created_at      timestamptz not null default now()
 );
 create index if not exists plans_created_idx on plans (created_at desc);
-
--- Row level security with no policies: Supabase's public (anon) key can't read
--- or write anything. This app uses the service role key (or connects as the
--- tables' owner), which RLS doesn't restrict.
-alter table recipes  enable row level security;
-alter table activity enable row level security;
-alter table plans    enable row level security;
-
--- On Supabase, make sure the service role can use the tables through the API,
--- and tell the API to pick up the new tables right away.
-do $$
-begin
-  if exists (select 1 from pg_roles where rolname = 'service_role') then
-    grant select, insert, update on recipes to service_role;
-    grant select, insert on activity to service_role;
-    grant select, insert on plans to service_role;
-    grant usage, select on sequence activity_id_seq to service_role;
-  end if;
-end $$;
-notify pgrst, 'reload schema';

@@ -295,3 +295,31 @@ details summary { cursor: pointer; font-weight: 600; font-size: 14px; color: var
   background: var(--ground); color: var(--ink); border: 1px solid var(--line); border-radius: 8px;
 }
 .group-note { margin: 8px 0 0; color: var(--muted); }
+
+/* ---------- admin ---------- */
+.linklike { background: none; border: 0; padding: 0; font: inherit; color: var(--accent); text-decoration: underline; cursor: pointer; }
+.btn.danger { color: var(--bad-ink); border-color: color-mix(in srgb, var(--bad-ink) 40%, var(--line)); }
+.btn.danger:hover { background: var(--bad-bg); color: var(--bad-ink); border-color: var(--bad-ink); }
+.btn.danger.armed, .btn.danger:not(:disabled).armed { background: var(--bad-ink); color: var(--surface); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.small-btn { padding: 5px 10px; font-size: 13px; }
+.row-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.confirm-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin-top: 10px; }
+.confirm-row label { flex-basis: 100%; }
+.confirm-row input, .filters input[type="search"] {
+  padding: 8px 10px; font: 15px var(--mono); background: var(--ground); color: var(--ink);
+  border: 1px solid var(--line); border-radius: 6px; width: 12rem; max-width: 100%;
+}
+.filters input[type="search"] { font-family: var(--body); width: 15rem; }
+.errors { margin: 10px 0 0; padding-left: 20px; color: var(--bad-ink); font-size: 14px; }
+.errors:empty { display: none; }
+.toast { position: sticky; top: 70px; z-index: 5; margin: 12px 0 0; padding: 10px 14px; border-radius: 8px; background: var(--scout-soft); color: var(--good-ink); font-weight: 600; }
+.toast.bad { background: var(--bad-bg); color: var(--bad-ink); }
+.admin-table table { min-width: 760px; }
+.admin-table td { font-size: 14px; }
+.admin-table .mono { font-family: var(--mono); font-size: 11px; }
+.nowrap { white-space: nowrap; }
+.edit-row td { background: var(--surface-2); }
+.json-edit { width: 100%; font: 13px/1.5 var(--mono); padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); margin: 6px 0 8px; }
+.danger-zone { border-color: color-mix(in srgb, var(--bad-ink) 35%, var(--line)); }
+h2 .count { font: 500 15px var(--mono); color: var(--muted); margin-left: 6px; }

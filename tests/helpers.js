@@ -1,16 +1,12 @@
-// Test setup. The end-to-end tests run once per storage backend:
-// - "supabase": the real Supabase store, talking to an in-memory stand-in for
-//   Supabase's API (tests/fake-supabase.js). Always runs.
-// - "postgres": the Postgres store against a real database. Runs only when
-//   TEST_DATABASE_URL points at a Postgres you don't mind wiping, e.g.
-//     TEST_DATABASE_URL=postgres://postgres@localhost:5432/recipes_test npm test
+// Test setup. The end-to-end tests need a Postgres they can wipe, named by
+// TEST_DATABASE_URL, e.g.
+//   TEST_DATABASE_URL=postgres://postgres@localhost:5432/recipes_test npm test
+// Without it they're skipped and only the unit tests run.
 import { readFile } from 'node:fs/promises';
 import pg from 'pg';
 import { poolConfig } from '../lib/db.js';
 import { setStore } from '../lib/store/index.js';
-import { supabaseStore } from '../lib/store/supabase.js';
 import { postgresStore } from '../lib/store/postgres.js';
-import { fakeSupabase } from './fake-supabase.js';
 
 export const TEST_DB = process.env.TEST_DATABASE_URL;
 
@@ -22,22 +18,8 @@ export const as = (group) => ({ authorization: `Bearer ${CLASS_KEY}`, 'x-group':
 const schema = () => readFile(new URL('../schema.sql', import.meta.url), 'utf8');
 let pool;
 
-// Each backend's fresh() empties the store and returns ways to look inside it.
+// fresh() recreates the tables and returns ways to look inside them.
 export const BACKENDS = [
-  {
-    name: 'supabase',
-    skip: false,
-    async fresh() {
-      const fake = fakeSupabase();
-      setStore(supabaseStore({ client: fake }));
-      return {
-        recipes: async () => fake.rows('recipes'),
-        activity: async () => fake.rows('activity'),
-        plans: async () => fake.rows('plans'),
-        dropRecipes: async () => fake.drop('recipes'),
-      };
-    },
-  },
   {
     name: 'postgres',
     skip: TEST_DB ? false : 'set TEST_DATABASE_URL to run the Postgres tests',

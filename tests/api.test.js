@@ -149,13 +149,13 @@ for (const backend of BACKENDS) {
       const text = await res.text();
       assert.equal(res.status, 200, text);
       const body = JSON.parse(text);
-      assert.deepEqual([body.ok, body.backend, body.database, body.class_key], [true, backend.name, 'ready', true]);
+      assert.deepEqual([body.ok, body.database, body.class_key], [true, 'ready', true]);
       assert.doesNotMatch(text, /class-key-for/);
 
       await db.dropRecipes();
       const missing = await (await health()).json();
       assert.equal(missing.database, 'no tables');
-      const hint = backend.name === 'supabase' ? /SQL Editor/ : /db:setup/;
+      const hint = /redeploy/;
       assert.match(missing.problems.join(' '), hint);
 
       const list = await call('GET', '/api/recipes');

@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Admin · Recipe Coordinator</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=JetBrains+Mono:wght@400;500&family=Source+Sans+3:wght@400;600&display=swap">
+<link rel="stylesheet" href="/site.css">
+</head>
+<body>
+<header class="site-head">
+  <div class="wrap">
+    <a class="brand" href="/"><span class="brand-mark" aria-hidden="true">RC</span>Recipe Coordinator</a>
+    <nav aria-label="Sections">
+      <ul class="tabs">
+        <li><a href="/">Welcome</a></li>
+        <li><a href="/scout"><span class="num">1</span>Recipe Scout</a></li>
+        <li><a href="/planner"><span class="num">2</span>Meal Planner</a></li>
+        <li><a href="/database">Database</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <p class="eyebrow">For the instructor</p>
+  <h1>Admin</h1>
+  <p class="lede" style="margin-top:10px">Fix or remove records, back up the database, and restore it from a backup if something goes wrong.</p>
+
+  <section class="panel narrow" id="signin" style="margin-top:28px">
+    <form class="keycheck" id="signin-form" autocomplete="off">
+      <label class="small" for="admin-key" style="flex-basis:100%"><strong>Admin key</strong> <span class="muted">(ADMIN_KEY in Vercel; kept in this browser tab only)</span></label>
+      <input id="admin-key" type="password" placeholder="Paste the admin key" spellcheck="false">
+      <button class="btn primary" type="submit">Sign in</button>
+    </form>
+    <p class="keycheck-result" id="signin-result" aria-live="polite"></p>
+  </section>
+
+  <div id="admin" hidden>
+    <p class="small muted" style="margin-top:12px">Signed in. <button class="linklike" type="button" id="signout">Sign out</button></p>
+    <p class="toast" id="toast" role="status" aria-live="polite" hidden></p>
+
+    <h2>Backup and restore</h2>
+    <div class="grid-2">
+      <div class="panel">
+        <h3 style="margin-top:0">Back up</h3>
+        <p class="small">Downloads every recipe, meal plan and activity entry as one file. Do this before class, and before any restore or reset.</p>
+        <button class="btn primary" type="button" id="backup">Download backup</button>
+      </div>
+      <div class="panel">
+        <h3 style="margin-top:0">Restore</h3>
+        <p class="small">Replaces <strong>everything</strong> in the database with a backup file. The file is checked first; if anything in it is wrong, nothing changes.</p>
+        <input type="file" id="restore-file" accept="application/json,.json">
+        <p class="small" id="restore-summary"></p>
+        <div class="confirm-row" id="restore-confirm" hidden>
+          <label class="small" for="restore-word">Type <code>RESTORE</code> to confirm</label>
+          <input id="restore-word" type="text" autocomplete="off" spellcheck="false">
+          <button class="btn danger" type="button" id="restore" disabled>Replace everything</button>
+        </div>
+        <ul class="errors" id="restore-errors"></ul>
+      </div>
+    </div>
+    <p class="small muted">Neon also keeps its own history of the database. If a backup file isn’t enough, open the database from Vercel’s Storage tab (“Open in Neon”) and use its restore feature to go back to a point in time.</p>
+
+    <h2>Recipes <span class="count" id="n-recipes"></span></h2>
+    <div class="filters">
+      <label class="field"><span>Group</span><select id="f-group"><option value="">All groups</option></select></label>
+      <label class="field"><span>Search</span><input id="f-search" type="search" placeholder="Name or theme"></label>
+    </div>
+    <div class="table-wrap admin-table">
+      <table>
+        <thead><tr><th>Recipe</th><th>Group</th><th>Theme</th><th>Status</th><th>Saved</th><th></th></tr></thead>
+        <tbody id="recipes"></tbody>
+      </table>
+    </div>
+
+    <h2>Meal plans <span class="count" id="n-plans"></span></h2>
+    <div class="table-wrap admin-table">
+      <table>
+        <thead><tr><th>Group</th><th>Saved</th><th>Total</th><th>Summary</th><th></th></tr></thead>
+        <tbody id="plans"></tbody>
+      </table>
+    </div>
+
+    <h2>Activity log <span class="count" id="n-activity"></span></h2>
+    <div class="panel narrow">
+      <p class="small" style="margin-top:0">The log of every save and mark attempt, shown on the Database page. Clearing it doesn’t touch recipes or meal plans.</p>
+      <button class="btn danger" type="button" id="clear-activity" data-confirm="Click again to clear the log">Clear activity log</button>
+    </div>
+
+    <h2>Start over</h2>
+    <div class="panel narrow danger-zone">
+      <p class="small" style="margin-top:0">Deletes <strong>all</strong> recipes, meal plans and activity, for example between two classes. Download a backup first.</p>
+      <div class="confirm-row">
+        <label class="small" for="reset-word">Type <code>RESET</code> to confirm</label>
+        <input id="reset-word" type="text" autocomplete="off" spellcheck="false">
+        <button class="btn danger" type="button" id="reset" disabled>Delete everything</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="status-strip" id="status-strip" aria-live="polite"></div>
+  </div>
+</footer>
+<script src="/site.js"></script>
+<script src="/admin.js"></script>
+</body>
+</html>

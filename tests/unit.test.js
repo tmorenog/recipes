@@ -66,36 +66,27 @@ test('writes without the class key are refused before touching the database', as
   assert.match((await mcp.json()).error.message, /class key/);
 });
 
-test('settings are found with or without a prefix, preferring exact names', async () => {
-  const { setting, supabaseSettings, databaseSettingNames } = await import('../lib/env.js');
+test('the connection string is found with or without a prefix, preferring exact names', async () => {
+  const { setting } = await import('../lib/env.js');
   const { databaseUrl } = await import('../lib/db.js');
-  assert.deepEqual(supabaseSettings({ STORAGE_SUPABASE_URL: 'u', STORAGE_SUPABASE_SERVICE_ROLE_KEY: 'k' }), { url: 'u', key: 'k' });
-  assert.deepEqual(supabaseSettings({ NEXT_PUBLIC_SUPABASE_URL: 'u', SUPABASE_SECRET_KEY: 's' }), { url: 'u', key: 's' });
+  assert.equal(databaseUrl({ env: { STORAGE_DATABASE_URL: 'a' } }), 'a');
   assert.equal(setting(['POSTGRES_URL'], { STORAGE_POSTGRES_URL: 'a', POSTGRES_URL: 'b' }), 'b');
   assert.equal(databaseUrl({ env: { POSTGRES_URL: 'p', X_POSTGRES_URL_NON_POOLING: 'd' }, direct: true }), 'd');
   assert.equal(databaseUrl({ env: { SUPABASE_URL: 'https://x.supabase.co' } }), null);
-  assert.deepEqual(databaseSettingNames({ SUPABASE_URL: 'x', SUPABASE_SERVICE_ROLE_KEY: 'y', HOME: '/root', EMPTY_DATABASE_URL: '' }), ['SUPABASE_SERVICE_ROLE_KEY', 'SUPABASE_URL']);
 });
 
-test('a Postgres connection string takes priority; incomplete settings are named in health', async () => {
-  const { configuredBackend } = await import('../lib/store/index.js');
-  assert.equal(configuredBackend({ SUPABASE_URL: 'u', SUPABASE_SERVICE_ROLE_KEY: 'k', POSTGRES_URL: 'postgres://x/y' }), 'postgres');
-  assert.equal(configuredBackend({ SUPABASE_URL: 'u', SUPABASE_SERVICE_ROLE_KEY: 'k' }), 'supabase');
-  assert.equal(configuredBackend({ SUPABASE_URL: 'u', POSTGRES_URL: 'postgres://x/y' }), 'postgres');
-  assert.equal(configuredBackend({ SUPABASE_URL: 'u' }), null);
-
+test('health explains a missing database and keys, without showing values', async () => {
   const { GET } = await import('../api/health.js');
   const saved = { ...process.env };
-  for (const k of Object.keys(process.env)) if (/POSTGRES|DATABASE|SUPABASE/.test(k)) delete process.env[k];
-  process.env.SUPABASE_URL = 'https://secret-ref.supabase.co';
+  for (const k of Object.keys(process.env)) if (/POSTGRES|DATABASE_URL|CLASS_KEY|ADMIN_KEY|KROGER/.test(k)) delete process.env[k];
   try {
-    const text = await (await GET()).text();
-    const body = JSON.parse(text);
-    assert.deepEqual([body.backend, body.database_settings_seen], [null, ['SUPABASE_URL']]);
-    assert.match(body.problems.join(' '), /incomplete \(found SUPABASE_URL\).*create a Postgres database/);
-    assert.doesNotMatch(text, /secret-ref/);
+    const res = await GET();
+    const body = await res.json();
+    assert.equal(res.status, 503);
+    assert.deepEqual([body.database, body.class_key, body.admin_key, body.kroger], ['not connected', false, false, false]);
+    assert.match(body.problems.join(' '), /CLASS_KEY is not set.*create a Neon/);
+    assert.equal(body.warnings.length, 2);
   } finally {
-    for (const k of Object.keys(process.env)) if (!(k in saved)) delete process.env[k];
     Object.assign(process.env, saved);
   }
 });

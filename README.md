@@ -15,25 +15,37 @@ Everyone shares one class key. Each group also sends its chosen group name (head
 
 ## Deploy
 
-You need a Vercel account and this repository on GitHub.
+You need a Vercel account and this repository on GitHub. Everything else happens in Vercel.
 
-1. **Create the Vercel project.** In Vercel, click **Add New → Project** and import this repository. Leave every setting at its default and click **Deploy**. The first deploy finishes without a database; the site will say so.
+1. **Create the Vercel project.** Click **Add New → Project**, import this repository, leave the settings as they are, and click **Deploy**. The site works straight away, but says the database isn't connected yet.
 
-2. **Create the database.** In the project, open the **Storage** tab, click **Create Database**, choose a **Postgres** provider (Neon is the simplest), and connect it to this project. Vercel adds its connection string (`POSTGRES_URL` / `DATABASE_URL`) to the project's settings.
+2. **Create the database.** In the project, open the **Storage** tab, click **Create Database**, choose **Neon**, and connect it to this project (Production and Preview ticked, no prefix). Vercel adds the connection string for you.
 
-3. **Nothing to do for the tables.** Every deploy runs `schema.sql` against that database, creating or updating the tables automatically.
+3. **Add the settings** under **Settings → Environment Variables** (Production and Preview):
 
-4. **Set the class key and Kroger credentials.** In Vercel, open **Settings → Environment Variables** and add `CLASS_KEY`: one password for the whole class, e.g. from `openssl rand -hex 8`. Give it to every group. Each group also picks its own group name (like `team-3`) and sends it with every request in the `X-Group` header; the agent pages fill it into the prompts.
+   | Name | What it is |
+   | --- | --- |
+   | `CLASS_KEY` | A password for the whole class, e.g. from `openssl rand -hex 8`. Give it to every group. |
+   | `ADMIN_KEY` | A different password, only for you: it opens the Admin page. |
+   | `KROGER_CLIENT_ID`, `KROGER_CLIENT_SECRET` | From your app at [developer.kroger.com](https://developer.kroger.com) (product scope). Needed for the Meal Planners’ prices; everything else works without them. |
 
-   Also add `KROGER_CLIENT_ID` and `KROGER_CLIENT_SECRET` from your app at [developer.kroger.com](https://developer.kroger.com) (it needs the product scope). The Meal Planners' price lookups go through these. Without them, everything else works and the site shows "Kroger prices off".
+   `DATABASE_URL` / `POSTGRES_URL` are added by step 2; don't add them yourself.
 
-5. **Redeploy.** Go to **Deployments**, open the ⋯ menu on the latest one and click **Redeploy**. Settings only take effect in new deployments. The build log shows `✓ Database ready`.
+4. **Redeploy:** **Deployments → ⋯ → Redeploy**. The build creates the database tables (the log shows `✓ Database ready`). Settings only take effect in new deployments.
 
-6. **Check it.** Open your site's address. The footer shows whether the database is ready, how many groups are set up, and whether Kroger prices are on. The Database page explains anything that's missing.
+5. **Check it.** Open the site. The footer should say **Database ready** and **Class key set**. If not, the Database page says what's missing.
 
-New groups need no setup: they just use a new group name.
+Each group picks its own group name (like `team-3`) and sends it with every request in the `X-Group` header; the agent pages fill it into the prompts. New groups need no setup.
 
-**Using Supabase's API instead:** without a Postgres connection string, the app uses `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`. Supabase's API can't create tables, so you then have to paste [`schema.sql`](schema.sql) into Supabase's **SQL Editor** and click **Run**, and do it again whenever `schema.sql` changes. If both are set, the Postgres connection string is used.
+## Admin
+
+The **Admin** page (`/admin`, linked in the footer) opens with `ADMIN_KEY`. From there you can:
+- **Download a backup** of everything as one JSON file. Do this before class.
+- **Restore** a backup file. It replaces everything, in one step; the file is checked first, and if anything in it is wrong nothing changes.
+- **Edit** a recipe (same rules as saving one), set it back to `new` or mark it processed, or **delete** it.
+- **Delete** meal plans, **clear** the activity log, or **delete everything** to start over between classes.
+
+Neon also keeps its own history: from Vercel's Storage tab, "Open in Neon" lets you restore the database to an earlier point in time.
 
 ## The recipe format
 
@@ -125,7 +137,7 @@ curl -X POST https://<your-site>.vercel.app/api/recipes \
 
 ## Checking the setup
 
-`/api/health` reports whether a database is connected, whether the tables exist, and which groups are configured. It shows group names, never keys. The site footer and the Database page use it to explain what’s missing.
+`/api/health` reports whether a database is connected, whether the tables exist, and whether each key and the Kroger credentials are set. It never shows their values. The site footer and the Database page use it to explain what’s missing.
 
 ## Run it locally
 
@@ -144,7 +156,7 @@ vercel dev                   # http://localhost:3000
 npm test
 ```
 
-The end-to-end tests run against the Supabase store (with an in-memory stand-in for Supabase's API) and, when `TEST_DATABASE_URL` points at a Postgres you don't mind wiping, against the Postgres store too:
+The end-to-end tests need a Postgres they can wipe, named by `TEST_DATABASE_URL`; without it only the unit tests run:
 
 ```sh
 TEST_DATABASE_URL=postgres://postgres@localhost:5432/recipes_test npm test
@@ -167,8 +179,9 @@ TEST_DATABASE_URL=postgres://postgres@localhost:5432/recipes_test npm test
 | `lib/kroger.js` | Kroger sign-in, store and product lookups, caching |
 | `lib/mcp.js` | The MCP tools |
 | `lib/auth.js` | Checks the class key and reads the group name from `X-Group` |
-| `lib/store/` | Where recipes are stored: `supabase.js` (default) or `postgres.js` |
-| `lib/env.js`, `lib/db.js` | Finding the Supabase or Postgres settings |
+| `lib/store/` | The database queries (`postgres.js`) |
+| `lib/env.js`, `lib/db.js` | Finding the database connection string |
+| `lib/admin.js`, `api/admin.js`, `public/admin.*` | The Admin page: edit, delete, backup, restore, reset |
 | `public/` | The site: Welcome, Scout and Planner instructions, Database |
 | `tests/` | Tests |
 
@@ -176,4 +189,3 @@ TEST_DATABASE_URL=postgres://postgres@localhost:5432/recipes_test npm test
 
 - Anyone with the site's address can read the recipes, plans and activity log. Only holders of the class key can write or use the Kroger lookups. Because the key is shared, a group could write under another group's name; that's the trade-off for simplicity.
 - The class key lives only in Vercel's environment variables. Don't put it in code, in the repository, or in a page's JavaScript.
-- Supabase's public (anon) key can't reach the tables: row level security is on with no policies. Only this app, using the service role key on the server, can. Never put the service role key in a page or app.
