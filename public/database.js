@@ -123,22 +123,28 @@
   }
 
   // ---------------------------------------------------------------- plans
+  const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  const dayIndex = (d) => (typeof d === 'number' ? d - 1 : WEEKDAYS.indexOf(d));
+
   function planCard(p, recipesById) {
+    // Plans store the week's cost per person (older plans: the shopping list total).
+    const perPerson = p.meals.some((m) => typeof m.day === 'string');
     const over = p.budget_usd != null && p.total_cost_usd > p.budget_usd;
     const total = el('span', { className: `plan-total${over ? ' over' : ''}` }, money(p.total_cost_usd),
-      el('small', { textContent: p.budget_usd != null ? `of ${money(p.budget_usd)} budget${over ? ', over' : ''}` : 'total' }));
+      el('small', { textContent: [perPerson ? 'per person for the week' : 'total', p.budget_usd != null ? `budget ${money(p.budget_usd)}${over ? ', over' : ''}` : null].filter(Boolean).join(' · ') }));
 
     const meals = el('ul', { className: 'meals' },
-      ...[...p.meals].sort((a, b) => a.day - b.day).map((m) => {
+      ...[...p.meals].sort((a, b) => dayIndex(a.day) - dayIndex(b.day)).map((m) => {
         const r = recipesById.get(m.recipe_id);
-        const src = safeUrl(r?.image_url);
+        const src = safeUrl(m.image_url || r?.image_url);
         const n = m.nutrition_per_serving || {};
         return el('li', { className: 'meal' },
           src ? el('img', { src, alt: '', loading: 'lazy' }) : el('span', { className: 'ph' }),
           el('div', {},
-            el('div', { className: 'day', textContent: `Day ${m.day}` }),
-            el('div', { className: 'mname', textContent: r ? r.name : `Recipe ${m.recipe_id.slice(0, 8)}…` }),
-            el('div', { className: 'mfacts', textContent: `${money(m.cost_per_serving_usd)}/serving · ${Math.round(n.calories ?? 0)} kcal · ${Math.round(n.protein_g ?? 0)} g protein` })));
+            el('div', { className: 'day', textContent: typeof m.day === 'number' ? `Day ${m.day}` : m.day }),
+            el('div', { className: 'mname', textContent: m.name || r?.name || `Recipe ${m.recipe_id.slice(0, 8)}…` }),
+            el('div', { className: 'mfacts', textContent: `${money(m.cost_per_serving_usd)}/serving · ${Math.round(n.calories ?? 0)} kcal · ${Math.round(n.protein_g ?? 0)} g protein` }),
+            m.why ? el('div', { className: 'mwhy', textContent: m.why }) : null));
       }));
 
     const rules = (p.rule_checks || []).length
@@ -146,7 +152,7 @@
       : null;
 
     const list = p.shopping_list || [];
-    const shopping = el('details', {},
+    const shopping = list.length ? el('details', {},
       el('summary', { textContent: `Shopping list: ${list.length} item${list.length === 1 ? '' : 's'}` }),
       el('div', { className: 'table-wrap' },
         el('table', {},
@@ -156,7 +162,7 @@
             el('td', { textContent: [s.description, s.size].filter(Boolean).join(', ') || '–' }),
             el('td', { className: 'num', textContent: s.quantity }),
             el('td', { className: 'num', textContent: money(s.unit_price_usd) }),
-            el('td', { className: 'num', textContent: money(s.quantity * s.unit_price_usd) })))))));
+            el('td', { className: 'num', textContent: money(s.quantity * s.unit_price_usd) }))))))) : null;
 
     return el('article', { className: 'plan' },
       el('div', { className: 'plan-head' }, chip(p.group), total,

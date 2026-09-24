@@ -66,26 +66,25 @@ export function recipe(overrides = {}) {
   };
 }
 
-// A valid 5-meal plan for the given recipe ids (costs and totals add up).
+// A 5-dinner plan (Monday to Friday) for the given recipe ids.
+const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 export function mealPlan(ids, overrides = {}) {
   return {
-    summary: 'Five balanced vegetarian dinners under budget.',
-    budget_usd: 60,
-    store_id: '01400943',
-    total_cost_usd: 13.47,
-    meals: ids.map((recipe_id, i) => ({
-      day: i + 1,
-      recipe_id,
-      servings: 4,
-      cost_used_usd: 8,
-      cost_per_serving_usd: 2,
-      nutrition_per_serving: { calories: 550, protein_g: 25, fiber_g: 9, sodium_mg: 700 },
-    })),
-    shopping_list: [
-      { item: 'chickpeas', kroger_product_id: '0001111', size: '15 oz', quantity: 3, unit_price_usd: 1.29, recipe_ids: [ids[0], ids[1]] },
-      { item: 'yellow onions', size: '3 lb bag', quantity: 2, unit_price_usd: 4.8, recipe_ids: ids },
-    ],
-    rule_checks: [{ rule: 'at least 20 g protein per serving', passed: true }],
+    budget_usd: 20,
+    summary: 'Five balanced dinners from several cuisines, under budget.',
+    meals: ids.map((recipe_id, i) => ({ day: DAYS[i], recipe_id, why: 'Cheap and filling.' })),
     ...overrides,
   };
+}
+
+// Marks recipes as priced by the Pricer, as if it had run: per serving, for 50 people.
+export async function markPriced(pool, recipeIds, perServing = () => ({})) {
+  for (const [i, id] of recipeIds.entries()) {
+    const n = { cost: 2, calories: 550, protein_g: 25, fiber_g: 8, sodium_mg: 700, ...perServing(i) };
+    await pool.query(
+      `update pricings set status = 'priced', people = 50, total_cost_usd = $2, to_buy_usd = $2, nutrition_total = $3
+       where meal_id = (select meal_id from recipes where id = $1)`,
+      [id, n.cost * 50, JSON.stringify({ calories: n.calories * 50, protein_g: n.protein_g * 50, fiber_g: n.fiber_g * 50, sodium_mg: n.sodium_mg * 50 })],
+    );
+  }
 }

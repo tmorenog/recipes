@@ -2,7 +2,8 @@
 //
 //   GET  /api/meal-plans?group=&limit=   anyone can read
 //   POST /api/meal-plans                 save a plan (class key + X-Group required)
-import { savePlan, listPlans } from '../lib/plans.js';
+//   POST /api/meal-plans?check=true      check a draft without saving it
+import { savePlan, checkPlan, listPlans } from '../lib/plans.js';
 import { json, guarded, requireGroup } from '../lib/http.js';
 
 export const GET = guarded(async (request) => {
@@ -19,7 +20,14 @@ export const POST = guarded(async (request) => {
   } catch {
     return json(400, { errors: ['The request body must be JSON, with the header Content-Type: application/json.'] });
   }
+  if (new URL(request.url).searchParams.get('check') === 'true') {
+    const res = await checkPlan(input);
+    if (!res.ok) return json(res.status, { errors: res.errors });
+    const { ok, ...result } = res;
+    return json(200, result);
+  }
   const res = await savePlan({ group, channel: 'rest', input });
   if (!res.ok) return json(res.status, { errors: res.errors });
-  return json(201, { saved: true, plan: res.plan, warnings: res.warnings, next_step: res.next_step });
+  const { ok, ...result } = res;
+  return json(201, { saved: true, ...result });
 });

@@ -412,3 +412,5 @@ h2 .count { font: 500 15px var(--mono); color: var(--muted); margin-left: 6px; }
 .card .price.price-priced { background: var(--pricer-soft); color: var(--pricer); }
 .card .price.price-pending, .card .price.price-pricing { background: var(--surface-2); color: var(--muted); }
 .card .price.price-failed { background: var(--bad-bg); color: var(--bad-ink); }
+
+.meal .mwhy { margin-top: 2px; font-size: 13px; color: var(--muted); font-style: italic; }

@@ -1,5 +1,7 @@
-Our coordinator is an MCP server (Streamable HTTP) with every tool the agent needs to read recipes, look up Kroger prices and save the plan: {{SITE}}/api/mcp?agent=planner
+Our class coordinator has the recipes the class found, already priced at Kroger with their nutrition per serving. Connect to it from backend code. No AI yet.
 
-From backend code only, send the headers "Authorization: Bearer " + COORDINATOR_KEY and "X-Group: {{GROUP}}" on every request. Load its tools with tools/list and give them to the agent exactly as the server describes them: don't write the plan format or rules into our code. A result with "isError": true is a rejection to pass back to the agent, not a crash. During a run, reuse earlier search_kroger_products answers for the same term and store instead of asking again.
+Add a secret named COORDINATOR_KEY and ask me to enter its value. It is our class key. Only backend functions may use it: never put it in the page, the browser, or the code.
 
-No AI yet. Test it: list the coordinator's tools, call get_expectations, list_recipes, find_kroger_stores for ZIP 45202, and search_kroger_products for "yellow onions" at the first store. Show me the results. Don't call save_meal_plan or mark_processed yet.
+The coordinator is an MCP server (Streamable HTTP) at {{SITE}}/api/mcp?agent=planner. Send the headers "Authorization: Bearer " + COORDINATOR_KEY and "X-Group: {{GROUP}}" on every request. Load its tools with tools/list and give them to the agent exactly as the server describes them: don't write the plan format or the rules into our code. A result with "isError": true is a rejection to pass back to the agent, not a crash.
+
+Test it: list the coordinator's tools, call get_expectations, and call list_recipes with {"priced": true}. Show the priced recipes in a table under the panels: photo, name, cuisine, cost per serving, calories and protein.

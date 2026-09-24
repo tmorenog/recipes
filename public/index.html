@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Recipe Coordinator</title>
-<meta name="description" content="The hub for the two-agent recipe exercise: instructions, prompts and the shared database.">
+<meta name="description" content="The hub for the class agents exercise: step-by-step instructions, sample prompts and the shared database.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=JetBrains+Mono:wght@400;500&family=Source+Sans+3:wght@400;600&display=swap">
@@ -30,56 +30,33 @@
   <section class="hero">
     <div>
       <p class="eyebrow">Agents exercise</p>
-      <h1>Welcome! Today you build two agents that plan a week of dinners.</h1>
-      <p class="lede">Your group builds two AI agents in Lovable. The first finds real recipes. The second turns recipes into five balanced, affordable dinners, priced at a real Kroger store. This site connects them: it holds the shared database, checks everything your agents send, and shows the whole class’s results as they happen.</p>
+      <h1>Welcome! Today your group works on an agent system.</h1>
+      <p class="lede">You’ll build an AI agent in Lovable that does one job and saves its results to this site, the coordinator. Other agents pick up from there, each doing its own part. Start with the first agent and make sure you understand what it does; if you have time, keep going.</p>
     </div>
     <div class="flow" aria-label="How the pieces fit together">
-      <div class="flow-node scout"><strong>Agent 1 · Recipe Scout</strong><span>Searches TheMealDB for recipes that fit a theme</span></div>
-      <div class="flow-arrow">saves recipes</div>
-      <div class="flow-node hub"><strong>Recipe Coordinator</strong><span>This site: shared database, checks every write, Kroger prices</span></div>
-      <div class="flow-arrow">reads new recipes, prices them</div>
-      <div class="flow-node planner"><strong>Agent 2 · Meal Planner</strong><span>Picks 5 balanced, well-priced dinners and a shopping list</span><span class="flow-side">saves the plan · marks recipes used</span></div>
+      <div class="flow-node scout"><strong>Your agent</strong><span>Does one job with real data and tools</span></div>
+      <div class="flow-arrow">saves its results</div>
+      <div class="flow-node hub"><strong>The coordinator</strong><span>This site: a shared database that checks everything agents save and shows the class’s results</span></div>
+      <div class="flow-arrow">other agents build on them</div>
+      <div class="flow-node planner"><strong>More agents</strong><span>Each reads what the others saved and adds its part</span></div>
     </div>
   </section>
 
   <h2>What you’ll do</h2>
   <ol class="steps">
     <li><strong>Get the class key and choose a group name</strong><p>Your instructor gives everyone the same class key. Your group picks a name, like <code>team-3</code>, which labels everything your agents save.</p></li>
-    <li><strong>Build Agent 1, the Recipe Scout</strong><p>Follow the <a href="/scout">Recipe Scout page</a>: what it must do, how to talk to the coordinator, and prompts to paste into Lovable.</p></li>
-    <li><strong>Build Agent 2, the Meal Planner</strong><p>Follow the <a href="/planner">Meal Planner page</a>. It reads the recipes the Scouts saved, prices them at Kroger, and saves a plan.</p></li>
-    <li><strong>Watch the results</strong><p>The <a href="/database">Database page</a> shows every recipe, every meal plan, and every attempt your agents made, including the ones the coordinator turned down and why.</p></li>
+    <li><strong>Build your first agent, step by step</strong><p>Each step says what it adds and gives a sample prompt to paste into Lovable. Test after every step.</p></li>
+    <li><strong>Watch the results</strong><p>The <a href="/database">Database page</a> shows everything the class’s agents saved, and every attempt the coordinator turned down, with the reason.</p></li>
+    <li><strong>If there’s time, keep going</strong><p>The tabs at the top lead on to the next parts of the system. One agent you understand well is a good result.</p></li>
   </ol>
-
-  <h2>The two agents</h2>
-  <div class="grid-2 agent-cards">
-    <div class="panel scout">
-      <span class="agent-tag scout">Agent 1</span>
-      <h3>Recipe Scout</h3>
-      <p class="small">Given a theme like “cheap weeknight vegetarian dinners”, it searches TheMealDB, reads full recipes, picks five that fit, and saves each one to the coordinator in the agreed format.</p>
-      <ul class="small">
-        <li>Uses tools: search, look up, save</li>
-        <li>Fixes and retries when a recipe is rejected</li>
-      </ul>
-      <p><a class="btn primary" href="/scout">Build the Recipe Scout</a></p>
-    </div>
-    <div class="panel planner">
-      <span class="agent-tag planner">Agent 2</span>
-      <h3>Meal Planner</h3>
-      <p class="small">Reads the new recipes, prices every ingredient at a nearby Kroger, estimates nutrition, and picks five dinners that are balanced and within budget. Saves the plan with a shopping list, then marks the recipes as used.</p>
-      <ul class="small">
-        <li>Plans across many tool calls</li>
-        <li>Lets code do the maths, the model the judgment</li>
-      </ul>
-      <p><a class="btn primary" href="/planner" style="background:var(--planner);border-color:var(--planner)">Build the Meal Planner</a></p>
-    </div>
-  </div>
+  <p><a class="btn primary" href="/scout">Start building</a></p>
 
   <h2 id="key">The class key and your group name</h2>
   <div class="panel narrow">
     <p style="margin:0">Your agents send two things with everything they save:</p>
     <ul>
       <li><strong>The class key</strong>, the same for everyone, from your instructor. Treat it like a password: store it in Lovable as a <strong>secret</strong> when a prompt asks for it, and never paste it into a prompt, your code, or a chat. Only your app’s backend should use it.</li>
-      <li><strong>Your group name</strong>, which your group chooses, e.g. <code>team-3</code>. Use the same name for both agents. Type it on the agent pages and the prompts fill it in for you.</li>
+      <li><strong>Your group name</strong>, which your group chooses, e.g. <code>team-3</code>. Use the same name for every agent you build. Type it on the building pages and the prompts fill it in for you.</li>
     </ul>
     <form class="keycheck" id="keycheck" autocomplete="off">
       <label class="muted small" for="key-input" style="flex-basis:100%">Check the class key. It’s sent only to this site and isn’t stored.</label>
@@ -91,9 +68,9 @@
 
   <h2>Good to know</h2>
   <div class="grid-3">
-    <div class="panel"><h3 style="margin-top:0">Rejections are normal</h3><p class="small" style="margin:0">The coordinator checks every recipe and plan. When something’s wrong it says exactly what, e.g. “est_servings must be at least 1”. A good agent reads the reasons, fixes them, and tries again.</p></div>
-    <div class="panel"><h3 style="margin-top:0">Everything is visible</h3><p class="small" style="margin:0">All groups’ recipes, plans and attempts appear on the Database page. Use it to check your agent did what you think it did.</p></div>
-    <div class="panel"><h3 style="margin-top:0">Build in small steps</h3><p class="small" style="margin:0">Paste one prompt at a time and test before moving on. When something breaks, tell Lovable what you expected and what happened instead.</p></div>
+    <div class="panel"><h3 style="margin-top:0">Rejections are normal</h3><p class="small" style="margin:0">The coordinator checks everything your agents save. When something’s wrong it says exactly what, e.g. “est_servings must be at least 1”. A good agent reads the reasons, fixes them, and tries again.</p></div>
+    <div class="panel"><h3 style="margin-top:0">Everything is visible</h3><p class="small" style="margin:0">Everything the class’s agents save, and every attempt, appears on the Database page. Use it to check your agent did what you think it did.</p></div>
+    <div class="panel"><h3 style="margin-top:0">Build in small steps</h3><p class="small" style="margin:0">Paste one step at a time and test before moving on. When something breaks, tell Lovable what you expected and what happened instead.</p></div>
   </div>
 </main>
 

@@ -10,7 +10,7 @@ The hub for a two-agent class exercise. Groups build two AI agents in Lovable: a
 
 **API** (used by the students' agents)
 - **REST** under `/api/…` for Lovable backends. Same data, same rules, same error messages as MCP.
-- **MCP** at `/api/mcp` with seven tools: `get_expectations`, `save_recipe`, `list_recipes`, `mark_processed`, `save_meal_plan`, `find_kroger_stores`, `search_kroger_products`.
+- **MCP** at `/api/mcp` with eight tools: `get_expectations`, `save_recipe`, `list_recipes`, `mark_processed`, `check_meal_plan`, `save_meal_plan`, `find_kroger_stores`, `search_kroger_products`. With `?agent=planner` the Planner sees `get_expectations`, `list_recipes`, `check_meal_plan` and `save_meal_plan`.
 
 Everyone shares one class key. Each group also sends its chosen group name (header `X-Group`), so each recipe and plan records who made it. Kroger lookups use the instructor's Kroger credentials, so students need none.
 
@@ -97,7 +97,8 @@ Add `?agent=scout` or `?agent=planner` to show only that agent's tools. Every an
 | `save_recipe` | Saves one recipe under your group. |
 | `list_recipes` | Recipes from every group, newest first. Options: `status` (`new`, the default; `processed`; or `all`), `theme`, `group`, `limit` (default 50, max 500). |
 | `mark_processed` | Takes one `recipe_id`. Marks that recipe as used by your group, so it drops out of the `new` list. Marking it again changes nothing. |
-| `save_meal_plan` | Saves a 5-meal plan with costs, nutrition and a shopping list. See the checks below. |
+| `check_meal_plan` | Checks a draft plan without saving it: the week’s cost per person and every balance rule. |
+| `save_meal_plan` | Saves a plan: five dinners, Monday to Friday, from priced recipes, with the budget. See the checks below. |
 | `find_kroger_stores` | Kroger stores near a US ZIP code, each with a `store_id`. |
 | `search_kroger_products` | Products at one store: description, size, price and promo price. Results are cached for an hour. |
 
@@ -132,7 +133,7 @@ Reading recipes, plans and activity needs no key, and works from a browser. Writ
 | `POST /api/recipes` with the recipe as JSON | Save a recipe | `201` `{ saved, recipe }` | `400` incomplete, `401` wrong key, `409` duplicate |
 | `POST /api/recipes/{id}/processed` | Mark it processed | `200` `{ processed, already, recipe }` | `401` wrong key, `404` no such recipe |
 | `GET /api/meal-plans?group=&limit=` | List meal plans | `200` `{ count, plans }` | |
-| `POST /api/meal-plans` | Save a meal plan | `201` `{ saved, plan, warnings, next_step }` | `400` with every problem, `401` |
+| `POST /api/meal-plans` | Save a meal plan (`?check=true`: check it without saving) | `201` `{ saved, plan, week_cost_per_person_usd, checks, … }` | `400` with every problem, `401` |
 | `GET /api/kroger/stores?zip=` | Kroger stores (key required) | `200` `{ stores }` | `400`, `429` Kroger busy, `503` not set up |
 | `GET /api/kroger/products?term=&store_id=&limit=` | Kroger products with prices (key required) | `200` `{ products }` | same |
 | `GET /api/activity?group=&result=all\|accepted\|rejected` | Every save and mark attempt | `200` `{ activity }` | |
@@ -146,12 +147,12 @@ curl -X POST https://<your-site>.vercel.app/api/recipes \
   -d '{"theme":"15-minute lunches","meal_id":"52771","name":"Halloumi wraps","ingredients":[{"name":"halloumi","amount":1,"unit":"block","raw":"1 block halloumi"}],"instructions":"Grill the halloumi, slice it and wrap it with salad.","est_minutes":15,"est_servings":2,"why_chosen":"Ready in 15 minutes."}'
 ```
 
-### Meal plan checks
-- Exactly 5 meals, on different days, with no recipe repeated, and every `recipe_id` must exist.
-- For each meal, `cost_per_serving_usd` = `cost_used_usd ÷ servings`, to within 5 cents.
-- `total_cost_usd` = the sum of `quantity × unit_price_usd` over the shopping list, to within 5 cents.
-- Each shopping list line's `recipe_ids` must be meals in this plan.
-- Going over `budget_usd` is allowed but returns a warning.
+### Meal plans
+A plan is `{ budget_usd, summary, meals }`: the budget in US dollars per person for the week, and five dinners, each `{ day, recipe_id, why }`. The coordinator fills in each dinner’s cost and nutrition per serving from the Pricer and adds up the week, so no number in a plan comes from the AI.
+
+Rejected (nothing saved): a day missing or repeated (Monday to Friday, each once), a recipe used twice, an unknown `recipe_id`, or a recipe that isn’t priced yet.
+
+Checked and reported with ✓ or ✗ (the plan is saved either way): the week’s cost per person within the budget; every dinner at 400–800 calories, at least 20 g protein, at least 5 g fibre and under 1,500 mg sodium per serving; at least 3 cuisines; no category more than twice; at least one vegetarian or vegan dinner. The rules are in `lib/plans.js`.
 
 ## Checking the setup
 

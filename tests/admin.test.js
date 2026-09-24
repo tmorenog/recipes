@@ -5,7 +5,7 @@ import { randomUUID } from 'node:crypto';
 import * as adminApi from '../api/admin.js';
 import * as rest from '../api/recipes.js';
 import * as plansApi from '../api/meal-plans.js';
-import { BACKENDS, as, recipe, mealPlan, closeDatabase } from './helpers.js';
+import { BACKENDS, as, recipe, mealPlan, markPriced, closeDatabase } from './helpers.js';
 
 const ADMIN_KEY = 'admin-key-for-tests';
 process.env.ADMIN_KEY = ADMIN_KEY;
@@ -78,6 +78,7 @@ for (const backend of BACKENDS) {
 
     test('deletes recipes, plans and the activity log', async () => {
       const ids = await saveRecipes('team-1', 5);
+      await markPriced(db.pool, ids);
       const saved = await plansApi.POST(new Request('http://x/api/meal-plans', { method: 'POST', headers: { ...as('team-2'), 'content-type': 'application/json' }, body: JSON.stringify(mealPlan(ids)) }));
       const planId = (await saved.json()).plan.id;
 
@@ -97,6 +98,7 @@ for (const backend of BACKENDS) {
     test('backup, reset and restore bring everything back exactly', async () => {
       const ids = await saveRecipes('team-1', 5);
       await rest.POST(new Request(`http://x/api/recipes?id=${ids[0]}&action=processed`, { method: 'POST', headers: as('team-2') }));
+      await markPriced(db.pool, ids);
       await plansApi.POST(new Request('http://x/api/meal-plans', { method: 'POST', headers: { ...as('team-2'), 'content-type': 'application/json' }, body: JSON.stringify(mealPlan(ids)) }));
       const before = await listAll();
 
@@ -120,7 +122,7 @@ for (const backend of BACKENDS) {
       assert.deepEqual(after.map(key).sort(), before.map(key).sort());
       const plans = await (await plansApi.GET(new Request('http://x/api/meal-plans'))).json();
       assert.equal(plans.plans[0].meals.length, 5);
-      assert.equal(plans.plans[0].total_cost_usd, 13.47);
+      assert.equal(plans.plans[0].total_cost_usd, 10); // five dinners at $2 a serving
     });
 
     test('restore checks the whole file first and changes nothing if it’s wrong', async () => {

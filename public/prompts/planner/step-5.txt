@@ -1,7 +1,5 @@
-Connect the page to run-planner.
-
-- "Plan my week" starts a run and is disabled until it ends.
-- "What the agent is doing" shows the steps live: tool name and inputs, results collapsed (click for JSON), rejections in red, a counter like "34 / 80 tool calls" and the time left.
-- "The plan" shows, once saved: five day cards (recipe photo and name, cost per serving, calories, protein), the shopping list with its total against the budget, the rule checks as pass/fail badges, and the summary. Credit TheMealDB for the recipe photos.
-- Link "See it on the class database" to {{SITE}}/database
+Improve the page:
+- "Plan my week" is disabled until the run ends.
+- "What the agent is doing" shows tool names and inputs, results collapsed (click for JSON), failed rules and coordinator rejections in red, a counter like "12 / 30 tool calls" and the time left.
+- Each dinner links to its recipe on TheMealDB (https://www.themealdb.com/meal/MEAL_ID). Credit TheMealDB for the photos.
 - Keep a list of past runs so I can reopen any earlier trace and plan.

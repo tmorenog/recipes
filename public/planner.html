@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Meal Planner · Recipe Coordinator</title>
-<meta name="description" content="Step-by-step Lovable prompts for Agent 2, the Meal Planner.">
+<meta name="description" content="Step-by-step Lovable prompts for Agent 2, the Meal Planner: a balanced, cheap Monday-to-Friday plan within a budget.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=JetBrains+Mono:wght@400;500&family=Source+Sans+3:wght@400;600&display=swap">
@@ -30,34 +30,27 @@
   <div class="page-head">
     <span class="agent-tag planner">Agent 2</span>
     <h1>Build the Meal Planner</h1>
-    <p class="lede">An agent that takes the recipes the Scouts saved, prices every ingredient at a real Kroger store, and plans five dinners that are balanced and within budget, with a shopping list.</p>
+    <p class="lede">An agent that takes a budget, reads the recipes the class has found, and plans five dinners, Monday to Friday, that are nutritious, varied and cheap. It shows the week and saves the plan to the coordinator.</p>
   </div>
 
   <h2 id="goal">The goal</h2>
   <div class="panel narrow">
-    <p style="margin-top:0"><strong>Your Planner is done when:</strong> you enter a ZIP code, a budget and a number of people, press a button, and a five-dinner plan with a Kroger shopping list appears on the <a href="/database">Database page</a> under your group. The five recipes it used are marked as processed.</p>
+    <p style="margin-top:0"><strong>Your Planner is done when:</strong> you enter a budget, press a button, watch it work step by step, and a Monday-to-Friday plan appears in your app and on the <a href="/database">Database page</a> under your group.</p>
     <ul class="checklist">
-      <li>It learns the steps, rules and plan format from the coordinator (<code>get_expectations</code>) instead of having them written into its code</li>
-      <li>Prices come from a real Kroger store near the ZIP code</li>
-      <li>The maths is done by code, not guessed by the AI</li>
-      <li>The plan follows the balance rules and says which ones passed</li>
-      <li>You can see every step: what it read, what it priced, why it chose each meal</li>
+      <li>It uses only recipes the class saved, with the prices and nutrition the <a href="/pricer">Pricer</a> worked out.</li>
+      <li>It learns the rules from the coordinator (<code>get_expectations</code>) instead of having them written into its code.</li>
+      <li>It checks its plan with the coordinator, and improves it until the rules pass or it can explain why they can’t.</li>
+      <li>The maths is done by the coordinator, never guessed by the AI.</li>
+      <li>You can see every step it took.</li>
     </ul>
   </div>
 
-  <h2 id="build">Build it in Lovable</h2>
-  <p>Each step says what it adds, then gives a <strong>sample prompt</strong>. Copy the prompt into Lovable as it is, or edit it to make the app your own, then check the result before moving on. As with the Scout, the app uses Lovable Cloud and Lovable’s built-in AI. The Kroger lookups go through the coordinator’s own Kroger account, so the only key you need is the class key.</p>
-  <div class="callout warn"><p><strong>The class key never goes in a prompt.</strong> Step 1 asks Lovable to create a secret. Lovable then shows a secure box where you paste the key.</p></div>
-  <div class="panel group-box">
-    <label for="group-planner"><strong>Your group name</strong></label>
-    <p class="small muted" style="margin:4px 0 10px">Pick one name for your group and use it for both agents, e.g. <code>team-3</code>. It labels everything your agents save.</p>
-    <input class="group-input" id="group-planner" type="text" placeholder="e.g. team-3" autocomplete="off" spellcheck="false">
-    <p class="group-note small" aria-live="polite"></p>
-  </div>
+  <h2 id="build">Build it in Lovable, step by step</h2>
+  <p>Each step says what it adds, then gives a <strong>sample prompt</strong>. Copy the prompt into Lovable as it is, or edit it to make the app your own, then check the result before moving on. Your app uses Lovable Cloud for its backend and Lovable’s built-in AI for the agent, so the only key you need is the class key.</p>
 
   <section class="step" id="step-1">
-    <h3 class="step-title"><span class="step-num">Step 1 of 5</span>Create the app and store your key</h3>
-    <p class="step-what">Sets up your Lovable project, stores the class key as a secret, and builds a page with inputs for the ZIP code, budget and number of people.</p>
+    <h3 class="step-title"><span class="step-num">Step 1 of 5</span>Create the app</h3>
+    <p class="step-what">Sets up your Lovable project and the page: a budget, a box for anything else to consider, a button, and an empty Monday-to-Friday week. No agent yet.</p>
     <div class="prompt planner">
       <div class="prompt-head">
         <p class="prompt-kind">Sample prompt</p>
@@ -65,11 +58,21 @@
       </div>
       <div class="prompt-body" id="q1" data-prompt="/prompts/planner/step-1.txt"></div>
     </div>
+    <p class="step-check"><strong>You should see:</strong> the page with the budget (15 to start), the text box, the button and five empty day cards.</p>
   </section>
+
+  <h3 id="coordinator">Before step 2: your group name and the class key</h3>
+  <div class="panel group-box">
+    <label for="group-planner"><strong>Your group name</strong></label>
+    <p class="small muted" style="margin:4px 0 10px">Pick one name for your group and use it for every agent you build, e.g. <code>team-3</code>. It labels everything your agents save. The prompts below fill it in.</p>
+    <input class="group-input" id="group-planner" type="text" placeholder="e.g. team-3" autocomplete="off" spellcheck="false">
+    <p class="group-note small" aria-live="polite"></p>
+  </div>
+  <div class="callout warn"><p><strong>The class key never goes in a prompt.</strong> Step 2 asks Lovable to create a secret. Lovable then shows a secure box where you paste the key.</p></div>
 
   <section class="step" id="step-2">
     <h3 class="step-title"><span class="step-num">Step 2 of 5</span>Connect to the coordinator</h3>
-    <p class="step-what">Connects your app to the coordinator, which has the recipes, the Kroger prices and the rules for saving a plan. No AI yet.</p>
+    <p class="step-what">Connects your app to the class coordinator, which has the recipes with their prices and nutrition, and the rules for a good plan. No AI yet.</p>
     <div class="prompt planner">
       <div class="prompt-head">
         <p class="prompt-kind">Sample prompt</p>
@@ -77,11 +80,11 @@
       </div>
       <div class="prompt-body" id="q2" data-prompt="/prompts/planner/step-2.txt"></div>
     </div>
+    <p class="step-check"><strong>You should see:</strong> four coordinator tools, the brief from <code>get_expectations</code> (the goal, the balance rules and the plan format), and a table of priced recipes. If the table is empty, the class hasn’t saved recipes yet, or the <a href="/pricer">Pricer</a> is still working on them.</p>
   </section>
-
   <section class="step" id="step-3">
-    <h3 class="step-title"><span class="step-num">Step 3 of 5</span>Add the calculator tools</h3>
-    <p class="step-what">Adds two calculators in plain code, so the AI chooses the products but never does the arithmetic.</p>
+    <h3 class="step-title"><span class="step-num">Step 3 of 5</span>Add the agent and show the week</h3>
+    <p class="step-what">Adds the AI. The model reads the recipes, drafts five dinners, asks the coordinator to check them, and improves the plan. The week appears in your app, not saved yet.</p>
     <div class="prompt planner">
       <div class="prompt-head">
         <p class="prompt-kind">Sample prompt</p>
@@ -89,11 +92,11 @@
       </div>
       <div class="prompt-body" id="q3" data-prompt="/prompts/planner/step-3.txt"></div>
     </div>
+    <p class="step-check"><strong>You should see:</strong> press the button, watch it list recipes and check drafts, and five dinners fill Monday to Friday, with the week’s cost against the budget and a ✓ or ✗ for each rule.</p>
   </section>
-
   <section class="step" id="step-4">
-    <h3 class="step-title"><span class="step-num">Step 4 of 5</span>Add the agent loop</h3>
-    <p class="step-what">Adds the AI agent. It reads the rules from the coordinator, prices recipes, and builds a five-dinner plan with a shopping list.</p>
+    <h3 class="step-title"><span class="step-num">Step 4 of 5</span>Save the plan to the coordinator</h3>
+    <p class="step-what">Lets the agent save its best plan to the class database, where everyone can see it.</p>
     <div class="prompt planner">
       <div class="prompt-head">
         <p class="prompt-kind">Sample prompt</p>
@@ -101,11 +104,11 @@
       </div>
       <div class="prompt-body" id="q4" data-prompt="/prompts/planner/step-4.txt"></div>
     </div>
+    <p class="step-check"><strong>You should see:</strong> a run that ends with <code>save_meal_plan</code>, and the plan on the <a href="/database">Database page</a> under Meal plans.</p>
   </section>
-
   <section class="step" id="step-5">
-    <h3 class="step-title"><span class="step-num">Step 5 of 5</span>Show the plan and the agent working</h3>
-    <p class="step-what">Shows the finished plan and the agent’s trace on the page, with a history of past runs.</p>
+    <h3 class="step-title"><span class="step-num">Step 5 of 5</span>Show the agent working</h3>
+    <p class="step-what">Makes the agent’s work easy to follow: a live trace with a counter, failed rules in red, and a history of past runs.</p>
     <div class="prompt planner">
       <div class="prompt-head">
         <p class="prompt-kind">Sample prompt</p>
@@ -113,6 +116,7 @@
       </div>
       <div class="prompt-body" id="q5" data-prompt="/prompts/planner/step-5.txt"></div>
     </div>
+    <p class="step-check"><strong>You should see:</strong> a clear, live trace, and a list of past runs you can reopen.</p>
   </section>
 
   <h2 id="test">Test it</h2>
@@ -121,20 +125,18 @@
       <h3 style="margin-top:0">It works when…</h3>
       <ul class="checklist">
         <li>The trace starts with <code>get_expectations</code></li>
-        <li>A run with ZIP 45202, $60 and 4 people saves a plan</li>
-        <li>The plan appears on the <a href="/database">Database page</a> under Meal plans, with a shopping list</li>
-        <li>The five recipes now show as processed, by your group</li>
-        <li>Every price in the trace came from a Kroger search</li>
+        <li>It calls <code>check_meal_plan</code> before saving, and fixes failed rules</li>
+        <li>A run with a $15 budget saves a plan, Monday to Friday</li>
+        <li>The plan appears on the <a href="/database">Database page</a> with its rule checks</li>
       </ul>
     </div>
     <div class="panel">
       <h3 style="margin-top:0">Now try to break it</h3>
       <ul>
-        <li><strong>A tiny budget:</strong> $15 for 4 people. Does it swap meals, or say it can’t be done?</li>
-        <li><strong>Not enough recipes:</strong> what happens when fewer than 5 are new?</li>
-        <li><strong>An odd ingredient</strong> Kroger doesn’t sell. Does it try another search, or make up a price?</li>
-        <li><strong>A tight limit:</strong> set the limit to 20 tool calls. What does it do when it runs out?</li>
-        <li><strong>Two costs:</strong> compare the plan’s total with the sum of cost used. Why are they different?</li>
+        <li><strong>A tiny budget:</strong> $3 for the week. Does it explain that it can’t be done, or pretend?</li>
+        <li><strong>A clash:</strong> “vegetarian only” with fewer than five vegetarian recipes. What does it choose?</li>
+        <li><strong>A rule of your own:</strong> “no dinner over 45 minutes”. Does it follow it, and say so?</li>
+        <li><strong>A tight limit:</strong> ask Lovable to set the limit to 6 tool calls. What does it do when it runs out?</li>
       </ul>
     </div>
   </div>
@@ -142,105 +144,62 @@
   <h2 id="reference">Reference</h2>
   <details class="panel" id="how">
     <summary><strong>How it works</strong></summary>
-    <ol class="steps">
-    <li><strong>Read the new recipes</strong><p>Ask the coordinator for recipes nobody has used yet. Recipes from every group are shared: once a Planner marks a recipe processed, it disappears from everyone’s “new” list.</p></li>
-    <li><strong>Pick a store</strong><p>Kroger prices depend on the store, so find one near the ZIP code and use it for every search.</p></li>
-    <li><strong>Price the ingredients</strong><p>For each ingredient, search Kroger, choose the product that matches, and let code work out what the recipe’s share of it costs.</p></li>
-    <li><strong>Estimate nutrition</strong><p>The AI estimates calories, protein, fibre and sodium per serving from the ingredients. These are estimates, and the plan says so.</p></li>
-    <li><strong>Choose five dinners</strong><p>Balanced by your rules, within budget. Recipes that share ingredients make the shopping list cheaper.</p></li>
-    <li><strong>Save and hand back</strong><p>Save the plan to the coordinator, fix anything it rejects, then mark the five recipes as processed.</p></li>
-  </ol>
-    <h3>The coordinator’s MCP server</h3>
-    <p class="small"><code>{{SITE}}/api/mcp?agent=planner</code> offers the Planner these tools. Every request carries <code>Authorization: Bearer &lt;class key&gt;</code> and <code>X-Group: {{GROUP}}</code>.</p>
+    <p>Recipes reach your Planner in two steps. The Scouts save recipes to the coordinator. Then the <a href="/pricer">Pricer</a>, an agent that runs on the coordinator, prices each one at Kroger and works out its nutrition. Your Planner only chooses and explains: the coordinator adds up costs and checks the rules.</p>
+    <p class="small"><code>{{SITE}}/api/mcp?agent=planner</code> offers the Planner four tools. Every request carries <code>Authorization: Bearer &lt;class key&gt;</code> and <code>X-Group: {{GROUP}}</code>.</p>
     <div class="table-wrap"><table>
       <tr><th>Tool</th><th>Does</th></tr>
-      <tr><td><code>get_expectations</code></td><td>The steps, the balance rules, every field <code>save_meal_plan</code> accepts, and the checks it runs</td></tr>
-      <tr><td><code>list_recipes</code></td><td>Recipes nobody has used yet (<code>status: "new"</code>), from every group</td></tr>
-      <tr><td><code>find_kroger_stores</code></td><td>Up to 5 stores near a ZIP code: <code>store_id</code>, name, address</td></tr>
-      <tr><td><code>search_kroger_products</code></td><td>Products at one store: <code>product_id</code>, description, <code>size</code>, <code>price_usd</code>, <code>promo_price_usd</code></td></tr>
-      <tr><td><code>save_meal_plan</code></td><td>Saves the plan, or rejects it with every reason at once</td></tr>
-      <tr><td><code>mark_processed</code></td><td>Marks a recipe as used, so it drops out of everyone’s “new” list</td></tr>
+      <tr><td><code>get_expectations</code></td><td>The goal, the steps, the balance rules and the plan format</td></tr>
+      <tr><td><code>list_recipes</code></td><td>The class’s recipes. With <code>{"priced": true}</code>, only priced ones, each with <code>pricing.cost_per_serving_usd</code> and <code>pricing.nutrition_per_serving</code></td></tr>
+      <tr><td><code>check_meal_plan</code></td><td>Checks a draft without saving: the week’s cost per person, and every rule with ✓ or ✗</td></tr>
+      <tr><td><code>save_meal_plan</code></td><td>Saves the plan with its numbers and rule checks</td></tr>
     </table></div>
-    <p class="small">Your app adds two calculator tools of its own, <code>price_ingredient</code> and <code>plan_totals</code>, so the model chooses and code calculates.</p>
-    <div class="callout"><p>Kroger allows a limited number of searches per day for the whole class. Search once per ingredient and reuse the answer: the same search at the same store gives the same prices.</p></div>
-  </details>
-
-  <details class="panel" id="cost">
-    <summary><strong>Costing a recipe</strong></summary>
-    <p>A recipe needs “2 tbsp olive oil”. Kroger sells a 16.9 fl oz bottle for $7.99. What does the recipe cost? There are two honest answers, and your plan uses both:</p>
-  <div class="grid-2">
-    <div class="panel"><h3 style="margin-top:0">Cost used</h3><p class="small" style="margin:0">The share of the package the meal uses: 2 tbsp is 1 fl oz, 1/16.9 of the bottle, about <strong>$0.47</strong>. This is the meal’s real food cost. It goes in <code>cost_used_usd</code>.</p></div>
-    <div class="panel"><h3 style="margin-top:0">Cost to buy</h3><p class="small" style="margin:0">What you pay at the till: the whole bottle, <strong>$7.99</strong>. The shopping list uses this. Its total is <code>total_cost_usd</code>, which is what your budget is about.</p></div>
-  </div>
-  <p>Unit conversion (tablespoons to fluid ounces, grams to pounds) is exactly the kind of arithmetic AI models get wrong. Step 3 gives your agent small calculator tools, so the model decides <em>which</em> product to use and code works out <em>how much</em> it costs.</p>
   </details>
 
   <details class="panel" id="rules">
-    <summary><strong>What “balanced” means</strong></summary>
-    <p>Your agent needs rules it can check, not just “make it healthy”. Start with these, then discuss as a group whether you’d change them. These are classroom rules, not dietary advice.</p>
-  <div class="grid-2">
-    <div class="panel">
-      <h3 style="margin-top:0">Each dinner, per serving</h3>
-      <ul class="small" style="margin:0">
-        <li>400 to 800 calories</li>
-        <li>At least 20 g protein</li>
-        <li>At least 5 g fibre</li>
-        <li>Under 1,500 mg sodium</li>
-      </ul>
-    </div>
-    <div class="panel">
-      <h3 style="margin-top:0">Across the five dinners</h3>
-      <ul class="small" style="margin:0">
-        <li>No main protein more than twice</li>
-        <li>At least 3 different cuisines, when the recipes allow</li>
-        <li>At least one vegetable-forward dinner</li>
-        <li>The shopping list total is within the budget</li>
-      </ul>
-    </div>
-  </div>
-    <p class="small muted">Your agent reads these rules from <code>get_expectations</code>. To use different ones, add them to the model’s instructions in step 4: the coordinator tells the agent that your rules win.</p>
+    <summary><strong>The balance rules</strong> (your agent reads these from <code>get_expectations</code>)</summary>
+    <ul>
+      <li>The week costs no more than the budget, per person</li>
+      <li>Every dinner has 400 to 800 calories, at least 20 g protein, at least 5 g fibre and less than 1,500 mg sodium per serving</li>
+      <li>At least 3 different cuisines</li>
+      <li>No category (e.g. Beef, Chicken) more than 2 times</li>
+      <li>At least one vegetarian or vegan dinner</li>
+    </ul>
+    <p class="small muted">Classroom rules, not dietary advice. Nutrition comes from USDA data for the products the Pricer chose, so it’s an estimate. Discuss as a group whether you’d change them; the model’s instructions can add rules of your own.</p>
   </details>
 
   <details class="panel" id="format">
-    <summary><strong>The meal plan format</strong> (your agent reads this from <code>get_expectations</code>)</summary>
+    <summary><strong>The meal plan format</strong></summary>
     <div class="table-wrap"><table>
-    <tr><th>Field</th><th>What goes in it</th></tr>
-    <tr><td><code>summary</code></td><td>Why these five meals: balance, cost, trade-offs, anything estimated</td></tr>
-    <tr><td><code>budget_usd</code></td><td>The budget you were given (optional)</td></tr>
-    <tr><td><code>store_id</code></td><td>The Kroger store the prices came from</td></tr>
-    <tr><td><code>total_cost_usd</code></td><td>The shopping list total: the sum of <code>quantity × unit_price_usd</code></td></tr>
-    <tr><td><code>meals</code></td><td>Exactly 5, each with <code>day</code> (1 to 5, all different), <code>recipe_id</code> (from the coordinator; all different), <code>servings</code>, <code>cost_used_usd</code>, <code>cost_per_serving_usd</code> (= cost used ÷ servings), <code>nutrition_per_serving</code> with <code>calories</code>, <code>protein_g</code>, <code>fiber_g</code>, <code>sodium_mg</code></td></tr>
-    <tr><td><code>shopping_list</code></td><td>One line per Kroger product: <code>item</code>, <code>kroger_product_id</code>, <code>description</code>, <code>size</code>, <code>quantity</code> (packages), <code>unit_price_usd</code>, <code>recipe_ids</code> (which of the 5 meals use it)</td></tr>
-    <tr><td><code>rule_checks</code></td><td>Each rule you checked: <code>rule</code>, <code>passed</code> (true/false), <code>detail</code></td></tr>
-  </table></div>
-  <p class="small muted">The coordinator rejects a plan whose numbers don’t add up (to within 5 cents), that repeats a day or a recipe, or that uses a recipe id it doesn’t know. Going over budget is allowed but flagged.</p>
+      <tr><th>Field</th><th>What goes in it</th></tr>
+      <tr><td><code>budget_usd</code></td><td>The budget: US dollars per person for the whole week</td></tr>
+      <tr><td><code>summary</code></td><td>How the five dinners balance nutrition, variety and cost, and any trade-offs</td></tr>
+      <tr><td><code>meals</code></td><td>Exactly 5: <code>day</code> (Monday to Friday, each once), <code>recipe_id</code> (a priced recipe from <code>list_recipes</code>, each once) and <code>why</code> (one sentence)</td></tr>
+    </table></div>
+    <p class="small muted">That’s all the agent sends. The coordinator adds each dinner’s cost and nutrition from the Pricer, the week’s total, and the rule checks. A plan that breaks a balance rule is still saved, with the rule marked ✗.</p>
   </details>
 
   <details class="panel" id="help">
     <summary><strong>When things go wrong</strong></summary>
-  <div class="table-wrap"><table>
-    <tr><th>You see</th><th>Try</th></tr>
-    <tr><td>“total_cost_usd is …, but the shopping list adds up to …”</td><td>The agent did the maths itself. Ask Lovable: “Make sure the agent always calls plan_totals before save_meal_plan and uses its numbers.”</td></tr>
-    <tr><td>“no recipe has the id …”</td><td>The agent invented or mistyped an id. Ask Lovable to use only ids returned by list_recipes.</td></tr>
-    <tr><td>“Kroger is limiting requests”</td><td>The class has used a lot of searches. Wait a minute, and check the agent reuses earlier search results.</td></tr>
-    <tr><td>“Kroger prices are not set up yet”</td><td>Tell your instructor: the coordinator needs its Kroger credentials.</td></tr>
-    <tr><td><code>401</code>, <code>400</code> about <code>X-Group</code>, or a CORS error</td><td>Same fixes as the Scout: check the class key on the <a href="/#key">Welcome page</a>, send <code>X-Group: {{GROUP}}</code>, and make sure calls happen in a backend function.</td></tr>
-    <tr><td>The agent never calls <code>get_expectations</code>, or the tool is missing</td><td>“Load the coordinator’s tools with tools/list from {{SITE}}/api/mcp?agent=planner and give all of them to the model, together with price_ingredient and plan_totals.”</td></tr>
-  </table></div>
+    <div class="table-wrap"><table>
+      <tr><th>You see</th><th>Try</th></tr>
+      <tr><td><code>401</code> “Missing or wrong class key”</td><td>Re-enter the COORDINATOR_KEY secret. Then ask Lovable: “Check that every request to the coordinator sends Authorization: Bearer followed by the COORDINATOR_KEY secret.”</td></tr>
+      <tr><td><code>400</code> about <code>X-Group</code></td><td>“Send the header X-Group: {{GROUP}} on every request to the coordinator.”</td></tr>
+      <tr><td>“isn’t priced yet”</td><td>The Pricer hasn’t finished that recipe. Ask Lovable to call <code>list_recipes</code> with <code>{"priced": true}</code>, or check the <a href="/pricer">Pricer page</a>.</td></tr>
+      <tr><td>No priced recipes</td><td>The Scouts haven’t saved any yet, or the Pricer is still working. Look at the <a href="/pricer">Pricer page</a>.</td></tr>
+      <tr><td>The agent adds up costs itself</td><td>“Make sure the agent uses check_meal_plan for every total, and shows the coordinator’s numbers.”</td></tr>
+      <tr><td>A CORS error in the browser console</td><td>The page is calling the coordinator directly. “Move every call to the coordinator into a backend function.”</td></tr>
+    </table></div>
   </details>
 
   <details class="panel" id="rest">
     <summary><strong>Without MCP: the REST addresses</strong></summary>
-    <p>The same tools and checks are also plain REST addresses, if MCP gives you trouble. Send the same two headers.</p>
     <div class="table-wrap"><table>
-      <tr><th>What</th><th>Call</th><th>Returns</th></tr>
-      <tr><td>New recipes</td><td><code>GET {{SITE}}/api/recipes?status=new&amp;limit=50</code><br><span class="small muted">optional: <code>&amp;theme=…</code> or <code>&amp;group=…</code></span></td><td>Recipes in the <a href="/scout#format">Scout’s format</a>, plus <code>id</code>, <code>group</code>, <code>status</code></td></tr>
-      <tr><td>Kroger stores</td><td><code>GET {{SITE}}/api/kroger/stores?zip=45202</code></td><td>Up to 5 stores</td></tr>
-      <tr><td>Kroger products</td><td><code>GET {{SITE}}/api/kroger/products?term=yellow%20onions&amp;store_id=…&amp;limit=5</code></td><td>Products with size and prices</td></tr>
-      <tr><td>Save the plan</td><td><code>POST {{SITE}}/api/meal-plans</code></td><td><code>201</code> saved, or <code>400</code> with every problem listed</td></tr>
-      <tr><td>Mark a recipe used</td><td><code>POST {{SITE}}/api/recipes/&lt;id&gt;/processed</code></td><td><code>200</code>, or <code>404</code> if there’s no such recipe</td></tr>
+      <tr><th>What</th><th>Call</th></tr>
+      <tr><td>Priced recipes</td><td><code>GET {{SITE}}/api/recipes?priced=true</code></td></tr>
+      <tr><td>Check a plan</td><td><code>POST {{SITE}}/api/meal-plans?check=true</code></td></tr>
+      <tr><td>Save a plan</td><td><code>POST {{SITE}}/api/meal-plans</code></td></tr>
     </table></div>
-    <p class="small muted">Over REST the agent can’t read the rules itself, so the steps, balance rules and plan format have to go into the model’s instructions.</p>
+    <p class="small muted">Send the same two headers. Over REST the agent can’t read the rules itself, so they have to go into the model’s instructions.</p>
   </details>
 
   <p><a class="btn primary" href="/database">Go to the Database</a></p>

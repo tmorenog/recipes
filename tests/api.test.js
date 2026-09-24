@@ -9,7 +9,7 @@ import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/
 import { handle } from '../api/mcp.js';
 import * as rest from '../api/recipes.js';
 import { GET as health } from '../api/health.js';
-import { BACKENDS, CLASS_KEY, as, recipe, mealPlan, closeDatabase } from './helpers.js';
+import { BACKENDS, CLASS_KEY, as, recipe, mealPlan, markPriced, closeDatabase } from './helpers.js';
 import * as plansApi from '../api/meal-plans.js';
 import { GET as activityApi } from '../api/activity.js';
 import { GET as whoami } from '../api/whoami.js';
@@ -46,7 +46,7 @@ for (const backend of BACKENDS) {
       const client = await mcp();
       const { tools } = await client.listTools();
       assert.deepEqual(tools.map((t) => t.name).sort(), [
-        'find_kroger_stores', 'get_expectations', 'list_recipes', 'mark_processed', 'save_meal_plan', 'save_recipe', 'search_kroger_products',
+        'check_meal_plan', 'find_kroger_stores', 'get_expectations', 'list_recipes', 'mark_processed', 'save_meal_plan', 'save_recipe', 'search_kroger_products',
       ]);
       const save = tools.find((t) => t.name === 'save_recipe');
       assert.equal(save.inputSchema.additionalProperties, false);
@@ -166,38 +166,60 @@ for (const backend of BACKENDS) {
       assert.match(tool.content[0].text, hint);
     });
 
-    test('save_meal_plan checks the plan, saves it, and reminds the planner to mark recipes', async () => {
+    test('meal plans use priced recipes; the coordinator adds up the week and checks the rules', async () => {
       const scout = await mcp('team-1');
+      const kinds = [['Indian', 'Vegetarian'], ['Mexican', 'Beef'], ['Italian', 'Chicken'], ['Thai', 'Chicken'], ['Mexican', 'Beef']];
       const ids = [];
-      for (let i = 0; i < 5; i++) ids.push(out(await scout.callTool({ name: 'save_recipe', arguments: recipe() })).id);
+      for (const [cuisine, category] of kinds) ids.push(out(await scout.callTool({ name: 'save_recipe', arguments: recipe({ cuisine, category }) })).id);
       const planner = await mcp('team-2');
+      const tool = async (name, args) => planner.callTool({ name, arguments: args });
+
+      // Not priced yet: the coordinator says so.
+      const early = await tool('check_meal_plan', mealPlan(ids));
+      assert.equal(early.isError, true);
+      assert.match(early.content[0].text, /isn’t priced yet/);
+
+      await markPriced(db.pool, ids, (i) => ({ cost: [1.5, 2.25, 3, 2, 4][i], ...(i === 3 && { protein_g: 12 }) }));
+      const priced = out(await tool('list_recipes', { priced: true }));
+      assert.equal(priced.count, 5);
+      assert.equal(priced.recipes.find((r) => r.id === ids[0]).pricing.cost_per_serving_usd, 1.5);
 
       const bad = mealPlan(ids);
-      bad.total_cost_usd = 20;
-      bad.meals[1].day = 1;
-      bad.meals[2].cost_per_serving_usd = 5;
+      bad.meals[1].day = 'Monday';
+      bad.meals[2].recipe_id = ids[0];
       bad.meals[4].recipe_id = randomUUID();
-      bad.shopping_list[0].recipe_ids = [randomUUID()];
-      const rejected = await planner.callTool({ name: 'save_meal_plan', arguments: bad });
+      const rejected = await tool('check_meal_plan', bad);
       assert.equal(rejected.isError, true);
-      for (const reason of [/adds up to 13.47/, /different day/, /cost_used_usd ÷ servings is 2.00/, /no recipe has the id/, /isn’t one of this plan’s meals/]) {
-        assert.match(rejected.content[0].text, reason);
-      }
-      const four = mealPlan(ids.slice(0, 4));
-      assert.match((await planner.callTool({ name: 'save_meal_plan', arguments: four })).content[0].text, /meals needs exactly 5 items/);
-      assert.equal((await db.plans()).length, 0);
+      for (const reason of [/missing Tuesday/, /same recipe is used twice/, /no recipe has the id/]) assert.match(rejected.content[0].text, reason);
+      assert.match((await tool('save_meal_plan', mealPlan(ids.slice(0, 4)))).content[0].text, /meals needs exactly 5 items/);
+      assert.match((await tool('save_meal_plan', { ...mealPlan(ids), meals: mealPlan(ids).meals.map((m) => ({ ...m, day: 'Saturday' })) })).content[0].text, /day must be one of: Monday/);
 
-      const saved = out(await planner.callTool({ name: 'save_meal_plan', arguments: mealPlan(ids, { budget_usd: 10 }) }));
+      // A draft: the week costs 12.75 per person; Thursday is short of protein.
+      const checked = out(await tool('check_meal_plan', mealPlan(ids, { budget_usd: 12 })));
+      assert.equal(checked.week_cost_per_person_usd, 12.75);
+      assert.equal(checked.all_rules_passed, false);
+      const failed = checked.checks.filter((c) => !c.passed);
+      assert.deepEqual(failed.map((c) => c.rule), ['The week costs no more than the budget, per person', 'Every dinner has at least 20 g protein per serving']);
+      assert.match(failed[1].detail, /Thursday/);
+      assert.equal((await db.plans()).length, 0, 'checking saves nothing');
+
+      const saved = out(await tool('save_meal_plan', mealPlan(ids, { budget_usd: 15 })));
       assert.equal(saved.saved, true);
-      assert.deepEqual(saved.warnings, ['over budget: 13.47 > 10']);
-      assert.match(saved.next_step, /mark these recipes processed/);
+      assert.deepEqual(saved.checks.filter((c) => !c.passed).map((c) => c.rule), ['Every dinner has at least 20 g protein per serving']);
+      const [row] = await db.plans();
+      assert.equal(Number(row.total_cost_usd), 12.75);
+      assert.deepEqual(row.meals.map((m) => [m.day, m.cost_per_serving_usd]), [['Monday', 1.5], ['Tuesday', 2.25], ['Wednesday', 3], ['Thursday', 2], ['Friday', 4]]);
+      assert.equal(row.meals[0].nutrition_per_serving.calories, 550);
 
-      // REST: same rules, public reading.
-      const post = (body, group = 'team-2') =>
-        plansApi.POST(new Request('http://x/api/meal-plans', { method: 'POST', headers: { ...as(group), 'content-type': 'application/json' }, body: JSON.stringify(body) }));
+      // REST: the same rules, a check without saving, and public reading.
+      const post = (body, query = '') =>
+        plansApi.POST(new Request(`http://x/api/meal-plans${query}`, { method: 'POST', headers: { ...as('team-2'), 'content-type': 'application/json' }, body: JSON.stringify(body) }));
       const restBad = await post({ ...mealPlan(ids), meals: [] });
       assert.equal(restBad.status, 400);
       assert.deepEqual((await restBad.json()).errors, ['meals needs exactly 5 items']);
+      const restCheck = await post(mealPlan(ids), '?check=true');
+      assert.equal(restCheck.status, 200);
+      assert.equal((await restCheck.json()).week_cost_per_person_usd, 12.75);
       assert.equal((await post(mealPlan(ids))).status, 201);
       const listed = await (await plansApi.GET(new Request('http://x/api/meal-plans?group=team-2'))).json();
       assert.equal(listed.count, 2);
