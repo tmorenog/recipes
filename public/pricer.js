@@ -89,12 +89,13 @@
     $('signin').hidden = on;
     $('signed-in').hidden = !on;
     $('prompt-actions').hidden = !on;
-    $('queue-actions').hidden = !on;
     $('prompt').readOnly = !on;
     $('prompt-kind').textContent = on ? 'Prompt · you can edit it' : 'Prompt';
-    $('run-test').disabled = !on || test?.status === 'running';
-    $('test-hint').textContent = on ? 'Uses real AI and Kroger requests; a test takes a minute or two.' : 'Sign in above to run a test.';
-    if (detail) renderDetail();
+    $('run-test').disabled = test?.status === 'running';
+    $('reprice-all').disabled = !on;
+    $('clear-all').disabled = !on;
+    $('admin-note').hidden = on;
+    if (overview) renderQueue();
   }
   function signOut(message) {
     key = '';
@@ -158,21 +159,24 @@
     }
     const p = e.product;
     const img = safeUrl(p.image_url);
-    return el('li', { className: 'product-card' },
+    return el('li', { className: `product-card${e.status === 'estimated' ? ' estimated' : ''}` },
       img ? el('img', { className: 'pc-img', src: img, alt: '', loading: 'lazy' }) : el('div', { className: 'pc-img blank' }),
       el('div', { className: 'pc-body' },
         el('p', { className: 'pc-line', textContent: line }),
-        el('p', { className: 'pc-product' }, p.description, p.on_sale ? el('span', { className: 'pill sale', textContent: 'On sale' }) : null),
+        el('p', { className: 'pc-product' }, p.description, p.on_sale ? el('span', { className: 'pill sale', textContent: 'On sale' }) : null,
+          e.status === 'estimated' ? el('span', { className: 'pill estimated', textContent: 'Estimated price', title: e.reason || '' }) : null),
         el('p', { className: 'small muted', textContent: [p.size, p.brand].filter(Boolean).join(' · ') }),
         el('p', { className: 'pc-price' }, el('strong', { textContent: `${e.packages} × ${money(p.price_usd)} = ${money(e.cost_to_buy_usd)}` })),
         el('p', { className: 'small muted', textContent: `Uses ${num(e.amount_used, 2)} ${e.unit_used} · ${money(e.cost_used_usd)} worth${e.note ? ` · ${e.note}` : ''}` }),
+        e.status === 'estimated' ? el('p', { className: 'small estimated-why', textContent: `Not from Kroger: ${e.reason}` }) : null,
       ),
     );
   }
 
-  function tiles(cart, used, people) {
+  function tiles(cart, used, people, estimated = 0) {
     return el('div', { className: 'cart-tiles' },
-      el('div', { className: 'tile' }, el('span', { textContent: 'Cart total' }), el('strong', { textContent: money(cart) }), el('small', { textContent: people ? `for ${people} people` : '' })),
+      el('div', { className: 'tile' }, el('span', { textContent: 'Cart total' }), el('strong', { textContent: money(cart) }),
+        el('small', { textContent: [people ? `for ${people} people` : '', estimated ? `includes ${estimated} estimated price${estimated === 1 ? '' : 's'}` : ''].filter(Boolean).join(' · ') })),
       el('div', { className: 'tile' }, el('span', { textContent: 'Cost per serving' }), el('strong', { textContent: money(people ? used / people : null) }), el('small', { textContent: `ingredients used: ${money(used)}` })),
     );
   }
@@ -197,12 +201,12 @@
         : el('p', { className: 'test-status' }, pill('failed'), ` ${t.error || 'The test failed.'}`);
     $('test-result').replaceChildren(
       status,
-      t.status === 'done' ? tiles(t.totals?.cart_usd, t.totals?.cost_used_usd, t.people) : null,
+      t.status === 'done' ? tiles(t.totals?.cart_usd, t.totals?.cost_used_usd, t.people, t.totals?.estimated_lines) : null,
       el('ul', { className: 'product-cards' }, t.ingredients.map((line, i) => productCard(line, byLine.get(i + 1), running ? 'Not yet…' : '–'))),
       t.summary ? el('p', { className: 'cart-summary' }, el('strong', { textContent: 'The agent’s summary: ' }), t.summary) : null,
       trace(t.steps || [], { open: running, toolCalls: t.tool_calls }),
     );
-    $('run-test').disabled = !key || running;
+    $('run-test').disabled = running;
     if (!$('test-lines').dataset.touched && t.ingredients) $('test-lines').value = t.ingredients.join('\n');
   }
   $('test-lines').addEventListener('input', () => { $('test-lines').dataset.touched = '1'; });
@@ -244,26 +248,32 @@
   });
 
   // ---------------------------------------------------------------- 3. recipe carts
-  $('run').addEventListener('click', async () => {
-    const r = await control('run');
-    toast(r.ok ? 'Started: waiting recipes are being priced.' : r.errors.join(' '), !r.ok);
-    setTimeout(refresh, 1500);
+  const busy = new Set(); // recipes whose button was just pressed
+  async function priceOne(mealId) {
+    busy.add(mealId);
+    renderQueue();
+    const r = await control('price', { meal_id: mealId });
+    if (!r.ok) toast(r.errors.join(' '), true);
+    setTimeout(() => { busy.delete(mealId); refresh(); }, 1200);
+  }
+  $('price-unpriced').addEventListener('click', async () => {
+    const r = await control('price-unpriced');
+    toast(r.ok ? (r.body.queued ? `${r.body.queued} recipe${r.body.queued === 1 ? ' is' : 's are'} queued to be priced.` : 'Every recipe already has a price or is in the queue.') : r.errors.join(' '), !r.ok);
+    setTimeout(refresh, 1200);
   });
-  $('retry').addEventListener('click', async () => {
-    const r = await control('retry-failed');
-    toast(r.ok ? `${r.body.queued} recipe${r.body.queued === 1 ? '' : 's'} queued again.` : r.errors.join(' '), !r.ok);
+  $('reprice-all').addEventListener('click', async (e) => {
+    if (!confirmed(e.currentTarget)) return;
+    const r = await control('reprice-all', { confirm: 'REPRICE' });
+    toast(r.ok ? `${r.body.queued} recipes queued to be priced again.` : r.errors.join(' '), !r.ok);
+    setTimeout(refresh, 1200);
+  });
+  $('clear-all').addEventListener('click', async (e) => {
+    if (!confirmed(e.currentTarget)) return;
+    const r = await control('clear-all', { confirm: 'CLEAR' });
+    toast(r.ok ? `Prices removed from ${r.body.cleared} recipes. They stay unpriced until someone asks.` : r.errors.join(' '), !r.ok);
+    selected = null;
     refresh();
   });
-
-  function queueMeta(p) {
-    if (p.status === 'priced') {
-      const per = p.people ? p.total_cost_usd / p.people : null;
-      return [`${money(per)} a serving · priced ${ago(p.finished_at)}`, p.prompt_current === false ? el('span', { className: 'pill older', textContent: 'older instructions' }) : null];
-    }
-    if (p.status === 'pricing') return [`${p.lines_done ?? 0} of ${p.lines ?? '?'} ingredients done`];
-    if (p.status === 'pending') return [`waiting since ${ago(p.created_at)}`];
-    return [p.error ? p.error.slice(0, 80) : 'see why'];
-  }
 
   function renderOverview() {
     const o = overview;
@@ -275,39 +285,89 @@
     const problem = $('problem');
     problem.hidden = !o.problem;
     if (o.problem) problem.replaceChildren(el('h2', { textContent: 'The Pricer isn’t running yet' }), el('p', { textContent: o.problem }));
-
     if (!promptDirty && document.activeElement !== $('prompt')) $('prompt').value = o.prompt;
     showPromptState();
     if (!$('test-lines').value) $('test-lines').value = (o.sample_ingredients || []).join('\n');
 
     const c = o.counts;
-    $('counts').replaceChildren(...STAGES.map(([s, label]) => el('span', { className: `count-chip price-${s}` }, el('strong', { textContent: String(c[s]) }), ` ${label.toLowerCase()}`)));
-
-    const groups = STAGES.map(([status, label]) => {
-      const items = o.pricings.filter((p) => p.status === status);
-      if (!items.length) return null;
-      return el('div', { className: `queue-group ${status}` },
-        el('h3', { className: 'queue-heading' }, label, el('span', { className: 'muted', textContent: ` ${items.length}` })),
-        el('ul', {}, items.map((p) => {
-          const img = safeUrl(p.image_url) ? el('img', { src: `${p.image_url}/small`, alt: '', loading: 'lazy' }) : el('span', { className: 'thumb-blank' });
-          return el('li', {},
-            el('button', { type: 'button', className: `queue-item${p.meal_id === selected ? ' selected' : ''}`, onclick: () => select(p.meal_id) },
-              img,
-              el('span', { className: 'queue-text' },
-                el('span', { className: 'queue-name', textContent: p.name || `Recipe ${p.meal_id}` }),
-                el('span', { className: 'queue-meta' }, queueMeta(p)))));
-        })));
-    }).filter(Boolean);
-    $('queue').replaceChildren(...(groups.length ? groups : [el('p', { className: 'empty small', textContent: 'No recipes yet. They appear here as soon as a Scout saves one.' })]));
-
-    if (!selected && o.pricings.length) select((o.pricings.find((p) => p.status === 'pricing') || o.pricings[0]).meal_id, { quiet: true });
+    $('counts').replaceChildren(...[['priced', 'priced'], ['pricing', 'being priced'], ['pending', 'waiting'], ['unpriced', 'not priced'], ['failed', 'couldn’t price']]
+      .filter(([k]) => k !== 'unpriced' || c.unpriced)
+      .map(([k, label]) => el('span', { className: `count-chip price-${k}` }, el('strong', { textContent: String(c[k] ?? 0) }), ` ${label}`)));
+    renderQueue();
+    renderFeed();
   }
 
-  function select(mealId, { quiet } = {}) {
-    selected = mealId;
-    if (!quiet) history.replaceState(null, '', `#${encodeURIComponent(mealId)}`);
-    renderOverview();
-    loadDetail();
+  const STATUS_TEXT = { unpriced: 'Not priced', pending: 'Waiting', pricing: 'Being priced', priced: 'Priced', failed: 'Couldn’t price' };
+
+  function renderQueue() {
+    const o = overview;
+    if (!o) return;
+    if (!o.pricings.length) {
+      $('queue').replaceChildren(el('p', { className: 'empty small', textContent: 'No recipes yet. They appear here as soon as a Recipe Scout saves one.' }));
+      return;
+    }
+    $('queue').replaceChildren(...o.pricings.map((p) => {
+      const img = safeUrl(p.image_url) ? el('img', { src: `${p.image_url}/small`, alt: '', loading: 'lazy' }) : el('span', { className: 'thumb-blank' });
+      const per = p.status === 'priced' && p.people ? p.total_cost_usd / p.people : null;
+      const price = p.status === 'priced'
+        ? el('div', { className: 'rl-price' }, el('strong', { textContent: `${money(per)}` }), el('span', { textContent: ' a serving' }),
+          el('small', { textContent: `cart ${money(p.to_buy_usd)} for ${p.people} · ${ago(p.finished_at)}` }),
+          p.estimated_lines ? el('span', { className: 'pill estimated', textContent: `${p.estimated_lines} estimated`, title: 'Prices the agent estimated because Kroger had none' }) : null,
+          p.prompt_current === false ? el('span', { className: 'pill older', textContent: 'older instructions' }) : null)
+        : el('div', { className: 'rl-price' }, pill(p.status),
+          el('small', { textContent: p.status === 'pricing' ? `${p.lines_done ?? 0} of ${p.lines ?? '?'} ingredients` : p.status === 'pending' ? 'in the queue' : p.status === 'failed' ? (p.error || '').slice(0, 70) : 'not in the queue' }));
+      const canPrice = p.status !== 'pricing' && p.status !== 'pending' && !busy.has(p.meal_id);
+      const label = p.status === 'priced' || p.status === 'failed' ? 'Reprice' : 'Price';
+      const open = p.meal_id === selected;
+      const row = el('article', { className: `rl-row status-${p.status}${open ? ' open' : ''}` },
+        el('div', { className: 'rl-main' },
+          img,
+          el('div', { className: 'rl-name' }, el('strong', { textContent: p.name || `Recipe ${p.meal_id}` }), el('small', { className: 'muted', textContent: (p.groups || []).join(', ') })),
+          price,
+          el('div', { className: 'rl-actions' },
+            el('button', { type: 'button', className: 'btn small-btn', textContent: busy.has(p.meal_id) ? 'Queued…' : p.status === 'pending' ? 'Queued' : p.status === 'pricing' ? 'Pricing…' : label, disabled: !canPrice, onclick: () => priceOne(p.meal_id) }),
+            el('button', { type: 'button', className: 'btn small-btn linklike-btn', textContent: open ? 'Hide cart' : 'Cart', 'aria-expanded': String(open), onclick: () => toggle(p.meal_id) }),
+          ),
+        ),
+        open ? el('div', { className: 'rl-detail', id: 'detail' }, detail && detail.meal_id === p.meal_id ? detailBody(detail) : el('p', { className: 'muted small', textContent: 'Loading…' })) : null,
+      );
+      return row;
+    }));
+  }
+
+  function toggle(mealId) {
+    selected = selected === mealId ? null : mealId;
+    history.replaceState(null, '', selected ? `#${encodeURIComponent(selected)}` : location.pathname);
+    detail = null;
+    renderQueue();
+    if (selected) loadDetail();
+  }
+
+  // What the agent is doing: a one-line summary, then its latest steps across recipes.
+  function renderFeed() {
+    const o = overview;
+    const now = o.pricings.filter((p) => p.status === 'pricing');
+    const waiting = o.counts.pending;
+    const testRunning = test?.status === 'running';
+    const line = now.length
+      ? `Pricing ${now.map((p) => `${p.name} (${p.lines_done ?? 0} of ${p.lines ?? '?'} ingredients)`).join(' and ')}${waiting ? `; ${waiting} waiting` : ''}.`
+      : waiting ? `${waiting} recipe${waiting === 1 ? '' : 's'} waiting; the agent starts within a minute.`
+        : testRunning ? 'Running a test on the sample list (section 1).'
+          : o.problem ? 'Stopped: see the message at the top of the page.' : 'Idle: nothing to price right now.';
+    $('agent-now').replaceChildren(el('span', { className: `dot ${now.length || testRunning ? 'on' : ''}` }), line);
+    $('feed').replaceChildren(...(o.activity || []).map((s) => {
+      let what = '';
+      if (s.kind === 'tool_call') what = `→ ${s.tool} ${Object.values(s.input || {}).filter((v) => typeof v !== 'object').slice(0, 3).join(', ')}`;
+      else if (s.kind === 'tool_result') what = s.tool === 'search_kroger' ? `← ${s.output?.count ?? 0} products` : s.tool === 'record_ingredient' ? `← line ${s.output?.recorded}: ${s.output?.packages_to_buy} × for ${money(s.output?.cost_to_buy_usd)}` : s.tool === 'estimate_ingredient' ? `← line ${s.output?.estimated}: estimated ${money(s.output?.cost_to_buy_usd)}` : `← ${s.tool}`;
+      else if (s.kind === 'final') what = '✓ Finished the cart';
+      else if (s.kind === 'error') what = `✗ ${s.text}`;
+      else what = s.text;
+      return el('li', { className: `feed-${s.kind}` },
+        el('span', { className: 'feed-time', textContent: time(s.at) }),
+        el('button', { type: 'button', className: 'linklike feed-recipe', textContent: s.name || s.meal_id, onclick: () => { if (selected !== s.meal_id) toggle(s.meal_id); } }),
+        el('span', { className: 'feed-what', textContent: what }));
+    }));
+    if (!(o.activity || []).length) $('feed').append(el('li', { className: 'muted small', textContent: 'No steps yet.' }));
   }
 
   async function loadDetail() {
@@ -316,10 +376,8 @@
       detail = await getJson(`/api/pricer?meal_id=${encodeURIComponent(selected)}`);
     } catch (e) {
       detail = null;
-      $('detail').replaceChildren(el('p', { className: 'empty', textContent: e.message }));
-      return;
     }
-    renderDetail();
+    renderQueue();
   }
 
   function stepCard(s) {
@@ -338,6 +396,7 @@
     if (s.tool === 'search_kroger') summary = o.count ? `${o.count} products, e.g. ${o.products[0].description} (${o.products[0].size}) ${money(o.products[0].promo_price_usd ?? o.products[0].price_usd)}` : 'No products found';
     if (s.tool === 'record_ingredient') summary = `Line ${o.recorded}: buy ${o.packages_to_buy} for ${money(o.cost_to_buy_usd)}, uses ${money(o.cost_used_usd)} worth`;
     if (s.tool === 'skip_ingredient') summary = `Line ${o.skipped} skipped`;
+    if (s.tool === 'estimate_ingredient') summary = `Line ${o.estimated}: ESTIMATED, buy ${o.packages_to_buy} for ${money(o.cost_to_buy_usd)}`;
     return el('li', { className: 'trace-step result' }, head,
       el('details', {}, el('summary', { textContent: `← ${summary}` }), el('pre', { className: 'code', textContent: JSON.stringify(o, null, 2) })));
   }
@@ -347,72 +406,48 @@
     if (d.status === 'priced') {
       return `Priced ${ago(d.finished_at)} for ${d.people} people, ${d.prompt_current === false ? 'with an older version of the instructions' : 'with the current instructions'}.`;
     }
-    if (d.status === 'pricing') return `Being priced now: ${done} of ${lines} ingredients done. This page updates itself.`;
-    if (d.status === 'pending') return 'Waiting its turn. It will be priced automatically, usually within a few minutes.';
-    return `Couldn’t be priced: ${d.error || 'unknown reason'}.`;
+    if (d.status === 'pricing') return `Being priced now: ${done} of ${lines} ingredients done.`;
+    if (d.status === 'pending') return 'In the queue: the agent will price it within a few minutes.';
+    if (d.status === 'unpriced') return 'Not priced. Press Price to add it to the queue.';
+    return `Couldn’t be priced: ${(d.error || 'unknown reason').replace(/\.$/, '')}.`;
   }
 
-  function renderDetail() {
-    const d = detail;
-    if (!d) return;
+  // One recipe's cart and steps, shown under its row.
+  function detailBody(d) {
     const r = d.recipe || {};
     const lines = r.ingredients || [];
     const byLine = new Map((d.basket || []).map((e) => [e.line, e]));
-
-    const head = el('div', { className: 'detail-head' },
-      safeUrl(r.image_url) ? el('img', { src: `${r.image_url}/medium`, alt: '' }) : null,
-      el('div', {},
-        el('h3', {}, /^\d+$/.test(d.meal_id) ? el('a', { href: `https://www.themealdb.com/meal/${d.meal_id}`, target: '_blank', rel: 'noopener', textContent: r.name || d.meal_id }) : (r.name || d.meal_id)),
-        el('p', { className: 'detail-status' }, pill(d.status), ' ', statusSentence(d, lines.length)),
-        el('p', { className: 'small muted', textContent: `Serves about ${r.est_servings ?? '?'} as written${d.store_id ? ` · Kroger store ${d.store_id}` : ''}` }),
-        key && d.status !== 'pricing' ? el('button', { type: 'button', className: 'btn small-btn', textContent: d.status === 'pending' ? 'Price it now' : 'Price again', onclick: async () => {
-          const res = d.status === 'pending' ? await control('run') : await control('price', { meal_id: d.meal_id });
-          toast(res.ok ? 'Queued: it will be priced with the current instructions.' : res.errors.join(' '), !res.ok);
-          setTimeout(refresh, 1000);
-        } }) : null,
-      ),
-    );
-
     const rows = lines.map((ing, i) => {
       const e = byLine.get(i + 1);
       const what = el('td', {}, el('strong', { textContent: ing.name }), el('br'), el('span', { className: 'small muted', textContent: ing.raw || 'no amount' }));
       if (!e) return el('tr', { className: 'waiting' }, el('td', { textContent: String(i + 1) }), what, el('td', { colSpan: 4, className: 'muted', textContent: d.status === 'pricing' ? 'Not yet…' : '–' }));
-      if (e.status === 'skipped') {
-        return el('tr', { className: 'skipped' }, el('td', { textContent: String(i + 1) }), what, el('td', { colSpan: 4, className: 'muted' }, 'Not bought: ', e.reason));
-      }
+      if (e.status === 'skipped') return el('tr', { className: 'skipped' }, el('td', { textContent: String(i + 1) }), what, el('td', { colSpan: 4, className: 'muted' }, 'Not bought: ', e.reason));
       const p = e.product;
       const img = safeUrl(p.image_url);
       return el('tr', {},
         el('td', { textContent: String(i + 1) }),
         what,
         el('td', { className: 'cart-product' }, img ? el('img', { src: img, alt: '', loading: 'lazy' }) : null,
-          el('span', {}, p.description, el('br'), el('span', { className: 'small muted', textContent: [p.size, p.brand].filter(Boolean).join(' · ') }), p.on_sale ? el('span', { className: 'pill sale', textContent: 'On sale' }) : null)),
+          el('span', {}, p.description, el('br'), el('span', { className: 'small muted', textContent: [p.size, p.brand].filter(Boolean).join(' · ') }), p.on_sale ? el('span', { className: 'pill sale', textContent: 'On sale' }) : null,
+            e.status === 'estimated' ? el('span', { className: 'pill estimated', textContent: 'Estimated', title: `Not from Kroger: ${e.reason}` }) : null,
+            e.status === 'estimated' ? el('span', { className: 'small estimated-why', textContent: ` ${e.reason}` }) : null)),
         el('td', { className: 'num' }, el('strong', { textContent: `× ${e.packages}` }), el('br'), el('span', { className: 'small muted', textContent: `at ${money(p.price_usd)}` })),
         el('td', { className: 'num' }, el('strong', { textContent: money(e.cost_to_buy_usd) })),
         el('td', { className: 'num' }, `${num(e.amount_used, 2)} ${e.unit_used}`, el('br'), el('span', { className: 'small muted', textContent: `${money(e.cost_used_usd)} used` })),
       );
     });
-    const cart = el('div', { className: 'table-wrap cart' }, el('table', {},
-      el('thead', {}, el('tr', {}, ...['#', 'Ingredient', 'Kroger product', 'Buy', 'Line total', 'Recipe uses'].map((h) => el('th', { textContent: h })))),
-      el('tbody', {}, rows),
-      d.status === 'priced' ? el('tfoot', {}, el('tr', {}, el('td', {}), el('td', { colSpan: 3, textContent: `Cart for ${d.people} people` }),
-        el('td', { className: 'num' }, el('strong', { textContent: money(d.to_buy_usd) })), el('td', { className: 'num', textContent: `${money(d.total_cost_usd)} used` }))) : null,
-    ));
-
-    const open = new Set([...$('detail').querySelectorAll('.trace-step details[open]')].map((x) => x.closest('li').dataset.id));
-    const traceOpen = $('detail').querySelector('details.trace')?.open ?? d.status === 'pricing';
-    $('detail').replaceChildren(...[
-      head,
-      d.status === 'priced' ? tiles(d.to_buy_usd, d.total_cost_usd, d.people) : null,
+    return [
+      el('p', { className: 'detail-status' }, pill(d.status), ' ', statusSentence(d, lines.length),
+        /^\d+$/.test(d.meal_id) ? el('a', { className: 'small', href: `https://www.themealdb.com/meal/${d.meal_id}`, target: '_blank', rel: 'noopener', textContent: ' Recipe on TheMealDB' }) : null),
+      d.status === 'priced' ? tiles(d.to_buy_usd, d.total_cost_usd, d.people, (d.basket || []).filter((x) => x.status === 'estimated').length) : null,
       d.summary ? el('p', { className: 'cart-summary' }, el('strong', { textContent: 'The agent’s summary: ' }), d.summary) : null,
-      el('h3', { textContent: 'Shopping cart' }),
-      cart,
-      trace(d.steps, { open: traceOpen, toolCalls: d.tool_calls }),
-    ].filter(Boolean));
-    [...$('detail').querySelectorAll('.trace-step')].forEach((li, i) => {
-      li.dataset.id = String(d.steps[i]?.id);
-      if (open.has(li.dataset.id)) li.querySelector('details')?.setAttribute('open', '');
-    });
+      el('div', { className: 'table-wrap cart' }, el('table', {},
+        el('thead', {}, el('tr', {}, ...['#', 'Ingredient', 'Kroger product', 'Buy', 'Line total', 'Recipe uses'].map((h) => el('th', { textContent: h })))),
+        el('tbody', {}, rows),
+        d.status === 'priced' ? el('tfoot', {}, el('tr', {}, el('td', {}), el('td', { colSpan: 3, textContent: `Cart for ${d.people} people` }),
+          el('td', { className: 'num' }, el('strong', { textContent: money(d.to_buy_usd) })), el('td', { className: 'num', textContent: `${money(d.total_cost_usd)} used` }))) : null)),
+      trace(d.steps, { open: d.status === 'pricing', toolCalls: d.tool_calls }),
+    ].filter(Boolean);
   }
 
   // ---------------------------------------------------------------- refresh
@@ -427,14 +462,14 @@
       renderOverview();
       await Promise.all([selected ? loadDetail() : null, loadTest(test?.status === 'running' ? test.id : 'latest')]);
     } catch (e) {
-      $('detail').replaceChildren(el('p', { className: 'empty', textContent: `Couldn’t load the Pricer: ${e.message}` }));
+      $('queue').replaceChildren(el('p', { className: 'errors', textContent: `Couldn’t load the Pricer: ${e.message}` }));
     }
     schedule();
   }
 
   window.addEventListener('hashchange', () => {
     const id = decodeURIComponent(location.hash.slice(1));
-    if (id && id !== selected) select(id, { quiet: true });
+    if (id && id !== selected) toggle(id);
   });
   showSignedIn();
   refresh();

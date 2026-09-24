@@ -92,8 +92,8 @@
     price.href = `/pricer#${encodeURIComponent(r.meal_id)}`;
     price.className = `price price-${p.status}`;
     price.textContent = p.status === 'priced'
-      ? `$${p.cost_per_serving_usd.toFixed(2)} a serving`
-      : { pending: 'Waiting to be priced', pricing: 'Being priced…', failed: 'Couldn’t be priced' }[p.status] || p.status;
+      ? `$${p.cost_per_serving_usd.toFixed(2)} a serving${p.estimated_lines ? ' · partly estimated' : ''}`
+      : { unpriced: 'Not priced', pending: 'Waiting to be priced', pricing: 'Being priced…', failed: 'Couldn’t be priced' }[p.status] || p.status;
     const ings = r.ingredients || [];
     node.querySelector('.ingredients summary').textContent = `${ings.length} ingredient${ings.length === 1 ? '' : 's'}`;
     node.querySelector('.ingredients ul').replaceChildren(

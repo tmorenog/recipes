@@ -161,3 +161,8 @@ update pricer_tests set error = regexp_replace(error, 'sk-ant-[A-Za-z0-9_-]{8,}'
 update pricer_tests set steps = regexp_replace(steps::text, 'sk-ant-[A-Za-z0-9_-]{8,}', 'sk-ant-[hidden]', 'g')::jsonb where steps::text ~ 'sk-ant-';
 update pricer_steps set text = regexp_replace(text, 'sk-ant-[A-Za-z0-9_-]{8,}', 'sk-ant-[hidden]', 'g') where text ~ 'sk-ant-';
 update pricings set error = regexp_replace(error, 'sk-ant-[A-Za-z0-9_-]{8,}', 'sk-ant-[hidden]', 'g') where error ~ 'sk-ant-';
+
+-- 'unpriced': prices cleared by the instructor; not queued until someone
+-- asks for it to be priced.
+alter table pricings drop constraint if exists pricings_status_check;
+alter table pricings add constraint pricings_status_check check (status in ('unpriced', 'pending', 'pricing', 'priced', 'failed'));

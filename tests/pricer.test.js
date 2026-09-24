@@ -99,7 +99,7 @@ for (const backend of BACKENDS) {
       await save('team-2', r); // the same TheMealDB recipe from another group is priced once
 
       let queue = (await pricer()).body;
-      assert.deepEqual(queue.counts, { pending: 1, pricing: 0, priced: 0, failed: 0 });
+      assert.deepEqual(queue.counts, { unpriced: 0, pending: 1, pricing: 0, priced: 0, failed: 0 });
       assert.equal(queue.prompt, DEFAULT_PROMPT);
       assert.match(queue.prompt, /50 people/);
 
@@ -133,10 +133,12 @@ for (const backend of BACKENDS) {
         cart_usd: 11.88,
         cost_used_usd: 11.26,
         cost_per_serving_usd: 0.23,
+        estimated_lines: 0,
       });
 
       queue = (await pricer()).body;
-      assert.deepEqual(queue.counts, { pending: 0, pricing: 0, priced: 1, failed: 0 });
+      assert.deepEqual(queue.counts, { unpriced: 0, pending: 0, pricing: 0, priced: 1, failed: 0 });
+      assert.ok(queue.activity.length > 0 && queue.activity[0].name, 'the latest steps come with the recipe’s name');
       assert.deepEqual(queue.pricings[0].groups.sort(), ['team-1', 'team-2']);
     });
 
@@ -177,8 +179,15 @@ for (const backend of BACKENDS) {
     test('the instructor test-runs the agent on a short list, with a draft prompt, without touching the recipes', async () => {
       const log = [];
       setPricerForTests({ model: scriptedModel(log), fetch: fakeFetch, auto: false });
-      assert.equal((await control('test', { ingredients: ['400g tin chickpeas', 'salt, to taste'] }, 'wrong-key')).status, 401);
+      assert.equal((await control('test', { ingredients: ['x', 'y'], prompt: 'y'.repeat(60) }, 'wrong-key')).status, 401, 'a draft prompt needs the admin key');
       assert.equal((await control('test', { ingredients: [] })).status, 400);
+
+      // Anyone can run a plain test; one at a time.
+      const open = await control('test', { ingredients: ['400g tin chickpeas', 'salt, to taste'] }, 'no-key');
+      assert.equal(open.status, 202);
+      assert.equal((await control('test', { ingredients: ['1 onion'] }, 'no-key')).status, 429, 'one test at a time');
+      for (let i = 0; i < 50 && (await pricer('?test=latest')).body.status === 'running'; i++) await new Promise((r) => setTimeout(r, 20));
+      log.length = 0;
 
       const draft = DEFAULT_PROMPT.replace('50 people', '20 people');
       const started = await control('test', { ingredients: ['400g tin chickpeas', 'salt, to taste'], serves: 4, prompt: draft });
@@ -219,6 +228,58 @@ for (const backend of BACKENDS) {
       await pool.query(await readFile(new URL('../schema.sql', import.meta.url), 'utf8'));
       const { rows } = await pool.query('select error, steps from pricer_tests');
       assert.doesNotMatch(JSON.stringify(rows), /Zz9_/);
+    });
+
+    test('each recipe can be priced on request; prices can be cleared, and unpriced recipes priced again', async () => {
+      setPricerForTests({ model: scriptedModel([]), fetch: fakeFetch, auto: false });
+      await save('team-1', recipe({ meal_id: '11' }));
+      await save('team-1', recipe({ meal_id: '12' }));
+      await runQueue();
+      assert.equal((await pricer()).body.counts.priced, 2);
+
+      assert.equal((await control('clear-all', {}, 'no-key')).status, 401);
+      assert.equal((await control('clear-all')).status, 400);
+      assert.equal((await control('clear-all', { confirm: 'CLEAR' })).body.cleared, 2);
+      let q = (await pricer()).body;
+      assert.deepEqual([q.counts.unpriced, q.counts.priced], [2, 0]);
+      assert.equal(q.activity.length, 0, 'clearing removes the old steps');
+      setPricerForTests({ model: scriptedModel([]) });
+      assert.equal(await runQueue(), 0, 'cleared recipes are not priced until asked');
+
+      // Anyone can price one recipe, or all the unpriced ones.
+      assert.equal((await control('price', { meal_id: '11' }, 'no-key')).status, 200);
+      await runQueue();
+      q = (await pricer()).body;
+      assert.deepEqual([q.counts.unpriced, q.counts.priced], [1, 1]);
+      assert.equal((await control('price-unpriced', {}, 'no-key')).body.queued, 1);
+      setPricerForTests({ model: scriptedModel([]) });
+      await runQueue();
+      assert.equal((await pricer()).body.counts.priced, 2);
+      assert.equal((await control('reprice-all', { confirm: 'REPRICE' }, 'no-key')).status, 401);
+    });
+
+    test('when Kroger has no price, the agent estimates one, and it is labelled as an estimate', async () => {
+      const model = async (params) => {
+        const turn = params.messages.filter((m) => m.role === 'assistant').length;
+        const content = [
+          [toolUse('a', 'estimate_ingredient', { line: 1, item: 'canned chickpeas', package_size: '15 oz', package_price_usd: 1.25, amount_used: 5000, unit_used: 'g', reason: 'no chickpeas at this store' }),
+            toolUse('b', 'skip_ingredient', { line: 2, reason: 'to taste' })],
+          [toolUse('c', 'finish', { people: 50, summary: 'Chickpeas are estimated.' })],
+        ][turn];
+        return { stop_reason: 'tool_use', content };
+      };
+      setPricerForTests({ model, fetch: fakeFetch, auto: false });
+      await save('team-1', recipe({ meal_id: '21' }));
+      await runQueue();
+      const { body: p } = await pricer('?meal_id=21');
+      assert.equal(p.status, 'priced');
+      assert.equal(p.basket[0].status, 'estimated');
+      assert.equal(p.basket[0].product.estimated, true);
+      assert.equal(p.basket[0].packages, 12); // 5000 g ÷ 15 oz
+      assert.equal(p.to_buy_usd, 15); // 12 × $1.25
+      const list = await recipesApi.GET(new Request('http://x/api/recipes?status=all')).then(getJson);
+      assert.equal(list.body.recipes[0].pricing.estimated_lines, 1);
+      assert.equal((await pricer()).body.pricings[0].estimated_lines, 1);
     });
 
     test('a model that stops without finishing is marked failed, with the reason', async () => {

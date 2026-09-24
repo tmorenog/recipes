@@ -1,16 +1,19 @@
-// The Pricer agent: what it's doing, and the instructor's controls.
+// The Pricer agent: what it's doing, and the controls.
 //
-//   GET  /api/pricer                    the queue: every recipe and its pricing status   (anyone)
-//   GET  /api/pricer?meal_id=…          one recipe: its shopping cart and every step    (anyone)
-//   GET  /api/pricer?test=latest|<id>   the instructor's latest (or one) test run       (anyone)
-//   POST /api/pricer?action=…           instructor controls, with Authorization: Bearer <ADMIN_KEY>
-//        prompt        body {"prompt": "…"} saves the agent's instructions; {"reset": true} goes back to the default
-//        test          body {"ingredients": ["1 onion", …], "serves": 4, "prompt"?: "…"} runs the agent on a
-//                      short list (with a draft prompt, if given); nothing is saved to the recipes
-//        price         body {"meal_id": "…"} prices that recipe again from scratch
-//        run           prices waiting recipes now
-//        retry-failed  prices every recipe that failed again
-//        reprice-all   body {"confirm": "REPRICE"} prices every recipe again (after changing the prompt)
+//   GET  /api/pricer                    every recipe and its price, and the agent's latest steps   (anyone)
+//   GET  /api/pricer?meal_id=…          one recipe: its shopping cart and every step               (anyone)
+//   GET  /api/pricer?test=latest|<id>   the latest (or one) test run                              (anyone)
+//   POST /api/pricer?action=…
+//     anyone:
+//        test            body {"ingredients": ["1 onion", …], "serves": 4} runs the agent on a short list;
+//                        nothing is saved to the recipes (one at a time, 30 an hour)
+//        price           body {"meal_id": "…"} prices that recipe (again) from scratch
+//        price-unpriced  prices every recipe without a price (cleared, or couldn't be priced)
+//     instructor, with Authorization: Bearer <ADMIN_KEY>:
+//        prompt          body {"prompt": "…"} saves the agent's instructions; {"reset": true} goes back to the default
+//        test            with "prompt": a draft of the instructions
+//        clear-all       body {"confirm": "CLEAR"} removes every price (recipes stay unpriced until asked)
+//        reprice-all     body {"confirm": "REPRICE"} prices every recipe again
 import { getStore } from '../lib/store/index.js';
 import { checkAdmin } from '../lib/admin.js';
 import { json, guarded } from '../lib/http.js';
@@ -37,22 +40,28 @@ export const GET = guarded(async (request) => {
   const prompt = await currentPrompt();
   const current = md5(prompt);
   const pricings = (await store.listPricings({ limit: 300 })).map(({ prompt_md5, ...p }) => ({ ...p, prompt_current: prompt_md5 == null ? null : prompt_md5 === current }));
-  const counts = Object.fromEntries(['pending', 'pricing', 'priced', 'failed'].map((s) => [s, pricings.filter((p) => p.status === s).length]));
-  return json(200, { ...pricerInfo(), prompt, prompt_is_default: prompt === DEFAULT_PROMPT, default_prompt: DEFAULT_PROMPT, sample_ingredients: SAMPLE_INGREDIENTS, counts, pricings });
+  const counts = Object.fromEntries(['unpriced', 'pending', 'pricing', 'priced', 'failed'].map((s) => [s, pricings.filter((p) => p.status === s).length]));
+  const activity = await store.recentPricerSteps(40);
+  return json(200, { ...pricerInfo(), prompt, prompt_is_default: prompt === DEFAULT_PROMPT, default_prompt: DEFAULT_PROMPT, sample_ingredients: SAMPLE_INGREDIENTS, counts, pricings, activity });
 });
 
+const OPEN = new Set(['test', 'price', 'price-unpriced']);
+
 export const POST = guarded(async (request) => {
-  const auth = checkAdmin(request);
-  if (!auth.ok) return json(auth.status, { errors: [auth.error] });
   const url = new URL(request.url);
   const action = url.searchParams.get('action') || '';
-  const store = getStore();
   let body = {};
   try {
     body = request.headers.get('content-length') === '0' ? {} : await request.json();
   } catch {
     body = {};
   }
+  // Trying a draft of the instructions is the instructor's; a plain test is anyone's.
+  if (!OPEN.has(action) || (action === 'test' && body.prompt)) {
+    const auth = checkAdmin(request);
+    if (!auth.ok) return json(auth.status, { errors: [auth.error] });
+  }
+  const store = getStore();
   switch (action) {
     case 'prompt': {
       if (body.reset) {
@@ -63,7 +72,7 @@ export const POST = guarded(async (request) => {
       if (prompt.length < 50) return json(400, { errors: ['The prompt is too short: give the agent its instructions (at least 50 characters).'] });
       if (prompt.length > 20000) return json(400, { errors: ['The prompt is too long (at most 20,000 characters).'] });
       await store.setPricerConfig('prompt', prompt);
-      return json(200, { saved: true, prompt, note: 'Recipes priced from now on use this prompt. Use "Price again" to re-price earlier ones.' });
+      return json(200, { saved: true, prompt, note: 'Recipes priced from now on use this prompt. Use "Reprice" to re-price earlier ones.' });
     }
     case 'test': {
       const res = await startTest(body);
@@ -71,22 +80,31 @@ export const POST = guarded(async (request) => {
     }
     case 'price': {
       const mealId = String(body.meal_id ?? '');
-      await store.enqueuePricing(mealId);
       if (!(await store.resetPricing(mealId))) return json(404, { errors: [`no recipe has meal_id ${mealId}`] });
       kickPricer();
       return json(200, { queued: mealId });
     }
+    case 'price-unpriced': {
+      const n = await store.queueUnpriced();
+      kickPricer();
+      return json(200, { queued: n });
+    }
+    case 'clear-all': {
+      if (body.confirm !== 'CLEAR') return json(400, { errors: ['Send {"confirm": "CLEAR"} to remove every price.'] });
+      return json(200, { cleared: await store.clearPricings() });
+    }
+    case 'reprice-all': {
+      if (body.confirm !== 'REPRICE') return json(400, { errors: ['Send {"confirm": "REPRICE"} to price every recipe again.'] });
+      const n = await store.resetPricings({ onlyFailed: false });
+      kickPricer();
+      return json(200, { queued: n });
+    }
+    // Older names, kept for scripts.
     case 'run':
       kickPricer();
       return json(200, { started: true });
     case 'retry-failed': {
       const n = await store.resetPricings({ onlyFailed: true });
-      kickPricer();
-      return json(200, { queued: n });
-    }
-    case 'reprice-all': {
-      if (body.confirm !== 'REPRICE') return json(400, { errors: ['Send {"confirm": "REPRICE"} to price every recipe again.'] });
-      const n = await store.resetPricings({ onlyFailed: false });
       kickPricer();
       return json(200, { queued: n });
     }
