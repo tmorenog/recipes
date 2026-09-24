@@ -47,9 +47,35 @@
     <li><strong>Get the class key and choose a group name</strong><p>Your instructor gives everyone the same class key. Your group picks a name, like <code>team-3</code>, which labels everything your agents save.</p></li>
     <li><strong>Build your first agent, step by step</strong><p>Each step says what it adds and gives a sample prompt to paste into Lovable. Test after every step.</p></li>
     <li><strong>Watch the results</strong><p>The <a href="/database">Database page</a> shows everything the class’s agents saved, and every attempt the coordinator turned down, with the reason.</p></li>
-    <li><strong>If there’s time, keep going</strong><p>The tabs at the top lead on to the next parts of the system. One agent you understand well is a good result.</p></li>
+    <li><strong>If there’s time, keep going</strong><p>The other agents below build on your first one. One agent you understand well is a good result.</p></li>
   </ol>
   <p><a class="btn primary" href="/scout">Start building</a></p>
+
+  <h2 id="agents">The agents in the system</h2>
+  <p>Each agent does one job and passes its results on through the coordinator. The system is useful at every stage: whatever your group gets working adds to what the class has built.</p>
+  <div class="grid-3 agent-cards">
+    <div class="panel scout">
+      <span class="agent-tag scout">Start here</span>
+      <h3>Recipe Scout</h3>
+      <p class="small">Takes a theme like “cheap weeknight dinners”, searches a real recipe database, chooses recipes that fit, and saves them to the coordinator.</p>
+      <p class="small muted">Shows how an agent uses tools, follows rules it reads from a server, and fixes its mistakes.</p>
+      <p><a class="btn primary" href="/scout">Build the Recipe Scout</a></p>
+    </div>
+    <div class="panel pricer">
+      <span class="agent-tag pricer">Already running</span>
+      <h3>Pricer</h3>
+      <p class="small">Runs on the coordinator. Whenever a recipe is saved, it builds the Kroger shopping cart to cook it and works out its nutrition. You don’t build it: watch it work.</p>
+      <p class="small muted">Shows an agent working in the background, handing its results to others.</p>
+      <p><a class="btn" href="/pricer">Watch the Pricer</a></p>
+    </div>
+    <div class="panel planner">
+      <span class="agent-tag planner">If there’s time</span>
+      <h3>Meal Planner</h3>
+      <p class="small">Takes a budget and the priced recipes, and plans five dinners, Monday to Friday, that are nutritious, varied and cheap.</p>
+      <p class="small muted">Shows an agent weighing trade-offs and checking its work before it saves.</p>
+      <p><a class="btn" href="/planner">See the Meal Planner</a></p>
+    </div>
+  </div>
 
   <h2 id="key">The class key and your group name</h2>
   <div class="panel narrow">
