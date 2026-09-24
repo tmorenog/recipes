@@ -68,6 +68,8 @@ async function save(group, body) {
   const res = await recipesApi.POST(new Request('http://x/api/recipes', { method: 'POST', headers: { ...as(group), 'content-type': 'application/json' }, body: JSON.stringify(body) }));
   assert.equal(res.status, 201, await res.clone().text());
 }
+let dbPoolRef;
+const dbPool = () => dbPoolRef;
 const getJson = async (res) => ({ status: res.status, body: await res.json() });
 const pricer = (query = '') => pricerApi.GET(new Request(`http://x/api/pricer${query}`)).then(getJson);
 const control = (action, body = {}, key = 'admin-key-for-tests') =>
@@ -84,8 +86,10 @@ after(async () => {
 
 for (const backend of BACKENDS) {
   describe(`the Pricer, with the ${backend.name} store`, { skip: backend.skip }, () => {
+    let db;
     beforeEach(async () => {
-      await backend.fresh();
+      db = await backend.fresh();
+      dbPoolRef = db.pool;
       resetKroger();
       calls.kroger = 0;
       calls.usda = 0;
@@ -127,14 +131,15 @@ for (const backend of BACKENDS) {
 
       // Planners see the price per serving with each recipe.
       const list = await recipesApi.GET(new Request('http://x/api/recipes?status=all')).then(getJson);
-      assert.deepEqual(list.body.recipes[0].pricing, {
-        status: 'priced',
-        people: 50,
-        cart_usd: 11.88,
-        cost_used_usd: 11.26,
-        cost_per_serving_usd: 0.23,
-        estimated_lines: 0,
-      });
+      const { priced_at, ...pricing } = list.body.recipes[0].pricing;
+      assert.deepEqual(pricing, { status: 'priced', people: 50, cart_usd: 11.88, cost_per_serving_usd: 0.23, estimated: false, estimated_lines: 0 });
+      assert.ok(priced_at, 'the recipe records when it was priced');
+      assert.equal(list.body.recipes.length, 1, 'two groups, one recipe');
+      assert.equal(list.body.recipes[0].pick_count, 2);
+      // The price is stored on the recipe itself.
+      const [row] = (await dbPool().query('select price_status, cost_per_serving_usd, cart_usd, priced_for, price_estimated from recipes')).rows;
+      assert.deepEqual({ ...row, cost_per_serving_usd: Number(row.cost_per_serving_usd), cart_usd: Number(row.cart_usd) },
+        { price_status: 'priced', cost_per_serving_usd: 0.23, cart_usd: 11.88, priced_for: 50, price_estimated: false });
 
       queue = (await pricer()).body;
       assert.deepEqual(queue.counts, { unpriced: 0, pending: 0, pricing: 0, priced: 1, failed: 0 });
@@ -279,6 +284,8 @@ for (const backend of BACKENDS) {
       assert.equal(p.to_buy_usd, 15); // 12 × $1.25
       const list = await recipesApi.GET(new Request('http://x/api/recipes?status=all')).then(getJson);
       assert.equal(list.body.recipes[0].pricing.estimated_lines, 1);
+      assert.equal(list.body.recipes[0].pricing.estimated, true);
+      assert.equal((await dbPool().query('select price_estimated from recipes')).rows[0].price_estimated, true);
       assert.equal((await pricer()).body.pricings[0].estimated_lines, 1);
     });
 

@@ -550,3 +550,7 @@ details.trace > summary { cursor: pointer; padding: 8px 0; }
 .pill.estimated { margin-left: 6px; background: var(--new-bg); color: var(--new-ink); }
 .product-card.estimated { border-style: dashed; border-color: var(--new-ink); }
 .estimated-why { color: var(--new-ink); }
+
+/* Database cards: popularity */
+.card .tags { display: flex; flex-wrap: wrap; gap: 4px 6px; align-items: center; }
+.picks-count { font: 700 12px/1.6 var(--body); color: var(--accent); margin-right: 2px; }

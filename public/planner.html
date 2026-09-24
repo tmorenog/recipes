@@ -39,6 +39,7 @@
     <ul class="checklist">
       <li>It uses only recipes the class saved, with the prices the <a href="/pricer">Pricer</a> worked out.</li>
       <li>It estimates each dinner’s nutrition from the ingredients, using USDA data from the coordinator.</li>
+      <li>It considers popularity: recipes picked by more groups are ones the class likes.</li>
       <li>It learns the rules from the coordinator (<code>get_expectations</code>) instead of having them written into its code.</li>
       <li>It checks its plan with the coordinator, and improves it until the rules pass or it can explain why they can’t.</li>
       <li>Costs are added up by the coordinator, never guessed by the AI.</li>
@@ -150,7 +151,7 @@
     <div class="table-wrap"><table>
       <tr><th>Tool</th><th>Does</th></tr>
       <tr><td><code>get_expectations</code></td><td>The goal, the steps, the balance rules and the plan format</td></tr>
-      <tr><td><code>list_recipes</code></td><td>The class’s recipes, with their ingredients. With <code>{"priced": true}</code>, only priced ones, each with <code>pricing.cost_per_serving_usd</code></td></tr>
+      <tr><td><code>list_recipes</code></td><td>The class’s recipes, each stored once, with their ingredients, <code>pick_count</code> and <code>picked_by</code> (how many groups chose it: its popularity). With <code>{"priced": true}</code>, only priced ones, each with <code>pricing.cost_per_serving_usd</code> and <code>pricing.estimated</code></td></tr>
       <tr><td><code>search_foods</code></td><td>USDA nutrition per 100 g for a plain food, e.g. “chickpeas canned”, to estimate each dinner’s nutrition</td></tr>
       <tr><td><code>check_meal_plan</code></td><td>Checks a draft without saving: the week’s cost per person, and every rule with ✓ or ✗</td></tr>
       <tr><td><code>save_meal_plan</code></td><td>Saves the plan with its numbers and rule checks</td></tr>

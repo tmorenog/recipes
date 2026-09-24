@@ -53,7 +53,11 @@ The **Pricer page** (`/pricer`) has three parts:
 2. **Its instructions**: edit the agent’s prompt (e.g. the number of people), test the draft with part 1, then **Save** or **Save and re-price every recipe**.
 3. **Recipe carts**: every recipe, grouped by stage (waiting, being priced, priced, couldn’t price), with when it was priced and whether with the current instructions; each recipe’s cart and every step the agent took.
 
-Each recipe from `list_recipes` / `GET /api/recipes` carries a `pricing` object: `status` (`pending`, `pricing`, `priced` or `failed`) and, once priced, `people`, `cart_usd`, `cost_used_usd` and `cost_per_serving_usd`.
+The Pricer’s result is stored on each recipe (`price_status`, `cost_per_serving_usd`, `cart_usd`, `priced_for`, `price_estimated`, `estimated_lines`, `priced_at`), kept in step by a database trigger. Each recipe from `list_recipes` / `GET /api/recipes` carries it as a `pricing` object: `status` (`unpriced`, `pending`, `pricing`, `priced` or `failed`) and, once priced, `people`, `cart_usd`, `cost_per_serving_usd`, `estimated` (any ingredient price estimated because Kroger had none), `estimated_lines` and `priced_at`.
+
+### One recipe per meal
+
+Each TheMealDB recipe is stored once. When another group saves a recipe that’s already there, their pick (group, theme, why) is added to it instead of a copy (`recipe_picks`). Recipes carry `pick_count`, `picked_by` and `picks`; the Meal Planner can use popularity when choosing. A group picking the same recipe twice for the same theme gets a `409`. Duplicates saved by earlier versions are merged on the next deploy, and plans are pointed at the kept copy.
 
 Nutrition is the Meal Planner’s job: its agent estimates each dinner’s nutrition per serving, using the coordinator’s `search_foods` tool (USDA FoodData Central, `USDA_API_KEY`).
 

@@ -53,7 +53,7 @@ for (const backend of BACKENDS) {
       assert.ok(save.inputSchema.required.includes('why_chosen'));
     });
 
-    test('save_recipe stores under the caller’s group and rejects duplicates and incomplete recipes', async () => {
+    test('save_recipe stores each recipe once, counts every group that picks it, and rejects repeats and incomplete recipes', async () => {
       const client = await mcp('team-2');
       const r = recipe({ meal_id: '52772' });
       const saved = await client.callTool({ name: 'save_recipe', arguments: r });
@@ -63,11 +63,19 @@ for (const backend of BACKENDS) {
 
       const dup = await client.callTool({ name: 'save_recipe', arguments: r });
       assert.equal(dup.isError, true);
-      assert.equal(dup.content[0].text, 'Rejected:\n- your group already saved meal_id "52772" for the theme "cheap weeknight vegetarian dinners"');
+      assert.equal(dup.content[0].text, 'Rejected:\n- your group already picked meal_id "52772" for the theme "cheap weeknight vegetarian dinners": choose a different recipe');
 
-      // A different group may save the same recipe.
-      const other = await (await mcp('team-1')).callTool({ name: 'save_recipe', arguments: r });
-      assert.ok(!other.isError);
+      // Another group picking the same recipe adds a pick; the recipe is stored once.
+      const other = out(await (await mcp('team-1')).callTool({ name: 'save_recipe', arguments: { ...r, theme: 'comfort food', why_chosen: 'Warming.' } }));
+      assert.equal(other.new_recipe, false);
+      assert.deepEqual(other.picked_by, ['team-2', 'team-1']);
+      assert.match(other.note, /now picked by 2 groups/);
+      assert.equal((await db.recipes()).length, 1);
+      const listed = out(await client.callTool({ name: 'list_recipes', arguments: {} })).recipes[0];
+      assert.equal(listed.pick_count, 2);
+      assert.deepEqual(listed.picks.map((p) => [p.group, p.theme]), [['team-2', 'cheap weeknight vegetarian dinners'], ['team-1', 'comfort food']]);
+      assert.equal(out(await client.callTool({ name: 'list_recipes', arguments: { group: 'team-1' } })).count, 1, 'filtering by group finds recipes it picked');
+      assert.equal(out(await client.callTool({ name: 'list_recipes', arguments: { theme: 'comfort food' } })).count, 1);
 
       const bad = await client.callTool({ name: 'save_recipe', arguments: recipe({ why_chosen: ' ', est_servings: 0 }) });
       assert.equal(bad.isError, true);
@@ -119,7 +127,7 @@ for (const backend of BACKENDS) {
 
       const dup = await call('POST', '/api/recipes', { group: 'team-1', body: r });
       assert.equal(dup.status, 409);
-      assert.deepEqual(dup.body.errors, ['your group already saved meal_id "rest-1" for the theme "cheap weeknight vegetarian dinners"']);
+      assert.deepEqual(dup.body.errors, ['your group already picked meal_id "rest-1" for the theme "cheap weeknight vegetarian dinners": choose a different recipe']);
 
       const bad = await call('POST', '/api/recipes', { group: 'team-1', body: recipe({ why_chosen: ' ', est_servings: 0 }) });
       assert.equal(bad.status, 400);
@@ -250,6 +258,26 @@ for (const backend of BACKENDS) {
     });
 
     if (backend.name === 'postgres') {
+      test('schema.sql merges duplicate recipes saved by earlier versions, keeping every pick and pointing plans at the kept copy', async () => {
+        await db.pool.query('drop index if exists recipes_meal_key');
+        const ins = async (group, theme, at) => (await db.pool.query(
+          `insert into recipes (group_name, theme, meal_id, name, ingredients, instructions, why_chosen, created_at)
+           values ($1, $2, '777', 'Dal', '[{"name":"lentils","amount":1,"unit":"cup","raw":"1 cup"}]', 'Simmer the lentils for thirty minutes.', 'cheap', $3) returning id`,
+          [group, theme, at])).rows[0].id;
+        const first = await ins('team-1', 'soups', '2026-01-01');
+        const copy = await ins('team-2', 'cheap eats', '2026-01-02');
+        await db.pool.query('delete from recipe_picks');
+        await db.pool.query(`insert into plans (group_name, summary, total_cost_usd, meals, shopping_list) values ('team-3', 'x', 1, $1, '[]')`,
+          [JSON.stringify([{ day: 'Monday', recipe_id: copy }])]);
+        await db.pool.query(await readFile(new URL('../schema.sql', import.meta.url), 'utf8'));
+
+        const rows = await db.recipes();
+        assert.deepEqual(rows.map((r) => r.id), [first]);
+        const picks = (await db.pool.query('select group_name, theme from recipe_picks order by created_at')).rows;
+        assert.deepEqual(picks.map((p) => [p.group_name, p.theme]), [['team-1', 'soups'], ['team-2', 'cheap eats']]);
+        assert.equal((await db.plans())[0].meals[0].recipe_id, first);
+      });
+
       test('schema.sql upgrades a database made by the earlier version', async () => {
         await db.pool.query('drop table recipes cascade');
         await db.pool.query(`create table recipes (
@@ -266,7 +294,8 @@ for (const backend of BACKENDS) {
         const saved = await client.callTool({ name: 'save_recipe', arguments: recipe({ theme: 'soups', meal_id: '1' }) });
         assert.ok(!saved.isError, saved.content[0].text);
         const all = out(await client.callTool({ name: 'list_recipes', arguments: { status: 'all' } }));
-        assert.deepEqual(all.recipes.map((r) => r.group).sort(), ['team-1', 'unassigned']);
+        assert.equal(all.count, 1, 'the same meal is one recipe');
+        assert.deepEqual(all.recipes[0].picked_by.sort(), ['team-1', 'unassigned']);
       });
     }
   });

@@ -76,8 +76,14 @@
     const pill = node.querySelector('.pill');
     pill.textContent = r.status === 'new' ? 'New' : 'Processed';
     pill.classList.add(r.status);
-    node.querySelector('.chip').replaceWith(chip(r.group));
-    node.querySelector('.theme').textContent = r.theme;
+    // Each recipe is stored once; every group that picked it is shown (its popularity).
+    const groups = r.picked_by?.length ? r.picked_by : [r.group];
+    const themes = [...new Set((r.picks || []).map((p) => p.theme))];
+    node.querySelector('.chip').replaceWith(
+      ...(groups.length > 1 ? [el('span', { className: 'picks-count', textContent: `Picked by ${groups.length} groups` })] : []),
+      ...groups.map(chip),
+    );
+    node.querySelector('.theme').textContent = (themes.length ? themes : [r.theme]).join(' · ');
     const link = node.querySelector('.name a');
     link.textContent = r.name;
     // TheMealDB asks apps to link each meal to its page there.
@@ -85,14 +91,15 @@
     else if (safeUrl(r.source_url)) link.href = r.source_url;
     node.querySelector('.meta').textContent = [r.cuisine, r.category, r.est_minutes && `${r.est_minutes} min`, r.est_servings && `serves ${r.est_servings}`]
       .filter(Boolean).join(' · ');
-    node.querySelector('.why').textContent = r.why_chosen;
+    const whys = (r.picks || []).filter((p) => p.why_chosen);
+    node.querySelector('.why').textContent = whys.length > 1 ? whys.map((p) => `${p.group}: ${p.why_chosen}`).join('  ·  ') : r.why_chosen;
     // What the Pricer agent found: the cost per serving, or where it's up to.
     const p = r.pricing || { status: 'pending' };
     const price = node.querySelector('.price');
     price.href = `/pricer#${encodeURIComponent(r.meal_id)}`;
     price.className = `price price-${p.status}`;
     price.textContent = p.status === 'priced'
-      ? `$${p.cost_per_serving_usd.toFixed(2)} a serving${p.estimated_lines ? ' · partly estimated' : ''}`
+      ? `$${p.cost_per_serving_usd.toFixed(2)} a serving${p.estimated ? ' · includes estimated prices' : ''}`
       : { unpriced: 'Not priced', pending: 'Waiting to be priced', pricing: 'Being priced…', failed: 'Couldn’t be priced' }[p.status] || p.status;
     const ings = r.ingredients || [];
     node.querySelector('.ingredients summary').textContent = `${ings.length} ingredient${ings.length === 1 ? '' : 's'}`;
@@ -107,7 +114,9 @@
 
   function renderRecipes() {
     const shown = data.recipes.filter(
-      (r) => (!state.group || r.group === state.group) && (!state.theme || r.theme === state.theme) && (!state.status || r.status === state.status),
+      (r) => (!state.group || (r.picked_by || [r.group]).includes(state.group))
+        && (!state.theme || (r.picks || [{ theme: r.theme }]).some((p) => p.theme === state.theme))
+        && (!state.status || r.status === state.status),
     );
     const open = new Set([...$('recipes').querySelectorAll('details[open]')].map((d) => d.closest('.card').dataset.id));
     $('recipes').replaceChildren(
@@ -218,9 +227,9 @@
     $('n-plans').textContent = data.plans.length || '';
     $('n-activity').textContent = data.activity.length || '';
 
-    const groups = [...new Set([...data.recipes, ...data.plans, ...data.activity].map((x) => x.group).filter(Boolean))].sort();
+    const groups = [...new Set([...data.recipes.flatMap((r) => r.picked_by || [r.group]), ...data.plans, ...data.activity].map((x) => (typeof x === 'string' ? x : x.group)).filter(Boolean))].sort();
     fillSelect($('f-group'), groups, state.group, 'All groups');
-    fillSelect($('f-theme'), [...new Set(data.recipes.map((r) => r.theme))].sort(), state.theme, 'All themes');
+    fillSelect($('f-theme'), [...new Set(data.recipes.flatMap((r) => (r.picks?.length ? r.picks.map((p) => p.theme) : [r.theme])))].sort(), state.theme, 'All themes');
 
     const [count, emptyText] = state.view === 'recipes' ? renderRecipes() : state.view === 'plans' ? renderPlans() : renderActivity();
     $('empty').hidden = count > 0 || !$('notice').hidden;
