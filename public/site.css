@@ -742,3 +742,9 @@ details.trace > summary { cursor: pointer; padding: 8px 0; }
 .note-begin h2 { margin: 0 0 8px; font-size: 24px; }
 .note-begin p { margin: 8px 0 0; max-width: 72ch; }
 .start-cta { margin: 24px 0 8px; }
+
+/* About page */
+.about { display: grid; gap: 8px; max-width: 72ch; }
+.about h2 { margin: 26px 0 8px; }
+.about ul { padding-left: 22px; }
+.about li { margin: 4px 0; }
