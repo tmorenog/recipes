@@ -4,16 +4,9 @@
   'use strict';
   const SITE = location.origin;
 
-  // "Before you start": the checklist at the top of the Welcome, Recipe Scout
-  // and Meal Planner pages (<section data-ready="welcome|scout|planner">).
-  // Ticks are remembered in this browser. Rendered first so the group box and
-  // key check below are wired up like any other.
-  const readyTick = (n, on) => {
-    const tick = document.getElementById(`ready-${n}`);
-    if (!tick || tick.checked === on) return;
-    tick.checked = on;
-    try { localStorage.setItem(`rc-ready2-${n}`, on ? '1' : '0'); } catch { /* ignore */ }
-  };
+  // "Before you start": the numbered list at the top of the Welcome, Recipe
+  // Scout and Meal Planner pages (<section data-ready="welcome|scout|planner">).
+  // Rendered first so the group box and key check below are wired up like any other.
   for (const box of document.querySelectorAll('[data-ready]')) {
     const page = ['welcome', 'scout', 'planner'].includes(box.dataset.ready) ? box.dataset.ready : 'welcome';
     const h = (tag, props = {}, ...kids) => {
@@ -21,12 +14,9 @@
       n.append(...kids.filter((k) => k != null));
       return n;
     };
-    const item = (n, title, ...body) => {
-      const tick = h('input', { type: 'checkbox', id: `ready-${n}` });
-      try { tick.checked = localStorage.getItem(`rc-ready2-${n}`) === '1'; } catch { /* storage unavailable */ }
-      tick.addEventListener('change', () => { try { localStorage.setItem(`rc-ready2-${n}`, tick.checked ? '1' : '0'); } catch { /* ignore */ } });
-      return h('li', { className: 'ready-item' }, tick, h('div', {}, h('label', { htmlFor: `ready-${n}`, className: 'ready-title' }, ...[].concat(title)), ...body));
-    };
+    const item = (n, title, ...body) => h('li', { className: 'ready-item' },
+      h('span', { className: 'ready-num', ariaHidden: 'true', textContent: String(n) }),
+      h('div', {}, h('p', { className: 'ready-title' }, ...[].concat(title)), ...body));
     const lovable = h('a', { href: 'https://lovable.dev', target: '_blank', rel: 'noopener', textContent: 'Lovable' });
     box.className = 'ready';
     box.id = 'before-you-start';
@@ -227,7 +217,6 @@
         } else {
           note.textContent = `“${group}” is free, and the prompts use it.`;
           note.classList.add('ok');
-          readyTick(3, true);
         }
       }, 400);
     };
@@ -281,7 +270,6 @@
         if (res.ok) {
           out.textContent = 'This key works.';
           out.classList.add('ok');
-          readyTick(4, true);
         } else {
           out.textContent = body.errors?.[0] || 'That isn’t the class key.';
           out.classList.add('bad');
