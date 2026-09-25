@@ -104,7 +104,7 @@ test('MCP works with plain fetch: ?agent=scout shows only the Scout’s tools, a
 
   const list = await rpc('?agent=scout', 'tools/list');
   assert.equal(list.status, 200);
-  assert.deepEqual((await list.json()).result.tools.map((t) => t.name), ['get_expectations', 'save_recipe', 'list_recipes']);
+  assert.deepEqual((await list.json()).result.tools.map((t) => t.name), ['get_expectations', 'save_recipe']);
 
   const brief = JSON.parse((await (await rpc('?agent=scout', 'tools/call', { name: 'get_expectations', arguments: {} })).json()).result.content[0].text);
   assert.equal(brief.agent, 'Recipe Scout');

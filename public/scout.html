@@ -94,7 +94,7 @@
     <div class="mcp-lanes"><span>Your app’s backend<small>in Lovable</small></span><span>Coordinator<small>this site, an MCP server</small></span></div>
     <ol class="mcp-msgs">
       <li class="mcp-req"><span class="mcp-label"><code>tools/list</code></span><span class="mcp-detail">What tools do you offer?</span></li>
-      <li class="mcp-res"><span class="mcp-label"><code>get_expectations</code>, <code>save_recipe</code>, <code>list_recipes</code></span><span class="mcp-detail">each with a description and its inputs</span></li>
+      <li class="mcp-res"><span class="mcp-label"><code>get_expectations</code>, <code>save_recipe</code></span><span class="mcp-detail">each with a description and its inputs</span></li>
       <li class="mcp-req"><span class="mcp-label"><code>tools/call get_expectations</code></span><span class="mcp-detail">What must I do?</span></li>
       <li class="mcp-res"><span class="mcp-label">the goal, the rules and the recipe format</span></li>
       <li class="mcp-req"><span class="mcp-label"><code>tools/call save_recipe</code> with a recipe</span></li>
@@ -115,7 +115,7 @@
       </div>
       <div class="prompt-body" id="p4" data-prompt="/prompts/scout/step-4.txt"></div>
     </div>
-    <p class="step-check"><strong>You should see:</strong> three coordinator tools and the brief from <code>get_expectations</code>: the goal, the rules and the recipe format. Then a run that starts with <code>get_expectations</code> and ends with five saved recipes on the <a href="/coordinator">Coordinator page</a> under your group.</p>
+    <p class="step-check"><strong>You should see:</strong> two coordinator tools and the brief from <code>get_expectations</code>: the goal, the rules and the recipe format. Then a run that starts with <code>get_expectations</code> and ends with five saved recipes on the <a href="/coordinator">Coordinator page</a> under your group.</p>
   </section>
 
   <section class="step" id="step-5">
@@ -169,12 +169,11 @@
       <tr><td>get_recipe</td><td><code>lookup.php?i=52772</code></td></tr>
     </table></div>
     <h3>Saving recipes: the coordinator’s MCP server</h3>
-    <p class="small">MCP (Model Context Protocol) lets an agent discover tools and their rules from a server instead of having them written into its code. <code>{{SITE}}/api/mcp?agent=scout</code> offers the Scout three tools:</p>
+    <p class="small">MCP (Model Context Protocol) lets an agent discover tools and their rules from a server instead of having them written into its code. <code>{{SITE}}/api/mcp?agent=scout</code> offers the Scout two tools:</p>
     <div class="table-wrap"><table>
       <tr><th>Tool</th><th>Does</th></tr>
       <tr><td><code>get_expectations</code></td><td>The goal, the rules, every field <code>save_recipe</code> accepts (and where its value comes from in TheMealDB), and an example</td></tr>
       <tr><td><code>save_recipe</code></td><td>Saves one recipe under your group, or rejects it with every reason at once</td></tr>
-      <tr><td><code>list_recipes</code></td><td>What the class has saved so far</td></tr>
     </table></div>
     <p class="small">Every request carries <code>Authorization: Bearer &lt;class key&gt;</code> and <code>X-Group: {{GROUP}}</code>. Under the hood it’s one POST per call:</p>
     <pre class="code">POST {{SITE}}/api/mcp?agent=scout

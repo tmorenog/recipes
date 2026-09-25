@@ -88,11 +88,11 @@ for (const backend of BACKENDS) {
       // fetch() with a JSON string body and no content type sends text/plain.
       const plain = await raw({ method: 'POST', body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list' }) });
       assert.equal(plain.status, 200);
-      assert.deepEqual((await plain.json()).result.tools.map((t) => t.name).sort(), ['get_expectations', 'list_recipes', 'save_recipe']);
+      assert.deepEqual((await plain.json()).result.tools.map((t) => t.name).sort(), ['get_expectations', 'save_recipe']);
 
       const stringArgs = await raw({ method: 'POST', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'tools/call', params: { name: 'list_recipes', arguments: '{"status": "all"}' } }) });
-      assert.equal(JSON.parse((await stringArgs.json()).result.content[0].text).count, 0);
+        body: JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'tools/call', params: { name: 'get_expectations', arguments: '{"agent": "planner"}' } }) });
+      assert.equal(JSON.parse((await stringArgs.json()).result.content[0].text).agent, 'Meal Planner');
     });
 
     test('unambiguous slips are accepted with a note; ambiguous ones are still rejected', async () => {
