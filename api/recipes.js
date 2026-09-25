@@ -44,5 +44,5 @@ export const POST = guarded(async (request) => {
     return json(400, { errors: ['The request body must be JSON, with the header Content-Type: application/json.'] });
   }
   const res = await saveRecipe({ group, channel: 'rest', input });
-  return res.ok ? json(201, { saved: true, recipe: res.recipe }) : fail(res);
+  return res.ok ? json(201, { saved: true, recipe: res.recipe, ...(res.notes?.length && { format_notes: res.notes }) }) : fail(res);
 });

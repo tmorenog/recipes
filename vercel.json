@@ -2,6 +2,10 @@
   "cleanUrls": true,
   "rewrites": [
     {
+      "source": "/api/mcp/",
+      "destination": "/api/mcp"
+    },
+    {
       "source": "/api/recipes/:id/processed",
       "destination": "/api/recipes?id=:id&action=processed"
     },

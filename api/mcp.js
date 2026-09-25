@@ -15,22 +15,44 @@ const fail = (status, message) =>
     headers: { 'content-type': 'application/json' },
   });
 
-// Every answer is plain JSON (enableJsonResponse), so a hand-written fetch works
-// as well as an MCP client. The spec asks clients to accept both types; many
-// hand-written ones send only one, or none, so fill it in rather than refuse.
-function acceptBoth(request) {
-  if (request.method !== 'POST') return request;
-  const accept = request.headers.get('accept') ?? '';
-  if (accept.includes('application/json') && accept.includes('text/event-stream')) return request;
+// This server is stateless: each POST stands alone and every answer is plain
+// JSON (enableJsonResponse). There is no stream to open, so GET and DELETE are
+// refused at once; MCP clients expect that and carry on with POSTs.
+const postOnly = () =>
+  new Response(JSON.stringify({
+    jsonrpc: '2.0',
+    error: { code: -32000, message: 'This coordinator only answers POST requests: send each MCP request as a POST with a JSON body. (It is stateless, so there is no stream to open.)' },
+    id: null,
+  }), { status: 405, headers: { 'content-type': 'application/json', allow: 'POST' } });
+
+// Hand-written code often gets the wrapping slightly wrong. Fix what is certain:
+// a JSON body sent without the JSON content type (fetch sends text/plain),
+// tool arguments sent as a JSON string, and a missing or partial Accept header
+// (the spec asks for both types; many clients send one or none).
+async function tidy(request) {
+  const text = await request.text();
+  let body;
+  try {
+    body = JSON.parse(text);
+  } catch {
+    return { request: new Request(request.url, { method: 'POST', headers: request.headers, body: text }), body: null };
+  }
+  for (const m of Array.isArray(body) ? body : [body]) {
+    if (m?.method === 'tools/call' && typeof m.params?.arguments === 'string') {
+      try { m.params.arguments = JSON.parse(m.params.arguments); } catch { /* left as sent: rejected with a reason */ }
+    }
+  }
   const headers = new Headers(request.headers);
+  headers.set('content-type', 'application/json');
   headers.set('accept', 'application/json, text/event-stream');
-  return new Request(request, { headers });
+  return { request: new Request(request.url, { method: 'POST', headers, body: JSON.stringify(body) }), body };
 }
 
 export async function handle(request) {
+  if (request.method !== 'POST') return postOnly();
   const { group, status, error } = checkCaller(request);
   if (error) return fail(status, error);
-  const agent = new URL(request.url).searchParams.get('agent') || null;
+  const agent = (new URL(request.url).searchParams.get('agent') || '').trim().toLowerCase() || null;
   if (agent && !AGENTS.includes(agent)) return fail(400, `?agent= must be one of: ${AGENTS.join(', ')}`);
   const server = createMcpServer(group, { agent });
   const transport = new WebStandardStreamableHTTPServerTransport({
@@ -39,9 +61,9 @@ export async function handle(request) {
   });
   await server.connect(transport);
   const started = Date.now();
-  // Keep a copy of what was asked, for the Coordinator page's exchange log.
-  const body = request.method === 'POST' ? await request.clone().json().catch(() => null) : null;
-  const response = await transport.handleRequest(acceptBoth(request));
+  const { request: tidied, body } = await tidy(request);
+  const response = await transport.handleRequest(tidied);
+  // Keep a copy of what was asked and answered, for the Coordinator page's exchange log.
   if (body) {
     const responseBody = await response.clone().json().catch(() => null);
     await logMcp({ body, responseBody, group, agent, ms: Date.now() - started });

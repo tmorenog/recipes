@@ -79,6 +79,53 @@ for (const backend of BACKENDS) {
       assert.deepEqual(newer.exchanges.map((x) => x.id), [exchanges[0].id]);
     });
 
+    test('hand-written requests: GET is refused at once; text/plain JSON and string arguments are accepted', async () => {
+      const raw = (init, query = '?agent=Scout') => handle(new Request(`http://x/api/mcp${query}`, { ...init, headers: { ...as('team-6'), ...init.headers } }));
+      const get = await raw({ method: 'GET', headers: { accept: 'text/event-stream' } });
+      assert.equal(get.status, 405);
+      assert.match((await get.json()).error.message, /only answers POST/);
+
+      // fetch() with a JSON string body and no content type sends text/plain.
+      const plain = await raw({ method: 'POST', body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list' }) });
+      assert.equal(plain.status, 200);
+      assert.deepEqual((await plain.json()).result.tools.map((t) => t.name).sort(), ['get_expectations', 'list_recipes', 'save_recipe']);
+
+      const stringArgs = await raw({ method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'tools/call', params: { name: 'list_recipes', arguments: '{"status": "all"}' } }) });
+      assert.equal(JSON.parse((await stringArgs.json()).result.content[0].text).count, 0);
+    });
+
+    test('unambiguous slips are accepted with a note; ambiguous ones are still rejected', async () => {
+      const client = await mcp('team-7');
+      const sloppy = { recipe: { ...recipe({ meal_id: 52772 }), est_minutes: '35', est_servings: '4', source_url: '',
+        ingredients: [{ name: 'soy sauce', amount: '3/4', unit: 'cup', raw: '3/4 cup' }, { name: 'rice', amount: 2 }] } };
+      const saved = out(await client.callTool({ name: 'save_recipe', arguments: sloppy }));
+      assert.equal(saved.saved, true);
+      assert.equal(saved.format_notes.length, 8);
+      assert.match(saved.format_notes.join(' | '), /inside \{"recipe": …\}.*est_minutes was sent as text \("35"\); read as 35.*meal_id was sent as a number.*source_url was empty.*ingredients\.0\.amount .*read as 0\.75.*ingredients\.1\.unit was missing/);
+      const [row] = (await db.recipes()).filter((r) => r.meal_id === '52772');
+      assert.deepEqual([row.est_minutes, row.source_url, row.ingredients[0].amount, row.ingredients[1].raw], [35, null, 0.75, null]);
+
+      const text = await client.callTool({ name: 'save_recipe', arguments: { ...recipe(), ingredients: ['2 onions'], est_minutes: 42.5 } });
+      assert.equal(text.isError, true);
+      assert.match(text.content[0].text, /ingredients\.0 must be an object like .*est_minutes must be a whole number/s);
+
+      // Plans: lowercase days and TheMealDB ids are understood.
+      const ids = [];
+      for (const [cuisine, category] of [['Indian', 'Vegetarian'], ['Mexican', 'Beef'], ['Italian', 'Chicken'], ['Thai', 'Seafood'], ['Greek', 'Lamb']]) {
+        ids.push(out(await client.callTool({ name: 'save_recipe', arguments: recipe({ cuisine, category }) })).id);
+      }
+      await markPriced(db.pool, ids);
+      const mealIds = new Map((await db.recipes()).map((r) => [r.id, r.meal_id]));
+      const plan = mealPlan(ids, { budget_usd: '20' });
+      plan.meals.forEach((m) => { m.day = m.day.toLowerCase(); });
+      plan.meals[0].recipe_id = mealIds.get(ids[0]);
+      const checked = out(await client.callTool({ name: 'check_meal_plan', arguments: plan }));
+      assert.equal(checked.all_rules_passed, true);
+      assert.equal(checked.meals[0].recipe_id, ids[0]);
+      assert.equal(checked.format_notes.length, 7);
+    });
+
     test('save_recipe stores each recipe once, counts every group that picks it, and rejects repeats and incomplete recipes', async () => {
       const client = await mcp('team-2');
       const r = recipe({ meal_id: '52772' });
