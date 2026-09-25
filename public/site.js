@@ -212,7 +212,7 @@
       if (!note) return;
       note.className = 'group-note small';
       if (!group) {
-        note.textContent = input.value.trim() ? 'Use letters, numbers and dashes, e.g. team-3.' : 'Type your group name and the prompts below fill it in.';
+        note.textContent = input.value.trim() ? 'Use letters, numbers and dashes, e.g. team-3.' : 'Type your group name; the prompts fill it in.';
         return;
       }
       note.textContent = `The prompts use “${group}”.`;

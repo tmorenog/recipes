@@ -18,7 +18,7 @@
       <ul class="tabs">
         <li><a href="/" aria-current="page">Welcome</a></li>
         <li><a href="/scout"><span class="num">1</span>Recipe Scout</a></li>
-        <li><a href="/pricer"><span class="num">2</span>Pricer</a></li>
+        <li><a href="/pricer"><span class="num">2</span>Recipe Pricer</a></li>
         <li><a href="/planner"><span class="num">3</span>Meal Planner</a></li>
         <li><a href="/coordinator">Coordinator</a></li>
       </ul>
@@ -27,88 +27,67 @@
 </header>
 
 <main class="wrap">
-  <section class="hero">
-    <div>
-      <h1>Welcome!</h1>
-      <p class="lede">Today, you’ll work on an agent system that creates a nutritious, varied, and affordable five-day lunch plan.</p>
-      <p class="hero-more">You’ll build a series of AI agents in Lovable that collaborate to complete this task. The first agent, the Recipe Scout, researches and proposes recipes. The second agent, the Recipe Pricer, calculates the cost of each recipe; this agent has already been built. The third agent, the Meal Planner, creates a five-day plan using the priced recipes. A coordinator manages the interactions and handoffs among the agents.</p>
-    </div>
-    <div class="flow" aria-label="How the pieces fit together">
-      <div class="flow-node scout"><strong>Your agent</strong><span>Does one job with real data and tools</span></div>
-      <div class="flow-arrow">saves its results</div>
-      <div class="flow-node hub"><strong>The coordinator</strong><span>This site: a shared database that checks everything agents save and shows the class’s results</span></div>
-      <div class="flow-arrow">other agents build on them</div>
-      <div class="flow-node planner"><strong>More agents</strong><span>Each reads what the others saved and adds its part</span></div>
-    </div>
+  <section class="intro">
+    <h1>Welcome!</h1>
+    <p class="lede">Today, you’ll work on an agent system that creates a nutritious, varied, and affordable five-day lunch plan.</p>
+    <p class="hero-more">You’ll build a series of AI agents in Lovable that collaborate to complete this task. The first agent, the Recipe Scout, researches and proposes recipes. The second agent, the Recipe Pricer, calculates the cost of each recipe; this agent has already been built. The third agent, the Meal Planner, creates a five-day plan using the priced recipes. A coordinator manages the interactions and handoffs among the agents.</p>
   </section>
+
+  <h2 id="system">The agent system</h2>
+  <div class="system" role="group" aria-label="Three agents and the coordinator that connects them">
+    <article class="sys-agent scout">
+      <span class="sys-num">1</span>
+      <h3>Recipe Scout</h3>
+      <p>Researches recipes on a real recipe database and proposes the ones that fit a theme.</p>
+      <p class="sys-where">You build it in Lovable · start here</p>
+      <p class="sys-handoff">With the coordinator: saves recipes</p>
+      <a class="btn primary" href="/scout">Build the Recipe Scout</a>
+    </article>
+    <p class="sys-link scout" aria-hidden="true"><span>saves recipes</span></p>
+
+    <article class="sys-agent pricer">
+      <span class="sys-num">2</span>
+      <h3>Recipe Pricer</h3>
+      <p>Calculates the cost of each recipe by building its shopping cart with real Kroger prices.</p>
+      <p class="sys-where">Already built · runs on the coordinator</p>
+      <p class="sys-handoff">With the coordinator: reads recipes, saves prices</p>
+      <a class="btn" href="/pricer">Watch the Recipe Pricer</a>
+    </article>
+    <p class="sys-link pricer" aria-hidden="true"><span>reads recipes, saves prices</span></p>
+
+    <article class="sys-agent planner">
+      <span class="sys-num">3</span>
+      <h3>Meal Planner</h3>
+      <p>Creates a five-day plan from the priced recipes, balancing nutrition, variety and cost within a budget.</p>
+      <p class="sys-where">You build it in Lovable · if there’s time</p>
+      <p class="sys-handoff">With the coordinator: reads priced recipes, saves the plan</p>
+      <a class="btn" href="/planner">Build the Meal Planner</a>
+    </article>
+    <p class="sys-link planner" aria-hidden="true"><span>reads priced recipes, saves the plan</span></p>
+
+    <article class="sys-hub">
+      <div>
+        <h3>Coordinator</h3>
+        <p>Manages the interactions and handoffs among the agents. The agents never talk to each other directly: each one connects to the coordinator over MCP, reads its instructions and tools there, and saves its results there for the next agent. The coordinator checks everything it receives and explains any rejection, so an agent can fix its mistake and try again.</p>
+      </div>
+      <a class="btn" href="/coordinator">Watch the coordinator</a>
+    </article>
+  </div>
 
   <section data-ready="welcome"></section>
 
-  <h2>What you’ll do</h2>
-  <ol class="steps">
-    <li><strong>Get ready</strong><p>Work through <a href="#before-you-start">Before you start</a> above: your group, Lovable, a group name and the class key.</p></li>
-    <li><strong>Build your first agent, step by step</strong><p>Each step says what it adds and gives a sample prompt to paste into Lovable. Test after every step.</p></li>
-    <li><strong>Watch the results</strong><p>The <a href="/coordinator">Coordinator page</a> shows, live, what every agent asks the coordinator and what it answers, including rejections and why, and everything the class’s agents saved.</p></li>
-    <li><strong>If there’s time, keep going</strong><p>The other agents below build on your first one. One agent you understand well is a good result.</p></li>
-  </ol>
-  <p><a class="btn primary" href="/scout">Start building</a></p>
+  <section class="note-begin" aria-labelledby="note-heading">
+    <h2 id="note-heading">A note before you begin</h2>
+    <p>The goal of this exercise is to learn by building—not to create a perfect system. Agent responses may be inconsistent, handoffs may not work as expected, and some steps may fail. That’s part of the process.</p>
+    <p>Pay attention to what works, investigate what doesn’t, and use each result as an opportunity to improve your system. Experiment, iterate, and have fun!</p>
+  </section>
 
-  <h2 id="architecture">How the system fits together</h2>
-  <div class="arch">
-    <div class="arch-flow" aria-label="Agents pass their work through the coordinator">
-      <div class="arch-agent scout"><span class="num">1</span><strong>Recipe Scout</strong><small>built in Lovable</small></div>
-      <div class="arch-arrow">saves recipes →</div>
-      <div class="arch-hub"><strong>Coordinator</strong><small>this site · shared database · checks every save</small>
-        <div class="arch-inside"><span class="num">2</span><strong>Pricer</strong><small>runs here, prices each new recipe</small></div>
-      </div>
-      <div class="arch-arrow">← reads priced recipes, saves a plan</div>
-      <div class="arch-agent planner"><span class="num">3</span><strong>Meal Planner</strong><small>built in Lovable</small></div>
-    </div>
-    <div class="grid-3 arch-notes">
-      <div><h3>Agents never talk to each other directly</h3><p class="small">Each one reads what it needs from the coordinator’s database and saves its results there. That’s why each agent can be built, tested and replaced on its own.</p></div>
-      <div><h3>They connect over MCP</h3><p class="small">The coordinator is an MCP server: an agent asks it which tools it offers (save a recipe, list recipes, check a plan…) and what the rules are, instead of having them written into its code.</p></div>
-      <div><h3>The coordinator is the referee</h3><p class="small">It checks every save and explains what’s wrong, keeps the class’s results in one place, and shows them on the <a href="/coordinator">Coordinator page</a>.</p></div>
-    </div>
-  </div>
-
-  <h2 id="agents">The agents in the system</h2>
-  <p>Each agent does one job and passes its results on through the coordinator. The system is useful at every stage: whatever your group gets working adds to what the class has built.</p>
-  <div class="grid-3 agent-cards">
-    <div class="panel scout">
-      <span class="agent-tag scout">1 · Start here</span>
-      <h3>Recipe Scout</h3>
-      <p class="small">Takes a theme like “cheap weeknight dinners”, searches a real recipe database, chooses recipes that fit, and saves them to the coordinator.</p>
-      <p class="small muted">Shows how an agent uses tools, follows rules it reads from a server, and fixes its mistakes.</p>
-      <p><a class="btn primary" href="/scout">Build the Recipe Scout</a></p>
-    </div>
-    <div class="panel pricer">
-      <span class="agent-tag pricer">2 · Already running</span>
-      <h3>Pricer</h3>
-      <p class="small">Runs on the coordinator. Whenever a recipe is saved, it builds the Kroger shopping cart to cook it and finds what it costs. You don’t build it: watch it work.</p>
-      <p class="small muted">Shows an agent working in the background, handing its results to others.</p>
-      <p><a class="btn" href="/pricer">Watch the Pricer</a></p>
-    </div>
-    <div class="panel planner">
-      <span class="agent-tag planner">3 · If there’s time</span>
-      <h3>Meal Planner</h3>
-      <p class="small">Takes a budget and the priced recipes, estimates their nutrition, and plans five dinners, Monday to Friday, that are nutritious, varied and cheap.</p>
-      <p class="small muted">Shows an agent weighing trade-offs and checking its work before it saves.</p>
-      <p><a class="btn" href="/planner">See the Meal Planner</a></p>
-    </div>
-  </div>
-
-  <h2>Good to know</h2>
-  <div class="grid-3">
-    <div class="panel"><h3 style="margin-top:0">Rejections are normal</h3><p class="small" style="margin:0">The coordinator checks everything your agents save. When something’s wrong it says exactly what, e.g. “est_servings must be at least 1”. A good agent reads the reasons, fixes them, and tries again.</p></div>
-    <div class="panel"><h3 style="margin-top:0">Everything is visible</h3><p class="small" style="margin:0">Everything the class’s agents save, and every attempt, appears on the Coordinator page. Use it to check your agent did what you think it did.</p></div>
-    <div class="panel"><h3 style="margin-top:0">Build in small steps</h3><p class="small" style="margin:0">Paste one step at a time and test before moving on. When something breaks, tell Lovable what you expected and what happened instead.</p></div>
-  </div>
+  <p class="start-cta"><a class="btn primary" href="/scout">Start with the Recipe Scout</a></p>
 </main>
 
 <footer class="site-foot">
   <div class="wrap">
     <div><a href="/admin" class="small">Instructor admin</a></div>
-    <div>For developers: agents can also connect over MCP at <code>{{SITE}}/api/mcp</code>. See the agent pages.</div>
   </div>
 </footer>
 <script src="/site.js"></script>

@@ -694,3 +694,45 @@ details.trace > summary { cursor: pointer; padding: 8px 0; }
 .xch-detail pre { margin: 0; max-height: 360px; overflow: auto; padding: 10px 12px; border-radius: 8px; font: 12.5px/1.5 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; }
 .live-dot::before { content: ""; display: inline-block; width: 7px; height: 7px; margin-right: 4px; border-radius: 50%; background: var(--good-ink); vertical-align: 1px; }
 .hero-more { margin: 14px 0 0; font-size: 17px; line-height: 1.6; max-width: 64ch; }
+
+/* Welcome: the agent system (three agents above, the coordinator below) */
+.intro { margin-top: 8px; }
+.system {
+  display: grid; gap: 0 18px; margin: 14px 0 30px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-areas: "a1 a2 a3" "l1 l2 l3" "hub hub hub";
+}
+.sys-agent { position: relative; display: flex; flex-direction: column; gap: 8px; padding: 18px 18px 16px; background: var(--surface); border: 1px solid var(--line); border-top: 5px solid var(--accent); border-radius: 12px; box-shadow: var(--shadow); }
+.sys-agent.scout { grid-area: a1; }
+.sys-agent.pricer { grid-area: a2; border-top-color: var(--pricer); }
+.sys-agent.planner { grid-area: a3; border-top-color: var(--planner); }
+.sys-agent h3 { margin: 0; font-size: 22px; }
+.sys-agent p { margin: 0; }
+.sys-agent .btn { align-self: flex-start; margin-top: auto; }
+.sys-where { font-size: 14px; color: var(--muted); }
+.sys-num { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; font: 700 14px/1 var(--display); background: var(--accent); color: #fff; }
+.sys-agent.pricer .sys-num { background: var(--pricer); }
+.sys-agent.planner .sys-num { background: var(--planner); }
+/* The handoff between each agent and the coordinator: a two-way line with a label. */
+.sys-link { margin: 0; min-height: 64px; display: grid; place-items: center; position: relative; max-width: none; }
+.sys-link::before { content: ""; position: absolute; top: 0; bottom: 0; left: 50%; border-left: 2px solid var(--line); }
+.sys-link span { position: relative; padding: 3px 10px; border-radius: 999px; background: var(--ground); border: 1px solid var(--line); font: 500 12.5px/1.3 var(--mono); color: var(--muted); text-align: center; }
+.sys-link.scout { grid-area: l1; } .sys-link.pricer { grid-area: l2; } .sys-link.planner { grid-area: l3; }
+.sys-hub { grid-area: hub; display: flex; gap: 16px 28px; align-items: center; justify-content: space-between; padding: 20px 22px; border-radius: 12px; background: var(--ink); color: var(--surface); }
+.sys-hub h3 { margin: 0 0 6px; font-size: 22px; color: inherit; }
+.sys-hub p { margin: 0; color: color-mix(in srgb, var(--surface) 82%, transparent); max-width: 78ch; }
+.sys-hub .btn { flex: none; }
+/* On a phone the cards stack, so each card names its own handoff instead of the lines. */
+.sys-handoff { display: none; font: 500 13px/1.4 var(--mono); color: var(--muted); }
+@media (max-width: 800px) {
+  .system { grid-template-columns: 1fr; gap: 14px; grid-template-areas: "a1" "a2" "a3" "hub"; }
+  .sys-link { display: none; }
+  .sys-handoff { display: block; }
+  .sys-hub { flex-direction: column; align-items: flex-start; }
+}
+
+/* Welcome: a note before you begin */
+.note-begin { margin: 26px 0 0; padding: 18px 22px; border-left: 5px solid var(--pricer); border-radius: 0 12px 12px 0; background: var(--pricer-soft); }
+.note-begin h2 { margin: 0 0 8px; font-size: 24px; }
+.note-begin p { margin: 8px 0 0; max-width: 72ch; }
+.start-cta { margin: 24px 0 8px; }
