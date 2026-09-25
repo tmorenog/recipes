@@ -157,7 +157,7 @@
   <h2 id="reference">Reference</h2>
   <details class="panel" id="how">
     <summary><strong>How it works</strong></summary>
-    <p>Recipes reach your Planner in two steps. The Scouts save recipes to the coordinator. Then the <a href="/pricer">Pricer</a>, an agent that runs on the coordinator, prices each one at Kroger. Your Planner estimates nutrition, chooses and explains; the coordinator adds up costs and checks the rules.</p>
+    <p>Recipes reach your Planner in two steps. The Scouts save recipes to the coordinator. Then the <a href="/pricer">Recipe Pricer</a>, a separate agent that’s already built, prices each one at Kroger and saves the price to the coordinator. Your Planner estimates nutrition, chooses and explains; the coordinator adds up costs and checks the rules.</p>
     <p class="small"><code>{{SITE}}/api/mcp?agent=planner</code> offers the Planner four tools. Every request carries <code>Authorization: Bearer &lt;class key&gt;</code> and <code>X-Group: {{GROUP}}</code>.</p>
     <div class="table-wrap"><table>
       <tr><th>Tool</th><th>Does</th></tr>

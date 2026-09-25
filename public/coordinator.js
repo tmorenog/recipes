@@ -219,7 +219,7 @@
   }
 
   // ---------------------------------------------------------------- exchanges
-  const AGENT_NAME = { scout: 'Recipe Scout', planner: 'Meal Planner', pricer: 'Pricer' };
+  const AGENT_NAME = { scout: 'Recipe Scout', planner: 'Meal Planner', pricer: 'Recipe Pricer' };
   const pretty = (v) => (v == null ? '(nothing)' : JSON.stringify(v, null, 2));
 
   function exchangeRow(x) {
@@ -229,7 +229,7 @@
     const toggle = el('button', { type: 'button', className: 'btn small-btn linklike-btn', textContent: open ? 'Hide' : 'Details', 'aria-expanded': String(open) });
     toggle.addEventListener('click', () => { if (open) openExchanges.delete(x.id); else openExchanges.add(x.id); render(); });
     const who = x.agent === 'pricer'
-      ? el('span', { className: 'xch-who' }, el('span', { className: 'agent-pill pricer', textContent: 'Pricer' }), el('span', { className: 'muted small', textContent: 'on the coordinator' }))
+      ? el('span', { className: 'xch-who' }, el('span', { className: 'agent-pill pricer', textContent: AGENT_NAME.pricer }))
       : el('span', { className: 'xch-who' }, x.agent ? el('span', { className: `agent-pill ${x.agent}`, textContent: AGENT_NAME[x.agent] }) : null, x.group_name ? chip(x.group_name) : null);
     const li = el('li', { className: `xch${x.ok ? '' : ' rejected'}${open ? ' open' : ''}` },
       el('div', { className: 'xch-head' },
