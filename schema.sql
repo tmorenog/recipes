@@ -285,3 +285,10 @@ create table if not exists exchanges (
 -- The exercise plans dinners: bring a Scout step 1 edited on the site in line.
 update prompt_overrides set text = replace(text, '"15-minute lunches"', '"20-minute dinners"'), updated_at = now()
 where agent = 'scout' and text like '%"15-minute lunches"%';
+
+-- The site is called Meal Squad, and the Recipe Pricer is an agent of its own:
+-- update that line in a Pricer prompt saved from the earlier default.
+update pricer_config set
+  value = replace(value, 'You are the Pricer, an agent that runs on the class''s recipe coordinator.', 'You are the Recipe Pricer, one of the agents in the class''s Meal Squad system.'),
+  updated_at = now()
+where key = 'prompt' and value like '%an agent that runs on the class''s recipe coordinator.%';

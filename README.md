@@ -1,6 +1,6 @@
-# Recipe Coordinator
+# Meal Squad
 
-The hub for a two-agent class exercise. Groups build two AI agents in Lovable: a **Recipe Scout** that finds recipes, and a **Meal Planner** that turns them into five balanced, affordable dinners priced at Kroger. This site hosts the instructions and the shared database that connects the agents.
+The site for Meal Squad, a class exercise in agent systems. Groups build AI agents in Lovable: a **Recipe Scout** that finds recipes, and a **Meal Planner** that turns them into five balanced, affordable dinners. A third agent, the **Recipe Pricer**, is already built and prices each recipe at Kroger. This site hosts the instructions and the coordinator: the shared database, reached over MCP, that connects the agents.
 
 **Pages**
 - **Welcome** (`/`): what the exercise is, how the pieces fit, and a check that the class key works.

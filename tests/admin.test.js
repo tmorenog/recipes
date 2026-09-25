@@ -131,7 +131,7 @@ for (const backend of BACKENDS) {
 
       const notBackup = await admin('POST', 'restore', { body: { hello: 'world' } });
       assert.equal(notBackup.status, 400);
-      assert.match(notBackup.body.errors.join(' '), /isn’t a Recipe Coordinator backup file/);
+      assert.match(notBackup.body.errors.join(' '), /isn’t a Meal Squad backup file/);
 
       const broken = JSON.parse(JSON.stringify(backup));
       broken.recipes[1].est_servings = 0;

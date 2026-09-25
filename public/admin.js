@@ -261,7 +261,7 @@
     if (!file) { $('restore-summary').textContent = ''; return; }
     try {
       const parsed = JSON.parse(await file.text());
-      if (parsed.format !== 'recipe-coordinator-backup') throw new Error('this isn’t a Recipe Coordinator backup file');
+      if (parsed.format !== 'recipe-coordinator-backup') throw new Error('this isn’t a Meal Squad backup file');
       backupFile = parsed;
       const c = { recipes: parsed.recipes?.length ?? 0, plans: parsed.plans?.length ?? 0, activity: parsed.activity?.length ?? 0 };
       $('restore-summary').textContent = `Backup from ${parsed.exported_at ? when(parsed.exported_at) : 'an unknown date'}: ${c.recipes} recipes, ${c.plans} meal plans, ${c.activity} activity entries. The database now has ${data.recipes.length} recipes and ${data.plans.length} meal plans.`;
