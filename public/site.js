@@ -64,11 +64,14 @@
   };
   fill();
 
-  // Sample prompts: the text files under /prompts/ (<div data-prompt="/prompts/scout/step-2.txt">),
+  // Sample prompts: the text files under /prompts/ (<div data-prompt="/prompts/scout/step-2.txt" data-step="12">),
   // unless the instructor edited a step on the page; edits come from /api/prompts.
   const boxes = [...document.querySelectorAll('[data-prompt]')].map((box) => {
-    const [, agent, step] = box.dataset.prompt.match(/\/prompts\/(\w+)\/step-(\d+)\.txt$/) || [];
-    return { box, agent, step: Number(step), file: box.dataset.prompt, slot: null, template: null, edited: false };
+    // The instructor's edits are stored per step number: data-step when the
+    // page gives one (files like step-3a.txt), otherwise the file's number.
+    const [, agent, step] = box.dataset.prompt.match(/\/prompts\/(\w+)\/step-(\w+)\.txt$/) || [];
+    const key = Number(box.dataset.step ?? step);
+    return { box, agent, step: Number.isInteger(key) ? key : null, file: box.dataset.prompt, slot: null, template: null, edited: false };
   });
   const setPrompt = (p, template) => {
     p.template = template;
@@ -86,7 +89,7 @@
     .catch(() => ({}))]));
   const loadPrompt = async (p) => {
     p.box.textContent = 'Loading the prompt…';
-    const edit = p.agent ? (await editsFor[p.agent])[p.step] : undefined;
+    const edit = p.agent && p.step ? (await editsFor[p.agent])[p.step] : undefined;
     if (edit) { p.edited = true; return setPrompt(p, edit.trim()); }
     p.edited = false;
     try {
@@ -105,7 +108,7 @@
   try { adminKey = sessionStorage.getItem('rc-admin-key') || ''; } catch { /* storage unavailable */ }
   if (adminKey && boxes.some((p) => p.agent)) {
     Promise.all([promptsLoaded, fetch('/api/admin/check', { headers: { authorization: `Bearer ${adminKey}` }, cache: 'no-store' })])
-      .then(([, res]) => { if (res.ok) boxes.filter((p) => p.agent).forEach(addEditor); })
+      .then(([, res]) => { if (res.ok) boxes.filter((p) => p.agent && p.step).forEach(addEditor); })
       .catch(() => {});
   }
 

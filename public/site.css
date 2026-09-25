@@ -748,3 +748,26 @@ details.trace > summary { cursor: pointer; padding: 8px 0; }
 .about h2 { margin: 26px 0 8px; }
 .about ul { padding-left: 22px; }
 .about li { margin: 4px 0; }
+
+/* Recipe Scout steps: goal, prompt, what you should see, things to try */
+.stages-intro { max-width: 72ch; }
+.stages-intro p { margin: 10px 0 0; }
+.action-def { padding: 10px 14px; border-left: 4px solid var(--accent); background: var(--scout-soft); border-radius: 0 8px 8px 0; }
+.step-label { margin: 0 0 4px; font: 700 12px/1.3 var(--body); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.step-goal { margin: 8px 0 14px; max-width: 72ch; }
+.step-goal p:last-child { margin: 0; }
+.step-after { display: grid; gap: 14px 28px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); margin-top: 14px; }
+.step-after ul { margin: 0; padding-left: 20px; }
+.step-after li { margin: 3px 0; }
+.step-after p { margin: 0; }
+.step-note { margin: 14px 0 0; padding: 10px 14px; border-radius: 8px; background: var(--surface); border: 1px solid var(--line); max-width: 72ch; }
+.step-group { padding-bottom: 4px; }
+.step-group > p { max-width: 72ch; }
+.step .callout { margin: 0 0 14px; }
+
+/* Step 3: Recipe Scout → Coordinator → Recipe Pricer */
+.handoff { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; margin: 6px 0 14px; }
+.handoff-node { padding: 8px 14px; border-radius: 10px; font: 700 16px/1.2 var(--display); background: var(--surface); border: 1px solid var(--line); border-top: 4px solid var(--accent); }
+.handoff-node.hub { background: var(--hub); color: var(--hub-ink); border-color: var(--hub); border-top-color: var(--hub-edge); }
+.handoff-node.pricer { border-top-color: var(--pricer); }
+.handoff-arrow { font: 700 20px/1 var(--body); color: var(--muted); }

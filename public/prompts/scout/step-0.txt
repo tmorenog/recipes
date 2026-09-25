@@ -1,0 +1,26 @@
+Create a web page for an application called “Recipe Scout.”
+
+The goal of Recipe Scout is to scout potential recipes that will be used to build a five-day dinner plan. It will eventually use AI to:
+
+- Take a dinner theme from the user
+- Search a real recipe database
+- Find five recipes that fit the theme
+- Examine each recipe before selecting it
+- Send the selected recipes to a coordinator so other agents can price them and use them in a meal plan
+
+For this first step, build only the interface. Do not add AI, a backend, a database or connections to other services yet.
+
+Include:
+
+- A welcoming title and a short explanation of what Recipe Scout will do
+- A box labeled “What kind of dinners are you looking for?”
+- These clickable examples:
+  - Cheap vegetarian weeknight dinners
+  - Comfort food for a rainy day
+  - Dinners ready in about 20 minutes
+- A “Scout recipes” button
+- An empty area where recipe suggestions will eventually appear
+
+Nothing needs to happen when the button is pressed yet.
+
+Make the page warm, inviting, responsive and accessible.

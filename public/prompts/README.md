@@ -4,7 +4,7 @@ Each file here is one step's sample prompt, shown on the site with a **Copy prom
 
 | File | Page |
 | --- | --- |
-| `scout/step-1.txt` … `scout/step-5.txt` | Recipe Scout (`/scout`), steps 1 to 5 |
+| `scout/step-0.txt`, `step-1.txt`, `step-2.txt`, `step-3a.txt`, `step-3b.txt` | Recipe Scout (`/scout`), steps 0, 1, 2, 3a and 3b |
 | `planner/step-1.txt` … `planner/step-5.txt` | Meal Planner (`/planner`), steps 1 to 5 |
 
 There are two ways to change a prompt:
@@ -19,4 +19,4 @@ Two placeholders are filled in on the page:
 - `{{SITE}}`: this site's address, e.g. `https://recipes-delta-red.vercel.app`
 - `{{GROUP}}`: the group name the student typed on the page (`YOUR-GROUP-NAME` until they do)
 
-A step's title, its one-line description and "You should see" live in `public/scout.html` and `public/planner.html`. If you change what a step does, update those too.
+A step's title, goal, "What you should see" and "Things to try" live in `public/scout.html` and `public/planner.html`. If you change what a step does, update those too.

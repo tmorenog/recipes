@@ -1,6 +1,0 @@
-Improve the page:
-- "Run Recipe Scout" is disabled until the run ends.
-- "What the agent is doing" shows tool names and inputs, results collapsed (click for JSON), coordinator rejections in red, a counter like "12 / 25 tool calls" and the time left.
-- "Saved recipes": link and credit TheMealDB as AGENTS.md asks.
-- Add a link "See it on the class database" to {{SITE}}/coordinator
-- Keep a list of past runs so I can reopen any earlier trace.

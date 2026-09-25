@@ -1,8 +1,25 @@
-Build a web app called "Recipe Scout" for a class exercise: an AI agent that finds real recipes for a theme.
+We are going to use TheMealDB API to find real recipes. Read and follow the implementation instructions at:
 
-Enable Lovable Cloud so the app has a backend.
+https://www.themealdb.com/AGENTS.md
 
-For now, build one page with:
-- a text box for the theme, with the examples "cheap weeknight vegetarian dinners", "comfort food for a rainy day" and "20-minute dinners" as clickable chips
-- a "Run Recipe Scout" button
-- two empty panels side by side: "What the agent is doing" and "Chosen recipes"
+Use TheMealDB’s free developer key “1.”
+
+Enable Lovable Cloud. All requests to TheMealDB must be made from the backend.
+
+Do not add an AI agent yet.
+
+Create backend actions that can:
+
+- Search for a recipe by its name
+- Find recipes containing a particular main ingredient
+- Find recipes in a category, such as Vegetarian or Seafood
+- Find recipes from a cuisine or country
+- Retrieve the complete details of one recipe
+
+Search and filter results should include the recipe’s ID, name and photo. Complete recipe details should also include its ingredients, measurements and instructions.
+
+If nothing is found, return an empty result instead of showing a technical error.
+
+Add a temporary area called “Recipe Tool Lab” below the existing Recipe Scout page. Let me choose one of the recipe actions, enter a search value and see the result. Explain that this is a testing area that may be removed later.
+
+Follow all attribution and linking requirements in TheMealDB’s instructions.
