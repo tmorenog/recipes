@@ -154,7 +154,7 @@ Every error response looks like `{ "errors": ["reason", "reason"] }`.
 ```sh
 curl -X POST https://<your-site>.vercel.app/api/recipes \
   -H "Authorization: Bearer <class key>" -H "X-Group: team-3" -H "Content-Type: application/json" \
-  -d '{"theme":"15-minute lunches","meal_id":"52771","name":"Halloumi wraps","ingredients":[{"name":"halloumi","amount":1,"unit":"block","raw":"1 block halloumi"}],"instructions":"Grill the halloumi, slice it and wrap it with salad.","est_minutes":15,"est_servings":2,"why_chosen":"Ready in 15 minutes."}'
+  -d '{"theme":"20-minute dinners","meal_id":"52771","name":"Halloumi wraps","ingredients":[{"name":"halloumi","amount":1,"unit":"block","raw":"1 block halloumi"}],"instructions":"Grill the halloumi, slice it and wrap it with salad.","est_minutes":15,"est_servings":2,"why_chosen":"Ready in 15 minutes."}'
 ```
 
 ### Meal plans

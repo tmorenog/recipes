@@ -281,3 +281,7 @@ create table if not exists exchanges (
   summary          text,
   ms               int
 );
+
+-- The exercise plans dinners: bring a Scout step 1 edited on the site in line.
+update prompt_overrides set text = replace(text, '"15-minute lunches"', '"20-minute dinners"'), updated_at = now()
+where agent = 'scout' and text like '%"15-minute lunches"%';

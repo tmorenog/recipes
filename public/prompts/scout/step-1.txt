@@ -3,6 +3,6 @@ Build a web app called "Recipe Scout" for a class exercise: an AI agent that fin
 Enable Lovable Cloud so the app has a backend.
 
 For now, build one page with:
-- a text box for the theme, with the examples "cheap weeknight vegetarian dinners", "comfort food for a rainy day" and "15-minute lunches" as clickable chips
+- a text box for the theme, with the examples "cheap weeknight vegetarian dinners", "comfort food for a rainy day" and "20-minute dinners" as clickable chips
 - a "Run Recipe Scout" button
 - two empty panels side by side: "What the agent is doing" and "Chosen recipes"
