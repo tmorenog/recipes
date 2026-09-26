@@ -721,6 +721,7 @@ section.step.collapsed { padding-block: 10px; }
 @media (prefers-reduced-motion: reduce) { .faq-item summary::before { transition: none; } }
 
 /* Backup agents page */
+.backup-forms { grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); }
 .backup-forms form { display: grid; gap: 10px; align-content: start; }
 .backup-forms h2 { font-size: 20px; display: flex; align-items: center; gap: 8px; }
 .backup-forms label { display: grid; gap: 4px; font-size: 14px; font-weight: 600; }
@@ -739,3 +740,8 @@ section.step.collapsed { padding-block: 10px; }
 .choice-reason { margin: 0; padding: 12px 16px; border-left: 4px solid var(--shopper); background: var(--shopper-soft); border-radius: 0 10px 10px 0; font-style: italic; }
 .cart-table td, .cart-table th { vertical-align: top; }
 .cart-table .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.plan-status { margin-right: 4px; }
+.plan-status.active { background: var(--shopper-soft); color: var(--shopper); }
+.plan-status.historical { background: var(--surface-2); color: var(--muted); }
+.history-item { margin: 0 0 10px; }
+.history-item > summary { cursor: pointer; padding: 8px 0; font-weight: 600; }

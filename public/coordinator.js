@@ -7,7 +7,7 @@
   const REFRESH_MS = 15000;
   const LIVE_MS = 4000; // the exchange log, while it's showing
   const $ = (id) => document.getElementById(id);
-  const VIEWS = ['exchanges', 'recipes', 'plans'];
+  const VIEWS = ['exchanges', 'recipes', 'plans', 'shopping'];
 
   const params = new URLSearchParams(location.search);
   const state = {
@@ -21,7 +21,7 @@
     result: params.get('result') || '',
   };
   const openRows = new Set(); // recipes whose details are showing
-  const data = { recipes: [], plans: [], exchanges: [] };
+  const data = { recipes: [], plans: [], exchanges: [], shopping: { choice: null, history: [] } };
   const openExchanges = new Set();
   let lastOk = null;
 
@@ -287,6 +287,18 @@
   }
 
   // ---------------------------------------------------------------- render
+  // ---------------------------------------------------------------- shopping
+  // The active shopping plan and the earlier choices (drawn by shopping.js).
+  function renderShopping() {
+    const { choice, history } = data.shopping;
+    keepState($('shopping'), () => $('shopping').replaceChildren(...(choice ? [window.shoppingPlan(choice)] : [])));
+    $('shopping-history-title').hidden = !history.length;
+    keepState($('shopping-history'), () => $('shopping-history').replaceChildren(...history.map((c) => el('details', { className: 'history-item', 'data-key': c.id },
+      el('summary', {}, `${new Date(c.created_at).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}: ${c.plan.group_name}’s plan, cart ${money(c.total_usd)}`),
+      window.shoppingPlan(c)))));
+    return [choice ? 1 : 0, 'No shopping plan yet. The instructor runs the Shopper Agent once the Planner Agents have saved their plans.'];
+  }
+
   function render() {
     for (const v of VIEWS) {
       $(`tab-${v}`).setAttribute('aria-selected', String(v === state.view));
@@ -295,6 +307,7 @@
     for (const f of document.querySelectorAll('.filters [data-for]')) f.hidden = f.dataset.for !== state.view;
     $('n-recipes').textContent = data.recipes.length || '';
     $('n-plans').textContent = data.plans.length || '';
+    $('n-shopping').textContent = data.shopping.choice ? 'active' : '';
     $('n-exchanges').textContent = 'live';
 
     const groups = [...new Set([
@@ -305,7 +318,7 @@
     fillSelect($('f-group'), groups, state.group, 'All groups');
     fillSelect($('f-theme'), [...new Set(data.recipes.flatMap((r) => (r.picks?.length ? r.picks.map((p) => p.theme) : [r.theme])))].sort(), state.theme, 'All themes');
 
-    const [count, emptyText] = state.view === 'recipes' ? renderRecipes() : state.view === 'plans' ? renderPlans() : renderExchanges();
+    const [count, emptyText] = state.view === 'recipes' ? renderRecipes() : state.view === 'plans' ? renderPlans() : state.view === 'shopping' ? renderShopping() : renderExchanges();
     $('empty').hidden = count > 0 || !$('notice').hidden;
     $('empty').textContent = emptyText;
   }
@@ -335,14 +348,16 @@
 
   async function load() {
     try {
-      const [r, p, x] = await Promise.all([
+      const [r, p, x, s] = await Promise.all([
         getJson('/api/recipes?status=all&limit=500'),
         getJson('/api/meal-plans?limit=200'),
         getJson('/api/exchanges?limit=300'),
+        getJson('/api/meal-plans?choice=latest'),
       ]);
       data.recipes = r.recipes;
       data.plans = p.plans;
       data.exchanges = x.exchanges;
+      data.shopping = { choice: s.choice, history: s.history || [] };
       lastOk = new Date();
       $('notice').hidden = true;
       $('stamp').className = '';

@@ -14,7 +14,7 @@
   };
   const time = (iso) => new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   const when = (iso) => new Date(iso).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
-  const NAMES = { scout: 'Scout Agent', planner: 'Planner Agent' };
+  const NAMES = { scout: 'Scout Agent', planner: 'Planner Agent', shopper: 'Shopper Agent' };
 
   async function api(method, { id, body } = {}) {
     const res = await fetch(`/api/admin/agent-runs${id ? `?id=${encodeURIComponent(id)}` : ''}`, {
@@ -45,6 +45,7 @@
     $('signin').hidden = true;
     $('backup').hidden = false;
     showOverview(res.body);
+    refreshAgents();
   }
   $('signin-form').addEventListener('submit', (e) => {
     e.preventDefault();
@@ -83,12 +84,12 @@
     $('feed').replaceChildren(...[...run.steps].reverse().map((s) => el('li', { className: `feed-${s.kind === 'tool_call' || s.kind === 'tool_result' ? 'tool' : s.kind}` },
       el('span', { className: 'feed-time', textContent: time(s.at) }),
       el('span', { className: 'feed-what', textContent: describe(s) }))));
-    const input = run.agent === 'scout' ? `theme “${run.input.theme}”` : `budget $${run.input.budget_usd} a dinner`;
+    const input = run.agent === 'scout' ? `theme “${run.input.theme}”` : run.agent === 'planner' ? `budget $${run.input.budget_usd} a dinner` : 'choosing the class’s plan';
     $('outcome').replaceChildren(...[
       el('strong', { textContent: running ? `${NAMES[run.agent]} running…` : run.outcome || run.status }),
       el('span', { className: 'small muted', textContent: ` · ${run.group_name} · ${input}` }),
       run.summary ? el('span', { className: 'outcome-summary', textContent: run.summary }) : null,
-      !running ? el('a', { href: `/coordinator?group=${encodeURIComponent(run.group_name)}`, className: 'small', textContent: 'See it on the Coordinator page' }) : null,
+      !running ? el('a', { href: run.agent === 'shopper' ? '/coordinator?view=shopping' : `/coordinator?group=${encodeURIComponent(run.group_name)}`, className: 'small', textContent: 'See it on the Coordinator page' }) : null,
     ].filter(Boolean));
     $('outcome').className = `outcome ${running ? '' : run.status === 'done' ? 'good' : 'bad'}`;
   }
@@ -98,7 +99,7 @@
     if (!res.ok) { $('outcome').textContent = res.error; return; }
     render(res.body);
     if (res.body.status === 'running') timer = setTimeout(() => follow(id), 2000);
-    else refreshOverview();
+    else { refreshOverview(); refreshAgents(); }
   }
 
   async function start(form, body) {
@@ -121,6 +122,57 @@
     const f = e.target.elements;
     start(e.target, { agent: 'planner', group: f.group.value, budget_usd: Number(f.budget_usd.value), requirements: f.requirements.value, preferences: f.preferences.value });
   });
+
+  // ---------------------------------------------------------------- Recipe Pricer and Shopper
+  // A button with data-confirm needs a second click within 4 seconds.
+  function confirmed(btn) {
+    if (!btn.dataset.confirm) return true;
+    if (btn.dataset.armed) { delete btn.dataset.armed; btn.textContent = btn.dataset.label; return true; }
+    btn.dataset.label = btn.textContent;
+    btn.dataset.armed = '1';
+    btn.textContent = btn.dataset.confirm;
+    setTimeout(() => { if (btn.dataset.armed) { delete btn.dataset.armed; btn.textContent = btn.dataset.label; } }, 4000);
+    return false;
+  }
+  const PRICE_WORDS = { priced: 'priced', pricing: 'being priced', pending: 'waiting', unpriced: 'not priced', failed: 'couldn’t be priced' };
+  async function refreshAgents() {
+    try {
+      const [p, s] = await Promise.all([
+        fetch('/api/pricer', { cache: 'no-store' }).then((r) => r.json()),
+        fetch('/api/meal-plans?choice=latest', { cache: 'no-store' }).then((r) => r.json()),
+      ]);
+      const c = p.counts || {};
+      $('pricer-counts').textContent = `Recipes: ${Object.entries(PRICE_WORDS).map(([k, w]) => `${c[k] ?? 0} ${w}`).join(' · ')}.`;
+      $('shopper-active').replaceChildren(...(s.choice
+        ? [`Active shopping plan: ${s.choice.plan.group_name}’s plan, cart $${Number(s.choice.total_usd).toFixed(2)}${s.history?.length ? ` (${s.history.length} earlier)` : ''}. `, el('a', { href: '/coordinator?view=shopping', textContent: 'See it' })]
+        : ['No shopping plan yet.']));
+    } catch { /* shown again on the next refresh */ }
+  }
+  async function pricer(action, body = {}) {
+    const res = await fetch(`/api/pricer?action=${action}`, {
+      method: 'POST', headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' }, body: JSON.stringify(body), cache: 'no-store',
+    });
+    const out = await res.json().catch(() => ({}));
+    if (res.status === 401) signOut('Your admin key was rejected. Sign in again.');
+    return { ok: res.ok, body: out, error: (out.errors || [`HTTP ${res.status}`])[0] };
+  }
+  const say = (text) => { $('pricer-msg').textContent = text; setTimeout(refreshAgents, 1200); };
+  $('price-unpriced').addEventListener('click', async () => {
+    const r = await pricer('price-unpriced');
+    say(r.ok ? (r.body.queued ? `${r.body.queued} recipe${r.body.queued === 1 ? ' is' : 's are'} queued to be priced.` : 'Every recipe already has a price or is in the queue.') : r.error);
+  });
+  $('reprice-all').addEventListener('click', async (e) => {
+    if (!confirmed(e.currentTarget)) return;
+    const r = await pricer('reprice-all', { confirm: 'REPRICE' });
+    say(r.ok ? `${r.body.queued} recipes queued to be priced again.` : r.error);
+  });
+  $('clear-all').addEventListener('click', async (e) => {
+    if (!confirmed(e.currentTarget)) return;
+    const r = await pricer('clear-all', { confirm: 'CLEAR' });
+    say(r.ok ? `Prices removed from ${r.body.cleared} recipes. They stay unpriced until you price them.` : r.error);
+  });
+  $('run-shopper').addEventListener('click', (e) => start(e.currentTarget.closest('section'), { agent: 'shopper' }));
+  setInterval(() => { if (!$('backup').hidden && !document.hidden) refreshAgents(); }, 10000);
 
   if (key) signIn(key);
 })();

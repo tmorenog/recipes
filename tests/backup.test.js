@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import * as adminApi from '../api/admin.js';
 import { setBackupForTests } from '../lib/backup-agents.js';
 import { getStore } from '../lib/store/index.js';
+import { saveChoice } from '../lib/shopper.js';
 import { BACKENDS, as, recipe, markPriced, closeDatabase } from './helpers.js';
 import * as rest from '../api/recipes.js';
 import * as plansApi from '../api/meal-plans.js';
@@ -176,6 +177,15 @@ for (const backend of BACKENDS) {
       assert.equal(view.choice.cart.estimated_lines, 1);
       assert.equal(view.choice.cart.people, 50);
       assert.equal(view.run.outcome, 'Plan chosen');
+      assert.equal(view.choice.status, 'active');
+      assert.deepEqual(view.history, []);
+
+      // Running the Shopper again: the new choice is active, the old one is history.
+      await saveChoice({ plan_id: planId, reason: 'Chosen again after the class discussed it.' });
+      const again = await (await plansApi.GET(new Request('http://x/api/meal-plans?choice=latest'))).json();
+      assert.equal(again.choice.reason, 'Chosen again after the class discussed it.');
+      assert.deepEqual(again.history.map((c) => [c.reason, c.status]), [[reason, 'historical']]);
+      assert.equal(again.history[0].plan.group_name, 'team-9');
     });
 
     test('a model error ends the run as failed, with the reason', async () => {

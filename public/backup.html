@@ -31,7 +31,7 @@
 <main class="wrap">
   <p class="eyebrow">For the instructor</p>
   <h1>Backup agents</h1>
-  <p class="lede" style="margin-top:10px">Your own Scout Agent and Planner Agent, run from this site if a group’s Lovable app isn’t working. They work like the students’ agents: they discover the coordinator’s tools over MCP, read its contract, and save recipes and plans under the group you choose, so everything shows up on the <a href="/coordinator">Coordinator page</a>.</p>
+  <p class="lede" style="margin-top:10px">Run any of the four agents from here. Your own Scout Agent and Planner Agent are a backup if a group’s Lovable app isn’t working: they work like the students’ agents, over MCP, under the group you choose. The Recipe Pricer and the Shopper Agent run on the site. Everything shows up on the <a href="/coordinator">Coordinator page</a>.</p>
 
   <section class="panel narrow" id="signin" style="margin-top:28px">
     <form class="keycheck" id="signin-form" autocomplete="off">
@@ -49,7 +49,7 @@
     <div class="grid-2 backup-forms">
       <form class="panel" id="scout-form" autocomplete="off">
         <h2 style="margin-top:0"><span class="agent-tag scout">Agent 1</span> Scout Agent</h2>
-        <p class="small muted">Finds five real recipes on TheMealDB for a theme and saves them to the coordinator. The Pricer Agent then prices them.</p>
+        <p class="small muted">Finds four real recipes on TheMealDB for a theme and saves them to the coordinator. The Pricer Agent then prices them.</p>
         <label>Group <input name="group" required maxlength="40" value="instructor" spellcheck="false"></label>
         <label>Dinner theme <input name="theme" required maxlength="200" value="Cheap vegetarian weeknight dinners"></label>
         <button class="btn primary" type="submit">Run the Scout Agent</button>
@@ -63,6 +63,23 @@
         <label>Preferences <input name="preferences" maxlength="500" placeholder="e.g. we like spicy food"></label>
         <button class="btn primary" type="submit">Run the Planner Agent</button>
       </form>
+      <section class="panel" id="pricer-panel" aria-labelledby="pricer-title">
+        <h2 id="pricer-title" style="margin-top:0"><span class="agent-tag pricer">Agent 2</span> Recipe Pricer</h2>
+        <p class="small muted">Prices every new recipe by itself. Use these when you need to step in; watch it work on the <a href="/pricer">Recipe Pricer page</a>.</p>
+        <p class="small" id="pricer-counts" aria-live="polite"></p>
+        <div class="row-actions">
+          <button class="btn primary" type="button" id="price-unpriced">Price unpriced recipes</button>
+          <button class="btn" type="button" id="reprice-all" data-confirm="Click again: every recipe is priced again">Reprice all</button>
+          <button class="btn danger" type="button" id="clear-all" data-confirm="Click again to remove every price">Remove all prices</button>
+        </div>
+        <p class="small" id="pricer-msg" aria-live="polite"></p>
+      </section>
+      <section class="panel" id="shopper-panel" aria-labelledby="shopper-title">
+        <h2 id="shopper-title" style="margin-top:0"><span class="agent-tag shopper">Agent 4</span> Shopper Agent</h2>
+        <p class="small muted">Chooses the class’s best meal plan from the saved ones and has the coordinator build its Kroger shopping list. The new choice becomes the active shopping plan; the previous one is kept as an earlier choice.</p>
+        <p class="small" id="shopper-active" aria-live="polite"></p>
+        <div class="row-actions"><button class="btn primary" type="button" id="run-shopper">Run the Shopper Agent</button></div>
+      </section>
     </div>
 
     <h2 id="run">The run</h2>

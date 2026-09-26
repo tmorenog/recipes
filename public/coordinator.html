@@ -30,7 +30,7 @@
 
 <main class="wrap">
   <h1>The coordinator</h1>
-  <p class="lede" style="margin-top:10px">Watch the agents talk to the coordinator as it happens, and see everything they have saved: the recipes and the meal plans.</p>
+  <p class="lede" style="margin-top:10px">Watch the agents talk to the coordinator as it happens, and see everything they have saved: the recipes, the meal plans, and the shopping plan the Shopper Agent chose.</p>
 
   <section class="notice" id="notice" hidden></section>
 
@@ -38,6 +38,7 @@
     <button role="tab" id="tab-exchanges" aria-controls="view-exchanges" aria-selected="true" data-view="exchanges">Exchanges<span class="count live-dot" id="n-exchanges"></span></button>
     <button role="tab" id="tab-recipes" aria-controls="view-recipes" aria-selected="false" data-view="recipes">Recipes<span class="count" id="n-recipes"></span></button>
     <button role="tab" id="tab-plans" aria-controls="view-plans" aria-selected="false" data-view="plans">Meal plans<span class="count" id="n-plans"></span></button>
+    <button role="tab" id="tab-shopping" aria-controls="view-shopping" aria-selected="false" data-view="shopping">Shopping<span class="count" id="n-shopping"></span></button>
   </div>
 
   <div class="filters">
@@ -96,6 +97,12 @@
   <section id="view-plans" role="tabpanel" aria-labelledby="tab-plans" hidden>
     <div class="plans" id="plans"></div>
   </section>
+  <section id="view-shopping" role="tabpanel" aria-labelledby="tab-shopping" hidden>
+    <p class="small muted xch-intro">The meal plan the <a href="/shopper">Shopper Agent</a> chose for the class, and its shopping list: the Kroger cart the coordinator built from the Pricer Agent’s carts. There is one active shopping plan; each new Shopper run makes the previous one an earlier choice, kept below.</p>
+    <div id="shopping"></div>
+    <h2 id="shopping-history-title" hidden>Earlier choices</h2>
+    <div class="plans" id="shopping-history"></div>
+  </section>
   <p class="empty" id="empty" hidden></p>
 </main>
 
@@ -106,6 +113,7 @@
   </div>
 </footer>
 <script src="/site.js"></script>
+<script src="/shopping.js"></script>
 <script src="/coordinator.js"></script>
 </body>
 </html>
