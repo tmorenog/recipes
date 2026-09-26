@@ -47,7 +47,7 @@ test('finds stores and prices products at a store', async () => {
   const res = await searchProducts({ term: 'yellow onions', store_id: '01400943' }, fetchImpl);
   assert.deepEqual(res.products[0], {
     product_id: '0001111060903', description: 'Yellow Onions', brand: 'Kroger', size: '3 lb',
-    price_usd: 3.49, promo_price_usd: 2.99, image_url: 'https://img/onion.jpg',
+    price_usd: 3.49, promo_price_usd: 2.99, stock: null, image_url: 'https://img/onion.jpg',
   });
   assert.equal(res.products[1].promo_price_usd, null, 'a promo of 0 means no promotion');
   assert.equal(res.products[2].price_usd, null);

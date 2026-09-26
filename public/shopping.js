@@ -37,6 +37,8 @@
     const note = (text) => el('span', { className: 'small muted line-note', textContent: text });
     return [
       l.estimated ? pill('estimated', 'Estimated', 'Not from Kroger: the Pricer Agent estimated this price') : null,
+      l.stock_check ? pill('check-stock', 'Check stock', `${l.stock_check}. Kroger’s stock levels are rough and can be unreliable.`) : null,
+      l.stock_check ? note(`${l.stock_check[0].toUpperCase()}${l.stock_check.slice(1)}.`) : null,
       l.availability === 'unavailable' ? pill('unavailable', 'Not carried', `At Kroger today: ${l.unavailable_reason || 'not carried'}`) : null,
       l.instead_of?.length ? pill('replaced', combined ? 'Combined' : 'Replacement', combined ? 'One product for several dinners' : 'Not the Pricer’s product') : null,
       l.instead_of?.length ? note(`Instead of ${l.instead_of.join(', ')}.${l.note ? ` ${l.note[0].toUpperCase()}${l.note.slice(1)}` : ''}`) : null,

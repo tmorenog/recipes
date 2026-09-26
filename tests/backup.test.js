@@ -228,6 +228,11 @@ for (const backend of BACKENDS) {
       await shopper.run('start_cart', { plan_id: planId });
       await shopper.run('buy_as_priced', {});
       assert.equal(shopper.cart().lines.find((l) => l.product_id === 'rice-1').packages, 5, 'for 100 people: five bags');
+      const big = createShopper({ people: 400, coordCall });
+      await big.run('start_cart', { plan_id: planId });
+      const bigRice = (await big.run('buy_as_priced', {})).check_stock.find((x) => x.product_id === 'rice-1');
+      assert.deepEqual([bigRice.packages, bigRice.why], [20, '20 packages is a lot for one shelf']);
+      assert.equal(big.cart().lines.find((l) => l.product_id === 'rice-1').stock_check, '20 packages is a lot for one shelf');
       assert.ok((await saveChoice({ plan_id: planId, reason: 'Chosen again for a bigger class.', cart: shopper.cart() })).ok);
       const again = await (await plansApi.GET(new Request('http://x/api/meal-plans?choice=latest'))).json();
       assert.deepEqual([again.choice.people, again.history.map((c) => c.status)], [100, ['historical']]);
@@ -280,7 +285,10 @@ for (const backend of BACKENDS) {
         assert.deepEqual(priced.not_carried_today.map((x) => [x.product_id, x.needs]), [['p-0', ['mon-2']], ['p-2', ['wed-2']]]);
         assert.deepEqual(priced.still_needed, ['mon-2', 'wed-2']);
         const rice = priced.lines.find((l) => l.product_id === 'rice-1');
-        assert.deepEqual([rice.price_usd, rice.priced_at_usd, rice.packages], [3.5, 3, 3], 'today’s price; stock levels ignored');
+        assert.deepEqual([rice.price_usd, rice.priced_at_usd, rice.packages], [3.5, 3, 3], 'today’s price');
+        assert.equal(rice.check_stock, 'Kroger says it’s out of stock at the moment', 'a stock level is flagged, not trusted');
+        assert.deepEqual(priced.check_stock.map((x) => x.product_id), ['rice-1']);
+        assert.match(priced.check_stock_hint, /larger size/);
 
         // One bag of onions for both dinners: 0.6 lb + 0.5 lb is one 3 lb bag.
         const onions = await shopper.run('buy', { items: [{ product_id: 'onion-3lb', needs: ['mon-3', 'tue-3'], note: 'one bag for both' }] });
@@ -304,7 +312,8 @@ for (const backend of BACKENDS) {
         assert.equal(l('rice-1'), undefined);
         assert.deepEqual([l('saffron-1').packages, l('saffron-1').estimated, l('saffron-1').instead_of], [2, undefined, ['saffron (1 g)']]);
         assert.deepEqual([l('alt-2').packages, l('alt-0').instead_of], [2, ['Item 0 (1 ea)']]);
-        assert.match(cart.kroger_check, /Kroger Hyde Park today; 1 price changed since pricing\. 2 products are shared by several dinners and bought once\. Double-check stock quantities/);
+        assert.equal(l('rice-5lb').stock_check, undefined, 'the big bag: one package, no stock level given');
+        assert.match(cart.kroger_check, /Kroger Hyde Park today; 1 price changed since pricing\. 2 products are shared by several dinners and bought once\. Kroger’s stock levels are rough and can be unreliable: double-check quantities/);
 
         const saved = await saveChoice({ plan_id: planId, reason: 'The only plan, with one bag of onions and replacements.', cart });
         assert.ok(saved.ok, JSON.stringify(saved.errors));
