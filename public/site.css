@@ -119,6 +119,10 @@ p, li { max-width: 70ch; }
 .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 20px 22px; }
 .callout { border-left: 4px solid var(--accent); background: var(--surface); padding: 14px 18px; border-radius: 0 10px 10px 0; margin: 18px 0; }
 .callout.warn { border-color: var(--new-ink); background: var(--new-bg); }
+.callout.lovable-how { max-width: 80ch; border-color: var(--accent); background: var(--scout-soft); }
+body:has(.agent-tag.planner) .callout.lovable-how { border-color: var(--planner); background: var(--planner-soft); }
+.lovable-how-title { font: 700 17px/1.3 var(--display); margin-bottom: 6px !important; }
+.lovable-how ol { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
 .callout p { margin: 0; }
 .callout p + p { margin-top: 8px; }
 
