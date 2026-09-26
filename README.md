@@ -71,7 +71,7 @@ The **Admin** page (`/admin`, linked in the footer) opens with `ADMIN_KEY`. From
 - **Restore** a backup file. It replaces everything, in one step; the file is checked first, and if anything in it is wrong nothing changes.
 - **Edit** a recipe (same rules as saving one), set it back to `new` or mark it processed, or **delete** it.
 - **Delete** meal plans, **clear** the activity log, or **delete everything** to start over between classes.
-- **Run a backup agent** (`/backup`): your own Scout Agent or Planner Agent, run from the site if a group's Lovable app isn't working. They use the coordinator over MCP like any student agent, under a group name you choose, with `ANTHROPIC_API_KEY` (model: `BACKUP_MODEL`, default `claude-opus-5`).
+- **Run a backup agent** (`/backup`, API `/api/admin/agent-runs`): your own Scout Agent or Planner Agent, run from the site if a group's Lovable app isn't working. They use the coordinator over MCP like any student agent, under a group name you choose, with `ANTHROPIC_API_KEY` (model: `BACKUP_MODEL`, default `claude-opus-5`).
 
 Neon also keeps its own history: from Vercel's Storage tab, "Open in Neon" lets you restore the database to an earlier point in time.
 

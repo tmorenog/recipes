@@ -184,3 +184,9 @@ test('keys never reach stored messages, and a pasted command is not accepted as 
     else process.env.ANTHROPIC_API_KEY = saved;
   }
 });
+
+test('the site stays within Vercel’s 12-function limit (each file in api/ is one function)', async () => {
+  const { readdir } = await import('node:fs/promises');
+  const functions = (await readdir(new URL('../api/', import.meta.url))).filter((f) => f.endsWith('.js'));
+  assert.ok(functions.length <= 12, `api/ has ${functions.length} functions: ${functions.join(', ')}`);
+});

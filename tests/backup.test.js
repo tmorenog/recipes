@@ -2,7 +2,7 @@
 // these check the harness: MCP discovery, the app's own checks, and the log.
 import { describe, test, beforeEach, after } from 'node:test';
 import assert from 'node:assert/strict';
-import * as backupApi from '../api/backup.js';
+import * as adminApi from '../api/admin.js';
 import { setBackupForTests } from '../lib/backup-agents.js';
 import { getStore } from '../lib/store/index.js';
 import { BACKENDS, as, recipe, markPriced, closeDatabase } from './helpers.js';
@@ -11,7 +11,7 @@ import * as rest from '../api/recipes.js';
 const ADMIN_KEY = 'admin-key-for-tests';
 process.env.ADMIN_KEY = ADMIN_KEY;
 
-const api = (method, { id, body, key = ADMIN_KEY } = {}) => backupApi[method](new Request(`http://x/api/backup${id ? `?id=${id}` : ''}`, {
+const api = (method, { id, body, key = ADMIN_KEY } = {}) => adminApi[method](new Request(`http://x/api/admin?action=agent-runs${id ? `&id=${id}` : ''}`, {
   method,
   headers: { ...(key && { authorization: `Bearer ${key}` }), 'content-type': 'application/json' },
   body: body === undefined ? undefined : JSON.stringify(body),

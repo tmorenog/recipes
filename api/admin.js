@@ -15,12 +15,17 @@
 //   POST /api/admin/delete-plan?id=…
 //   POST /api/admin/clear-activity
 //   POST /api/admin/clear-exchanges
+//   GET  /api/admin/agent-runs[?id=…]          the backup agents: the latest runs, or one run with every step
+//   POST /api/admin/agent-runs                 start one: {"agent":"scout","group":…,"theme":…}
+//                                              or {"agent":"planner","group":…,"budget_usd":…,"requirements":…,"preferences":…}
+// (Vercel's plan allows 12 functions, so the backup agents live here rather than in their own.)
 //
 // vercel.json rewrites /api/admin/{action} to this function with ?action=.
 import * as admin from '../lib/admin.js';
 import { json, guarded } from '../lib/http.js';
 import { checkKroger } from '../lib/kroger.js';
 import { getSettings, saveSettings, DEFAULTS } from '../lib/settings.js';
+import { startBackupRun, getBackupRun, listBackupRuns, backupProblem, backupModel, LIMITS as AGENT_LIMITS } from '../lib/backup-agents.js';
 
 function route(request) {
   const url = new URL(request.url);
@@ -42,6 +47,12 @@ export const GET = guarded(async (request) => {
   if (action === 'kroger-check') return json(200, await checkKroger());
   if (action === 'sample') return json(200, admin.sampleSummary());
   if (action === 'settings') return json(200, { settings: await getSettings(), defaults: DEFAULTS });
+  if (action === 'agent-runs') {
+    const { id } = route(request);
+    if (!id) return json(200, { problem: backupProblem(), model: backupModel(), limits: AGENT_LIMITS, runs: await listBackupRuns() });
+    const run = await getBackupRun(id);
+    return run ? json(200, run) : json(404, { errors: [`no backup run has the id ${id}`] });
+  }
   if (action === 'backup') {
     const data = await admin.backup();
     const stamp = data.exported_at.slice(0, 16).replace(/[:T]/g, '-');
@@ -79,6 +90,12 @@ export const POST = guarded(async (request) => {
     case 'delete-plan': return reply(await admin.deletePlan(id));
     case 'clear-activity': return reply(await admin.clearActivity());
     case 'clear-exchanges': return reply(await admin.clearExchanges());
+    case 'agent-runs': {
+      const input = await body();
+      if (input === undefined) return json(400, { errors: ['send the run as JSON'] });
+      const res = await startBackupRun(input);
+      return res.ok ? json(202, res) : json(res.status, { errors: res.errors });
+    }
     default: return json(404, { errors: [`unknown admin action "${action}"`] });
   }
 });

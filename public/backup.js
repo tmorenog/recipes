@@ -1,5 +1,5 @@
 // Backup agents page: sign in with ADMIN_KEY, start a Scout or Planner Agent
-// run, and follow it step by step. Runs happen on the server (/api/backup).
+// run, and follow it step by step. Runs happen on the server (/api/admin/agent-runs).
 (() => {
   'use strict';
   const $ = (id) => document.getElementById(id);
@@ -17,7 +17,7 @@
   const NAMES = { scout: 'Scout Agent', planner: 'Planner Agent' };
 
   async function api(method, { id, body } = {}) {
-    const res = await fetch(`/api/backup${id ? `?id=${encodeURIComponent(id)}` : ''}`, {
+    const res = await fetch(`/api/admin/agent-runs${id ? `?id=${encodeURIComponent(id)}` : ''}`, {
       method,
       headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' },
       body: body === undefined ? undefined : JSON.stringify(body),
