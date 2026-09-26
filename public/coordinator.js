@@ -33,6 +33,20 @@
     node.append(...children.filter((c) => c != null && c !== false));
     return node;
   };
+  // A refresh rebuilds a list: keep the panels the viewer opened and the
+  // button they were on. Rows are told apart by data-key.
+  function keepState(container, render) {
+    const where = (n) => {
+      const row = n.closest('[data-key]');
+      return `${row?.dataset.key ?? ''}|${n.tagName}|${[...(row || container).querySelectorAll(n.tagName)].indexOf(n)}`;
+    };
+    const open = new Set([...container.querySelectorAll('details[open]')].map(where));
+    const active = container.contains(document.activeElement) ? where(document.activeElement) : null;
+    render();
+    for (const d of container.querySelectorAll('details')) if (open.has(where(d))) d.open = true;
+    if (active) [...container.querySelectorAll('button, a, summary, input')].find((n) => where(n) === active)?.focus({ preventScroll: true });
+  }
+
   const hue = (s) => [...String(s)].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 360, 7);
   const chip = (group) => {
     const c = el('span', { className: 'chip', textContent: group });
@@ -109,7 +123,7 @@
     const toggle = el('button', { type: 'button', className: 'btn small-btn linklike-btn', textContent: open ? 'Hide' : 'Details', 'aria-expanded': String(open) });
     toggle.addEventListener('click', () => { if (open) openRows.delete(r.id); else openRows.add(r.id); render(); });
 
-    const row = el('div', { className: `db-row${r.status === 'processed' ? ' is-processed' : ''}${open ? ' open' : ''}`, role: 'row' },
+    const row = el('div', { className: `db-row${r.status === 'processed' ? ' is-processed' : ''}${open ? ' open' : ''}`, role: 'row', 'data-key': r.id },
       thumb,
       el('div', { className: 'db-name', role: 'cell' }, el('strong', {}, link), el('small', { className: 'muted', textContent: meta })),
       el('div', { className: 'db-picks', role: 'cell' },
@@ -155,7 +169,7 @@
         && (!state.status || r.status === state.status)
         && (!state.price || (state.price === 'priced' ? priced(r) : state.price === 'estimated' ? priced(r) && r.pricing.estimated : !priced(r))),
     ).sort(SORTS[state.sort] || SORTS.newest);
-    $('recipes').replaceChildren(...shown.map(recipeRow));
+    keepState($('recipes'), () => $('recipes').replaceChildren(...shown.map(recipeRow)));
     const fresh = data.recipes.filter((r) => r.status === 'new').length;
     const nPriced = data.recipes.filter(priced).length;
     $('shown').textContent = `${shown.length} of ${data.recipes.length} recipes · ${nPriced} priced · ${fresh} new`;
@@ -215,7 +229,7 @@
             el('td', { className: 'num', textContent: money(s.unit_price_usd) }),
             el('td', { className: 'num', textContent: money(s.quantity * s.unit_price_usd) }))))))) : null;
 
-    return el('article', { className: 'plan' },
+    return el('article', { className: 'plan', 'data-key': p.id },
       el('div', { className: 'plan-head' }, chip(p.group), total,
         el('span', { className: 'muted small', textContent: [ago(p.created_at), p.store_id && `Kroger store ${p.store_id}`].filter(Boolean).join(' · ') })),
       el('p', { className: 'plan-summary', textContent: p.summary }),
@@ -225,7 +239,7 @@
   function renderPlans() {
     const shown = data.plans.filter((p) => !state.group || p.group === state.group);
     const byId = new Map(data.recipes.map((r) => [r.id, r]));
-    $('plans').replaceChildren(...shown.map((p) => planCard(p, byId)));
+    keepState($('plans'), () => $('plans').replaceChildren(...shown.map((p) => planCard(p, byId))));
     $('shown').textContent = `${shown.length} of ${data.plans.length} meal plans`;
     return [shown.length, data.plans.length ? 'No meal plans from this group yet.' : 'No meal plans yet. They appear here when a Meal Planner saves one.'];
   }
@@ -243,7 +257,7 @@
     const who = x.agent === 'pricer'
       ? el('span', { className: 'xch-who' }, el('span', { className: 'agent-pill pricer', textContent: AGENT_NAME.pricer }))
       : el('span', { className: 'xch-who' }, x.agent ? el('span', { className: `agent-pill ${x.agent}`, textContent: AGENT_NAME[x.agent] }) : null, x.group_name ? chip(x.group_name) : null);
-    const li = el('li', { className: `xch${x.ok ? '' : ' rejected'}${open ? ' open' : ''}` },
+    const li = el('li', { className: `xch${x.ok ? '' : ' rejected'}${open ? ' open' : ''}`, 'data-key': String(x.id) },
       el('div', { className: 'xch-head' },
         el('span', { className: 'xch-time', textContent: when(x.at) }),
         who,
@@ -266,7 +280,7 @@
       (x) => (!state.group || x.group_name === state.group) && (!state.agent || x.agent === state.agent)
         && (!state.result || (state.result === 'accepted') === x.ok),
     );
-    $('exchanges').replaceChildren(...shown.map(exchangeRow));
+    keepState($('exchanges'), () => $('exchanges').replaceChildren(...shown.map(exchangeRow)));
     const rejected = data.exchanges.filter((x) => !x.ok).length;
     $('shown').textContent = `${shown.length} of the latest ${data.exchanges.length} exchanges · ${rejected} rejected`;
     return [shown.length, data.exchanges.length ? 'Nothing matches these filters.' : 'No exchanges yet. They appear here as soon as an agent talks to the coordinator.'];

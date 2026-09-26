@@ -25,6 +25,20 @@
     node.append(...children.flat().filter((c) => c != null && c !== false));
     return node;
   };
+  // A refresh rebuilds a list: keep the panels the viewer opened and the
+  // button they were on. Rows are told apart by data-key.
+  function keepState(container, render) {
+    const where = (n) => {
+      const row = n.closest('[data-key]');
+      return `${row?.dataset.key ?? ''}|${n.tagName}|${[...(row || container).querySelectorAll(n.tagName)].indexOf(n)}`;
+    };
+    const open = new Set([...container.querySelectorAll('details[open]')].map(where));
+    const active = container.contains(document.activeElement) ? where(document.activeElement) : null;
+    render();
+    for (const d of container.querySelectorAll('details')) if (open.has(where(d))) d.open = true;
+    if (active) [...container.querySelectorAll('button, a, summary, input')].find((n) => where(n) === active)?.focus({ preventScroll: true });
+  }
+
   const money = (n) => (n == null ? '–' : `$${Number(n).toFixed(2)}`);
   const num = (n, digits = 0) => (n == null ? '–' : Number(n).toLocaleString(undefined, { maximumFractionDigits: digits }));
   const time = (iso) => new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -304,7 +318,7 @@
       $('queue').replaceChildren(el('p', { className: 'empty small', textContent: 'No recipes yet. They appear here as soon as a Scout Agent saves one.' }));
       return;
     }
-    $('queue').replaceChildren(...o.pricings.map((p) => {
+    keepState($('queue'), () => $('queue').replaceChildren(...o.pricings.map((p) => {
       const img = safeUrl(p.image_url) ? el('img', { src: thumb(p.image_url), alt: '', loading: 'lazy' }) : el('span', { className: 'thumb-blank' });
       const per = p.status === 'priced' && p.people ? p.total_cost_usd / p.people : null;
       const price = p.status === 'priced'
@@ -317,7 +331,7 @@
       const canPrice = Boolean(key) && p.status !== 'pricing' && p.status !== 'pending' && !busy.has(p.meal_id);
       const label = p.status === 'priced' || p.status === 'failed' ? 'Reprice' : 'Price';
       const open = p.meal_id === selected;
-      const row = el('article', { className: `rl-row status-${p.status}${open ? ' open' : ''}` },
+      const row = el('article', { className: `rl-row status-${p.status}${open ? ' open' : ''}`, 'data-key': p.meal_id },
         el('div', { className: 'rl-main' },
           img,
           el('div', { className: 'rl-name' }, el('strong', { textContent: p.name || `Recipe ${p.meal_id}` }), el('small', { className: 'muted', textContent: (p.groups || []).join(', ') })),
@@ -330,7 +344,7 @@
         open ? el('div', { className: 'rl-detail', id: 'detail' }, detail && detail.meal_id === p.meal_id ? detailBody(detail) : el('p', { className: 'muted small', textContent: 'Loading…' })) : null,
       );
       return row;
-    }));
+    })));
   }
 
   function toggle(mealId) {
