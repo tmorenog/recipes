@@ -101,20 +101,7 @@
       <span class="handoff-node pricer">Recipe Pricer</span>
     </div>
     <p>The Scout does not send recipes directly to the Recipe Pricer. It sends them to the coordinator. The coordinator checks each recipe, saves accepted recipes and makes them available to the next agent.</p>
-    <p>The Scout talks to the coordinator through MCP, a standard way for an app to ask another system what actions it offers and then use them. Each use is a request and an answer:</p>
-    <figure class="mcp-seq" aria-label="How your agent talks to the coordinator">
-      <div class="mcp-lanes"><span>Your app’s backend<small>in Lovable</small></span><span>Coordinator<small>this site, an MCP server</small></span></div>
-      <ol class="mcp-msgs">
-        <li class="mcp-req"><span class="mcp-label"><code>tools/list</code></span><span class="mcp-detail">What tools do you offer?</span></li>
-        <li class="mcp-res"><span class="mcp-label"><code>get_expectations</code>, <code>save_recipe</code></span><span class="mcp-detail">each with a description and its inputs</span></li>
-        <li class="mcp-req"><span class="mcp-label"><code>tools/call get_expectations</code></span><span class="mcp-detail">What must I do?</span></li>
-        <li class="mcp-res"><span class="mcp-label">its role, the recipe format, the checks and the limits</span></li>
-        <li class="mcp-req"><span class="mcp-label"><code>tools/call save_recipe</code> with a recipe</span></li>
-        <li class="mcp-res ok"><span class="mcp-label">✓ saved, with the recipe’s id</span></li>
-        <li class="mcp-res bad"><span class="mcp-label">✗ <code>"isError": true</code>: “est_servings must be at least 1”</span><span class="mcp-detail">the agent reads the reason, fixes the recipe and calls again</span></li>
-      </ol>
-      <figcaption class="small muted">Every request carries two headers: <code>Authorization: Bearer</code> + the class key (from the Lovable secret), and <code>X-Group: {{GROUP}}</code>. The AI model decides which tool to call; your backend sends the request and hands the answer back to the model.</figcaption>
-    </figure>
+    <p>The Scout talks to the coordinator through MCP, a standard way for an app to ask another system what actions it offers and then use them.</p>
   </section>
 
   <section class="step" id="step-3a">
