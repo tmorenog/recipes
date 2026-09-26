@@ -177,12 +177,13 @@
         const r = recipesById.get(m.recipe_id);
         const src = safeUrl(m.image_url || r?.image_url);
         const n = m.nutrition_per_serving || {};
+        const facts = [`${money(m.cost_per_serving_usd)}/serving`, n.calories != null && `${Math.round(n.calories)} kcal`, n.protein_g != null && `${Math.round(n.protein_g)} g protein`].filter(Boolean);
         return el('li', { className: 'meal' },
           src ? el('img', { src, alt: '', loading: 'lazy' }) : el('span', { className: 'ph' }),
           el('div', {},
             el('div', { className: 'day', textContent: typeof m.day === 'number' ? `Day ${m.day}` : m.day }),
             el('div', { className: 'mname', textContent: m.name || r?.name || `Recipe ${m.recipe_id.slice(0, 8)}…` }),
-            el('div', { className: 'mfacts', textContent: `${money(m.cost_per_serving_usd)}/serving · ${Math.round(n.calories ?? 0)} kcal · ${Math.round(n.protein_g ?? 0)} g protein` }),
+            el('div', { className: 'mfacts', textContent: facts.join(' · ') }),
             m.why ? el('div', { className: 'mwhy', textContent: m.why }) : null));
       }));
 

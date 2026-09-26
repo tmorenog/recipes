@@ -16,7 +16,6 @@ These are the goals and rules for the Planner Agent:
 - Begin each run by using the coordinator tool that explains how to work with the coordinator.
 - Follow the formats, checks and limits returned by the coordinator.
 - Use only recipes from the coordinator that already have a price.
-- Estimate the nutrition of one serving of each dinner from its ingredients and number of servings, and say that these are estimates.
 - When two choices are otherwise equally good, prefer the one more groups picked, then the cheaper one.
 - Let the coordinator add up the costs. Never calculate or guess them.
 - Ask the coordinator to check a draft before saving it. If a check fails, change the plan and check again.
@@ -41,7 +40,7 @@ Update the page:
 - “What the Planner Agent is doing” shows its actions, the coordinator’s requests and responses, and errors as they happen
 - Make failed checks and rejections easy to spot, without presenting them as technical failures
 - Show how many actions the Planner Agent has used and the time left
-- “The week” shows the saved plan: for each day the photo, name, cost per serving, estimated calories and protein, and why it was chosen; below the days, the week’s cost per person against the budget and each check with ✓ or ✗
+- “The week” shows the saved plan: for each day the photo, name, cost per serving and why it was chosen; below the days, the week’s cost per person against the budget and each check with ✓ or ✗
 - Below the days, add a “Shopping list”: the ingredients to buy for the five dinners, combined from the recipes (the same ingredient listed once), with the week’s total price from the coordinator
 - Link each dinner to its recipe on TheMealDB (https://www.themealdb.com/meal/MEAL_ID) and credit TheMealDB for the photos
 - Fill the outcome area: “Valid plan found” when the saved plan passes every check; “No feasible plan found” with the Planner Agent’s explanation; “Run failed” with the reason when the run stopped on an error or a limit

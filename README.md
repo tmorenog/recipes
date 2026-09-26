@@ -60,7 +60,7 @@ The Pricer’s result is stored on each recipe (`price_status`, `cost_per_servin
 
 Each TheMealDB recipe is stored once. When another group saves a recipe that’s already there, their pick (group, theme, why) is added to it instead of a copy (`recipe_picks`). Recipes carry `pick_count`, `picked_by` and `picks`; the Meal Planner can use popularity when choosing. A group picking the same recipe twice for the same theme gets a `409`. Duplicates saved by earlier versions are merged on the next deploy, and plans are pointed at the kept copy.
 
-Nutrition is the Meal Planner’s job: its agent estimates each dinner’s nutrition per serving from the recipe’s ingredients. The coordinator checks those estimates against the balance rules.
+Nutrition is a goal the students give their Meal Planner, not something the coordinator checks. A plan may include the agent’s own estimate per dinner; the coordinator stores and shows it but never checks it.
 
 A run starts in the background after each save. The Pricer and Coordinator pages restart it if recipes are waiting or a run stopped part-way, and a stopped run carries on where it left off.
 
@@ -160,11 +160,11 @@ curl -X POST https://<your-site>.vercel.app/api/recipes \
 ```
 
 ### Meal plans
-A plan is `{ budget_usd, summary, meals }`: the budget in US dollars per person for the week, and five dinners, each `{ day, recipe_id, why, nutrition_per_serving }` (the agent’s estimate). The coordinator fills in each dinner’s cost per serving from the Pricer and adds up the week, so no cost in a plan comes from the AI.
+A plan is `{ budget_usd, summary, meals }`: the budget in US dollars per person for the week, and five dinners, each `{ day, recipe_id, why }`, optionally with `nutrition_per_serving` (the agent’s own estimate, shown but not checked). The coordinator fills in each dinner’s cost per serving from the Pricer and adds up the week, so no cost in a plan comes from the AI.
 
 Rejected (nothing saved): a day missing or repeated (Monday to Friday, each once), a recipe used twice, an unknown `recipe_id`, or a recipe that isn’t priced yet.
 
-Checked and reported with ✓ or ✗ (the plan is saved either way): the week’s cost per person within the budget; every dinner at 400–800 calories, at least 20 g protein, at least 5 g fibre and under 1,500 mg sodium per serving; at least 3 cuisines; no category more than twice; at least one vegetarian or vegan dinner. The rules are in `lib/plans.js`.
+Checked and reported with ✓ or ✗ (the plan is saved either way): the week’s cost per person within the budget; at least 3 cuisines; no category more than twice; at least one vegetarian or vegan dinner. All are worked out from the stored data. The instructor can change the numbers on the Admin page; the rules are in `lib/plans.js`.
 
 ## Checking the setup
 

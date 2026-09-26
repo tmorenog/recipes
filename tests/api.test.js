@@ -320,19 +320,25 @@ for (const backend of BACKENDS) {
       assert.match((await tool('save_meal_plan', mealPlan(ids.slice(0, 4)))).content[0].text, /meals needs exactly 5 items/);
       assert.match((await tool('save_meal_plan', { ...mealPlan(ids), meals: mealPlan(ids).meals.map((m) => ({ ...m, day: 'Saturday' })) })).content[0].text, /day must be one of: Monday/);
 
-      // A draft: the week costs 12.75 per person; the planner estimates Thursday is short of protein.
-      const lowProtein = (plan) => { plan.meals[3].nutrition_per_serving.protein_g = 12; return plan; };
+      // A draft: the week costs 12.75 per person, over a budget of 12. Nutrition is never checked.
+      const lowProtein = (plan) => { plan.meals[3].nutrition_per_serving.protein_g = 2; return plan; };
       const checked = out(await tool('check_meal_plan', lowProtein(mealPlan(ids, { budget_usd: 12 }))));
       assert.equal(checked.week_cost_per_person_usd, 12.75);
       assert.equal(checked.all_rules_passed, false);
       const failed = checked.checks.filter((c) => !c.passed);
-      assert.deepEqual(failed.map((c) => c.rule), ['The week costs no more than the budget, per person', 'Every dinner has at least 20 g protein per serving']);
-      assert.match(failed[1].detail, /Thursday/);
+      assert.deepEqual(failed.map((c) => c.rule), ['The week costs no more than the budget, per person']);
+      assert.match(failed[0].detail, /\$12\.75 per person for the week, budget \$12\.00/);
+      assert.ok(checked.checks.every((c) => !/calorie|protein|fibre|sodium/i.test(c.rule)), 'no nutrition rules');
       assert.equal((await db.plans()).length, 0, 'checking saves nothing');
+
+      // Nutrition is optional: a plan without it is accepted.
+      const bare = mealPlan(ids, { budget_usd: 15 });
+      for (const m of bare.meals) delete m.nutrition_per_serving;
+      assert.equal(out(await tool('check_meal_plan', bare)).all_rules_passed, true);
 
       const saved = out(await tool('save_meal_plan', lowProtein(mealPlan(ids, { budget_usd: 15 }))));
       assert.equal(saved.saved, true);
-      assert.deepEqual(saved.checks.filter((c) => !c.passed).map((c) => c.rule), ['Every dinner has at least 20 g protein per serving']);
+      assert.deepEqual(saved.checks.filter((c) => !c.passed).map((c) => c.rule), []);
       const [row] = await db.plans();
       assert.equal(Number(row.total_cost_usd), 12.75);
       assert.deepEqual(row.meals.map((m) => [m.day, m.cost_per_serving_usd]), [['Monday', 1.5], ['Tuesday', 2.25], ['Wednesday', 3], ['Thursday', 2], ['Friday', 4]]);

@@ -152,7 +152,8 @@ for (const backend of BACKENDS) {
       assert.equal((await admin('GET', 'settings', { key: null })).status, 401);
       assert.equal((await admin('GET', 'settings')).body.settings.max_recipes_per_group, 10);
       assert.equal((await admin('POST', 'settings', { body: { max_recipes_per_group: -1 } })).status, 400);
-      assert.match((await admin('POST', 'settings', { body: { checks: { calories_min: 900 } } })).body.errors[0], /calories_min/);
+      assert.match((await admin('POST', 'settings', { body: { checks: { calories_min: 900 } } })).body.errors[0], /calories_min/, 'nutrition checks no longer exist');
+      assert.ok(!('calories_min' in (await admin('GET', 'settings')).body.settings.checks));
 
       const set = await admin('POST', 'settings', { body: { max_recipes_per_group: 2, max_plans_per_group: 1, max_saves_per_minute: 0, auto_pricing: false, checks: { require_vegetarian: false } } });
       assert.equal(set.status, 200, JSON.stringify(set.body));
@@ -171,7 +172,7 @@ for (const backend of BACKENDS) {
       const post = (body) => plansApi.POST(new Request('http://x/api/meal-plans', { method: 'POST', headers: { ...as('team-4'), 'content-type': 'application/json' }, body: JSON.stringify(body) }));
       const first = await post(mealPlan(more));
       assert.equal(first.status, 201, JSON.stringify(await first.clone().json()));
-      assert.equal((await first.json()).checks.length, 7, 'eight checks minus the vegetarian one');
+      assert.equal((await first.json()).checks.length, 3, 'four checks minus the vegetarian one');
       const second = await post(mealPlan(more));
       assert.equal(second.status, 403);
 

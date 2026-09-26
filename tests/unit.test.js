@@ -122,7 +122,7 @@ test('MCP works with plain fetch: ?agent=scout shows only the Scout’s tools, a
   const { planSchema, mealSchema } = await import('../lib/plans.js');
   assert.deepEqual(Object.keys(plannerBrief.plan_format), Object.keys(planSchema.shape));
   assert.deepEqual(Object.keys(plannerBrief.meal_format), Object.keys(mealSchema.shape));
-  assert.equal(plannerBrief.checks.reported_for_every_plan.rules.length, 8);
+  assert.equal(plannerBrief.checks.reported_for_every_plan.rules.length, 4);
   // The brief describes structure and protocol, not the agent's goals or strategy.
   for (const b of [brief, plannerBrief]) {
     assert.deepEqual(Object.keys(b).filter((k) => ['goal', 'steps'].includes(k)), []);
