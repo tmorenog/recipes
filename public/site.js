@@ -96,18 +96,32 @@
     openTarget();
   }
 
-  // Long sample prompts show their first lines; the whole prompt is always copied.
+  // Collapsible sample prompts: "Sample prompt" in the prompt's header shows or
+  // hides it, like the steps. Closed at first; remembered in this browser.
+  // Copy prompt copies the whole prompt either way.
+  const promptMemoryKey = `rc-prompts:${location.pathname}`;
+  let promptsOpen = {};
+  try { promptsOpen = JSON.parse(localStorage.getItem(promptMemoryKey)) || {}; } catch { /* storage unavailable */ }
   for (const body of document.querySelectorAll('.prompt-body[data-prompt]')) {
-    body.classList.add('clamped');
-    const more = Object.assign(document.createElement('button'), { type: 'button', className: 'btn prompt-more', textContent: 'Show whole prompt' });
-    more.setAttribute('aria-controls', body.id);
-    more.setAttribute('aria-expanded', 'false');
-    more.addEventListener('click', () => {
-      const clamped = body.classList.toggle('clamped');
-      more.textContent = clamped ? 'Show whole prompt' : 'Show less';
-      more.setAttribute('aria-expanded', String(!clamped));
+    const frame = body.closest('.prompt');
+    const label = frame?.querySelector('.prompt-head .prompt-kind');
+    if (!label) continue;
+    const toggle = Object.assign(document.createElement('button'), { type: 'button', className: 'prompt-toggle' });
+    toggle.setAttribute('aria-controls', body.id);
+    toggle.append(...label.childNodes);
+    label.append(toggle);
+    const setOpen = (open) => {
+      frame.classList.toggle('collapsed', !open);
+      toggle.setAttribute('aria-expanded', String(open));
+      body.hidden = !open;
+    };
+    toggle.addEventListener('click', () => {
+      const open = frame.classList.contains('collapsed');
+      setOpen(open);
+      promptsOpen[body.id] = open;
+      try { localStorage.setItem(promptMemoryKey, JSON.stringify(promptsOpen)); } catch { /* ignore */ }
     });
-    body.closest('.prompt')?.querySelector('.prompt-head [data-copy]')?.before(more);
+    setOpen(promptsOpen[body.id] ?? false);
   }
 
   // Fill in this site's address ({{SITE}}) and the group's name ({{GROUP}})
@@ -208,7 +222,7 @@
 
     const open = (on) => {
       editor.hidden = !on;
-      p.box.hidden = on;
+      p.box.hidden = on || Boolean(frame?.classList.contains('collapsed'));
       editBtn.hidden = on;
       reset.hidden = !p.edited;
       msg.textContent = '';

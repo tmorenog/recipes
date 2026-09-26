@@ -801,7 +801,13 @@ section.step.collapsed { padding-block: 10px; }
 .step-body { padding-top: 6px; }
 @media (prefers-reduced-motion: reduce) { .step-toggle::before { transition: none; } }
 
-/* Clamped sample prompts */
-.prompt-body.clamped { max-height: 11.5em; overflow: hidden; -webkit-mask-image: linear-gradient(#000 70%, transparent); mask-image: linear-gradient(#000 70%, transparent); }
+/* Collapsible sample prompts */
+.prompt-toggle { all: unset; box-sizing: border-box; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font: inherit; color: inherit; letter-spacing: inherit; text-transform: inherit; }
+.prompt-toggle::before { content: "▸"; font-size: 15px; transition: transform .15s ease; }
+.prompt-toggle[aria-expanded="true"]::before { transform: rotate(90deg); }
+.prompt-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+.prompt-toggle:hover { color: var(--ink); }
+.prompt.collapsed .prompt-head { border-bottom: 0; }
+@media (prefers-reduced-motion: reduce) { .prompt-toggle::before { transition: none; } }
 .prompt-head { flex-wrap: wrap; justify-content: flex-start; gap: 8px; }
 .prompt-head .prompt-kind { margin-right: auto; }
