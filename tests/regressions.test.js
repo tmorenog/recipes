@@ -237,3 +237,20 @@ test('the coordinator accepts the likely ways to send the class key and group, a
   assert.match(noGroup.error, /^Missing group name\. Send two headers/);
   assert.equal(call({}, `http://x/api/mcp?key=${CLASS_KEY}&group=team-3`).status, 401, 'never the key in the address');
 });
+
+test('the Meal Planner is told the defaults it gets: every recipe, up to 500', async () => {
+  const { handle } = await import('../api/mcp.js');
+  const { as } = await import('./helpers.js');
+  const list = async (agent) => {
+    const res = await handle(new Request(`http://x/api/mcp?agent=${agent}`, {
+      method: 'POST',
+      headers: { ...as('team-1'), 'content-type': 'application/json', accept: 'application/json, text/event-stream' },
+      body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list', params: {} }),
+    }));
+    return (await res.json()).result.tools.find((t) => t.name === 'list_recipes')?.inputSchema.properties;
+  };
+  const planner = await list('planner');
+  assert.deepEqual([planner.status.default, planner.limit.default], ['all', 500]);
+  const plain = await list('');
+  assert.deepEqual([plain.status.default, plain.limit.default], ['new', 50]);
+});
