@@ -84,6 +84,12 @@
         <legend>Every group</legend>
         <label>Save attempts per minute <input type="number" min="0" max="1000" step="1" name="max_saves_per_minute"></label>
         <p class="small muted">Recipes and plans, accepted or not. Stops a runaway agent.</p>
+        <label>Kroger searches per group a minute, at most <input type="number" min="0" max="1000" step="1" name="max_kroger_per_minute" value="30"></label>
+      </fieldset>
+      <fieldset>
+        <legend>The whole class</legend>
+        <label>Save attempts for the whole class a minute, at most <input type="number" min="0" max="1000" step="1" name="max_class_saves_per_minute" value="120"></label>
+        <label>Kroger searches for the whole class a minute, at most <input type="number" min="0" max="1000" step="1" name="max_class_kroger_per_minute" value="300"></label>
       </fieldset>
       <fieldset>
         <legend>Recipe Pricer</legend>
