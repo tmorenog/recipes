@@ -23,13 +23,20 @@
   const money = (n) => (n == null ? '–' : `$${Number(n).toFixed(2)}`);
   const when = (iso) => new Date(iso).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
 
+  // No answer at all (offline, server down) comes back like any other failed call.
+  const OFFLINE = 'Couldn’t reach the server. Check your connection and try again.';
   async function api(method, action, { id, body } = {}) {
-    const res = await fetch(`/api/admin/${action}${id ? `?id=${encodeURIComponent(id)}` : ''}`, {
-      method,
-      headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' },
-      body: body === undefined ? undefined : JSON.stringify(body),
-      cache: 'no-store',
-    });
+    let res;
+    try {
+      res = await fetch(`/api/admin/${action}${id ? `?id=${encodeURIComponent(id)}` : ''}`, {
+        method,
+        headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' },
+        body: body === undefined ? undefined : JSON.stringify(body),
+        cache: 'no-store',
+      });
+    } catch {
+      return { ok: false, status: 0, body: {}, errors: [OFFLINE] };
+    }
     const out = await res.json().catch(() => ({}));
     if (res.status === 401) signOut('Your admin key was rejected. Sign in again.');
     return { ok: res.ok, status: res.status, body: out, errors: out.errors || (res.ok ? [] : [`HTTP ${res.status}`]) };
@@ -81,11 +88,19 @@
   async function signIn(candidate) {
     key = candidate;
     const res = await api('GET', 'check');
-    if (!res.ok) {
+    // Only a rejected key signs out; if the server didn't answer, the key is kept for a reload.
+    if (res.status === 401) {
       signOut(res.errors[0]);
       return;
     }
+    if (!res.ok) {
+      $('signin-result').textContent = `Couldn’t reach the server (${res.status ? res.errors[0] : 'no connection'}). Reload to try again.`;
+      $('signin-result').className = 'keycheck-result bad';
+      return;
+    }
     try { sessionStorage.setItem(STORE, key); } catch { /* ignore */ }
+    window.showInstructor?.(true);
+    $('signin-result').textContent = '';
     $('signin').hidden = true;
     $('admin').hidden = false;
     describeSample();
@@ -242,7 +257,7 @@
     const btn = $('backup');
     btn.disabled = true;
     try {
-      const res = await fetch('/api/admin/backup', { headers: { authorization: `Bearer ${key}` }, cache: 'no-store' });
+      const res = await fetch('/api/admin/backup', { headers: { authorization: `Bearer ${key}` }, cache: 'no-store' }).catch(() => { throw new Error('no connection'); });
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).errors?.[0] || `HTTP ${res.status}`);
       const blob = await res.blob();
       const name = /filename="([^"]+)"/.exec(res.headers.get('content-disposition') || '')?.[1] || 'recipes-backup.json';
@@ -346,7 +361,7 @@
   }
   async function loadSettings() {
     const r = await api('GET', 'settings');
-    if (r.ok) fillSettings(r.body.settings);
+    if (r.ok) fillSettings(r.body.settings); else settingsResult(`Couldn’t load the current settings: ${r.errors.join(' ')}`, true);
   }
   function settingsResult(text, bad = false) {
     $('settings-result').textContent = text;
@@ -397,6 +412,7 @@
   });
   async function describeSample() {
     const r = await api('GET', 'sample');
+    // If it fails, the page's own description stays.
     if (r.ok) $('sample-what').textContent = `${r.body.recipes} real TheMealDB recipes picked by ${r.body.groups.length} groups (${r.body.groups.join(', ')}), ${r.body.picks - r.body.recipes} of them by two groups`;
   }
 
@@ -446,7 +462,11 @@
   // One prompt's two sets: { current, edited, def, replaced, original, updated }.
   const setsCache = {};
   async function promptState(agent, step, file, fresh = false) {
-    if (fresh || !setsCache[agent]) setsCache[agent] = fetch(`/api/prompts?agent=${agent}`, { cache: 'no-store' }).then((r) => r.json());
+    if (fresh || !setsCache[agent]) {
+      const sets = fetch(`/api/prompts?agent=${agent}`, { cache: 'no-store' }).then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))));
+      setsCache[agent] = sets;
+      sets.catch(() => { if (setsCache[agent] === sets) delete setsCache[agent]; }); // a failure isn't kept
+    }
     const b = await setsCache[agent];
     const original = file ? (await (await fetch(file, { cache: 'no-cache' })).text()).trim() : null;
     const replaced = Boolean(b.defaults_replaced?.[step]);
@@ -457,19 +477,30 @@
   }
 
   async function sendPrompt(body) {
-    const res = await fetch('/api/prompts', { method: 'POST', headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' }, body: JSON.stringify(body) });
+    let res;
+    try {
+      res = await fetch('/api/prompts', { method: 'POST', headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' }, body: JSON.stringify(body) });
+    } catch {
+      return { ok: false, body: {}, errors: [OFFLINE] };
+    }
     const out = await res.json().catch(() => ({}));
     if (res.status === 401) signOut('Your admin key was rejected. Sign in again.');
     return { ok: res.ok, body: out, errors: out.errors || (res.ok ? [] : [`HTTP ${res.status}`]) };
   }
 
+  const NO_PROMPTS = 'Couldn’t load the prompts. Check your connection and try again.';
+
   // Changing a safe copy never changes what students see: a live prompt that is
   // still the safe copy itself is first saved as live text of its own.
   async function pinLive(list) {
     const prompts = [];
-    for (const [agent, step, file] of list) {
-      const st = await promptState(agent, step, file, true);
-      if (!st.edited) prompts.push({ agent, step, text: st.current });
+    try {
+      for (const [agent, step, file] of list) {
+        const st = await promptState(agent, step, file, true);
+        if (!st.edited) prompts.push({ agent, step, text: st.current });
+      }
+    } catch {
+      return { ok: false, errors: [NO_PROMPTS] };
     }
     return prompts.length ? sendPrompt({ set: 'current', prompts }) : { ok: true };
   }
@@ -502,7 +533,7 @@
     const done = async (r, text) => {
       msg.textContent = r.ok ? text : r.errors.join(' ');
       msg.className = `small ${r.ok ? 'good' : 'bad'}`;
-      if (r.ok) await refresh(true);
+      if (r.ok) await load(true);
     };
     save.addEventListener('click', async () => done(await sendPrompt({ agent, step, text: area.value }), 'Saved: everyone uses this version now.'));
     saveDefault.addEventListener('click', async () => {
@@ -514,8 +545,9 @@
       const r = await pinLive([[agent, step, file]]);
       done(r.ok ? await sendPrompt({ set: 'default', agent, step, reset: true }) : r, 'The safe copy is the original again. Live is unchanged.');
     });
-    refresh(false).catch(() => { badge.textContent = ''; });
-    editors.push(refresh);
+    const load = (fresh) => refresh(fresh).catch(() => { badge.textContent = ''; msg.textContent = 'Couldn’t load this prompt. Reload to try again.'; msg.className = 'small bad'; });
+    load(false);
+    editors.push(load);
     return item;
   }
 
@@ -540,7 +572,12 @@
     const end = new Uint8Array([...u32(0x06054b50), ...u16(0), ...u16(0), ...u16(files.length), ...u16(files.length), ...u32(size), ...u32(offset), ...u16(0)]);
     return new Blob([...parts, ...central, end], { type: 'application/zip' });
   }
+  // The whole-set actions read every prompt first; if one can't be read, they stop and say so.
+  const unreadable = (out) => { out.textContent = NO_PROMPTS; out.className = 'small bad'; };
   async function downloadSet(set) {
+    try { await downloadFiles(set); } catch { unreadable($('prompt-files-result')); }
+  }
+  async function downloadFiles(set) {
     const files = [];
     for (const [agent, step, , file, name] of ALL_PROMPTS) {
       const st = await promptState(agent, step, file, true);
@@ -550,6 +587,9 @@
     document.body.append(a); a.click(); a.remove();
   }
   async function uploadSet(fileList, set) {
+    try { await uploadFiles(fileList, set); } catch { unreadable($('prompt-files-result')); }
+  }
+  async function uploadFiles(fileList, set) {
     const out = $('prompt-files-result');
     const byName = new Map(ALL_PROMPTS.map((p) => [p[4], p]));
     const prompts = []; const unknown = [];
@@ -571,6 +611,9 @@
   // The whole set at once: the safe copies go live (e.g. after a bad edit, or
   // before class), or the live prompts become the safe copies (a snapshot).
   async function restoreAllSafe() {
+    try { await restoreAll(); } catch { unreadable($('prompt-all-result')); }
+  }
+  async function restoreAll() {
     const out = $('prompt-all-result');
     let n = 0;
     for (const [agent, step, , file] of ALL_PROMPTS) {
@@ -585,6 +628,9 @@
     for (const refresh of editors) refresh(true);
   }
   async function saveAllAsSafe() {
+    try { await saveAll(); } catch { unreadable($('prompt-all-result')); }
+  }
+  async function saveAll() {
     const out = $('prompt-all-result');
     const prompts = [];
     for (const [agent, step, , file] of ALL_PROMPTS) prompts.push({ agent, step, text: (await promptState(agent, step, file, true)).current });

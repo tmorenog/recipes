@@ -16,16 +16,23 @@
   const when = (iso) => new Date(iso).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
   const NAMES = { scout: 'Scout Agent', planner: 'Meal Planner Agent', shopper: 'Shopper Agent' };
 
+  // No answer at all (offline, server down) comes back like any other failed call.
+  const OFFLINE = 'Couldn’t reach the server. Check your connection and try again.';
   async function api(method, { id, body } = {}) {
-    const res = await fetch(`/api/admin/agent-runs${id ? `?id=${encodeURIComponent(id)}` : ''}`, {
-      method,
-      headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' },
-      body: body === undefined ? undefined : JSON.stringify(body),
-      cache: 'no-store',
-    });
+    let res;
+    try {
+      res = await fetch(`/api/admin/agent-runs${id ? `?id=${encodeURIComponent(id)}` : ''}`, {
+        method,
+        headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' },
+        body: body === undefined ? undefined : JSON.stringify(body),
+        cache: 'no-store',
+      });
+    } catch {
+      return { ok: false, status: 0, body: {}, error: OFFLINE };
+    }
     const out = await res.json().catch(() => ({}));
     if (res.status === 401) signOut('Your admin key was rejected. Sign in again.');
-    return { ok: res.ok, body: out, error: (out.errors || [`HTTP ${res.status}`])[0] };
+    return { ok: res.ok, status: res.status, body: out, error: (out.errors || [`HTTP ${res.status}`])[0] };
   }
 
   // ---------------------------------------------------------------- sign in
@@ -41,8 +48,16 @@
   async function signIn(candidate) {
     key = candidate;
     const res = await api('GET');
-    if (!res.ok) return signOut(res.error);
+    // Only a rejected key signs out; if the server didn't answer, the key is kept for a reload.
+    if (res.status === 401) return signOut(res.error);
+    if (!res.ok) {
+      $('signin-result').textContent = `Couldn’t reach the server (${res.status ? res.error : 'no connection'}). Reload to try again.`;
+      $('signin-result').className = 'keycheck-result bad';
+      return;
+    }
     try { sessionStorage.setItem(STORE, key); } catch { /* ignore */ }
+    window.showInstructor?.(true);
+    $('signin-result').textContent = '';
     $('signin').hidden = true;
     $('backup').hidden = false;
     showOverview(res.body);
@@ -79,7 +94,7 @@
         fetch('/api/recipes?status=all&limit=500', { cache: 'no-store' }).then((x) => x.json()),
         fetch('/api/meal-plans?limit=200', { cache: 'no-store' }).then((x) => x.json()),
       ]);
-      classGroups = new Set([...(r.recipes || []).flatMap((x) => x.picked_by || [x.group]), ...(p.plans || []).map((x) => x.group_name)].filter(Boolean));
+      classGroups = new Set([...(r.recipes || []).flatMap((x) => x.picked_by || [x.group]), ...(p.plans || []).map((x) => x.group)].filter(Boolean));
       $('class-groups').replaceChildren(...[...classGroups].sort().map((g) => el('option', { value: g })));
     } catch { /* suggestions are optional */ }
   }
@@ -177,16 +192,24 @@
     } catch { /* shown again on the next refresh */ }
   }
   async function pricer(action, body = {}) {
-    const res = await fetch(`/api/pricer?action=${action}`, {
-      method: 'POST', headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' }, body: JSON.stringify(body), cache: 'no-store',
-    });
+    let res;
+    try {
+      res = await fetch(`/api/pricer?action=${action}`, {
+        method: 'POST', headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' }, body: JSON.stringify(body), cache: 'no-store',
+      });
+    } catch {
+      return { ok: false, status: 0, body: {}, error: OFFLINE };
+    }
     const out = await res.json().catch(() => ({}));
     if (res.status === 401) signOut('Your admin key was rejected. Sign in again.');
     return { ok: res.ok, body: out, error: (out.errors || [`HTTP ${res.status}`])[0] };
   }
   const say = (text) => { $('pricer-msg').textContent = text; setTimeout(refreshAgents, 1200); };
-  $('price-unpriced').addEventListener('click', async () => {
-    const r = await pricer('price-unpriced');
+  $('price-unpriced').addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
+    btn.disabled = true;
+    let r;
+    try { r = await pricer('price-unpriced'); } finally { btn.disabled = false; }
     say(r.ok ? (r.body.queued ? `${r.body.queued} recipe${r.body.queued === 1 ? ' is' : 's are'} queued to be priced.` : 'Every recipe already has a price or is in the queue.') : r.error);
   });
   $('reprice-all').addEventListener('click', async (e) => {
