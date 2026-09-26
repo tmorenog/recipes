@@ -10,7 +10,7 @@ The site for Meal Squad, a class exercise in agent systems. Groups build AI agen
 
 **API** (used by the students' agents)
 - **REST** under `/api/…` for Lovable backends. Same data, same rules, same error messages as MCP.
-- **MCP** at `/api/mcp` with eight tools: `get_contract`, `save_recipe`, `list_recipes`, `mark_processed`, `check_meal_plan`, `save_meal_plan`, `find_kroger_stores`, `search_kroger_products`. With `?agent=planner` the Meal Planner Agent sees `get_contract`, `list_recipes`, `check_meal_plan` and `save_meal_plan`.
+- **MCP** at `/api/mcp`. Each agent adds `?agent=` to see only its tools: `scout` (`get_contract`, `save_recipe`), `planner` (`get_contract`, `list_recipes`, `check_meal_plan`, `save_meal_plan`), `shopper` (`get_contract`, `list_meal_plans`, `get_plan_ingredients`, `save_choice`) and `pricer` (`get_contract`, `get_recipe_to_price`, `save_pricing`). `save_choice`, `get_recipe_to_price` and `save_pricing` need the admin key (the site's own agents). Without `?agent=` there are also `mark_processed`, `find_kroger_stores` and `search_kroger_products`.
 
 Everyone shares one class key. Each group also sends its chosen group name (header `X-Group`), so each recipe and plan records who made it. Kroger lookups use the instructor's Kroger credentials, so students need none.
 
@@ -66,7 +66,9 @@ Each group picks its own group name (like `team-3`) and sends it with every requ
 
 ## The Pricer agent
 
-The Recipe Pricer (agent 2) is already built and only prices. It is a separate agent from the coordinator, deployed with this site for convenience. When a Scout Agent saves a recipe, the Pricer builds the Kroger shopping cart needed to cook it (for 50 people by default): the AI chooses products and amounts, and code works out packages, the cart total and the cost per serving. Each TheMealDB recipe is priced once for the whole class, and Kroger searches are remembered.
+The Recipe Pricer (the Pricer Agent) is already built and only prices. It is a separate agent from the coordinator, deployed with this site for convenience, and works through the coordinator over MCP like every other agent. When a Scout Agent saves a recipe, the site hands it to a Pricer run, which reads it with `get_recipe_to_price`, builds the Kroger shopping cart needed to cook it (for 50 people by default) with its own Kroger tools, and saves the cart with `save_pricing`. The AI chooses products and amounts; the coordinator checks the cart (every ingredient line once, bought, estimated or skipped, with reasons) and works out the packages, the cart total and the cost per serving itself. Each TheMealDB recipe is priced once for the whole class, and Kroger searches are remembered.
+
+The site's own agents (the Pricer and the Shopper) call the coordinator with the admin key: only that key gets `get_recipe_to_price`, `save_pricing` and `save_choice`, so the class key can't change a price or the class's plan.
 
 The **Pricer page** (`/pricer`) has three parts:
 

@@ -47,8 +47,8 @@ for (const backend of BACKENDS) {
       const client = await mcp();
       const { tools } = await client.listTools();
       assert.deepEqual(tools.map((t) => t.name).sort(), [
-        'check_meal_plan', 'find_kroger_stores', 'get_contract', 'get_plan_ingredients', 'list_meal_plans', 'list_recipes', 'mark_processed', 'save_choice', 'save_meal_plan', 'save_recipe', 'search_kroger_products',
-      ]);
+        'check_meal_plan', 'find_kroger_stores', 'get_contract', 'get_plan_ingredients', 'list_meal_plans', 'list_recipes', 'mark_processed', 'save_meal_plan', 'save_recipe', 'search_kroger_products',
+      ], 'the class key can’t save prices or the class’s choice');
       const save = tools.find((t) => t.name === 'save_recipe');
       assert.equal(save.inputSchema.additionalProperties, false);
       assert.ok(save.inputSchema.required.includes('why_chosen'));

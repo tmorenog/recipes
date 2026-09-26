@@ -82,7 +82,7 @@ const jsonAnswer = (value, status = 200) => new Response(JSON.stringify(value), 
 
 async function answer(request) {
   if (request.method !== 'POST') return postOnly();
-  const { group, status, error } = checkCaller(request);
+  const { group, site, status, error } = checkCaller(request);
   if (error) return fail(status, error);
   const agent = (new URL(request.url).searchParams.get('agent') || '').trim().toLowerCase() || null;
   if (agent && !AGENTS.includes(agent)) return fail(400, `?agent= must be one of: ${AGENTS.join(', ')}`);
@@ -93,7 +93,7 @@ async function answer(request) {
   const started = Date.now();
   const { request: tidied, body, answered, tooMany } = await tidy(request, text, group);
   if (tooMany) return fail(400, `A batch can hold at most ${MAX_BATCH} requests: send the rest separately.`);
-  const server = createMcpServer(group, { agent });
+  const server = createMcpServer(group, { agent, site });
   const transport = new WebStandardStreamableHTTPServerTransport({
     sessionIdGenerator: undefined, // stateless: each request stands alone, which suits serverless
     enableJsonResponse: true,
