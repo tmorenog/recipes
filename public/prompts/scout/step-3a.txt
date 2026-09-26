@@ -1,9 +1,9 @@
 Connect Recipe Scout’s backend to the class coordinator using MCP. The MCP server is at this address: {{SITE}}/api/mcp?agent=scout
 
-For this step, only establish the connection and discover the tools offered by the coordinator. Do not give the tools to the Recipe Scout yet, and do not change how the Scout works.
+For this step, only establish the connection and discover the tools offered by the coordinator. Do not give the tools to the Scout Agent yet, and do not change how it works.
 
-The coordinator requires two things on every request: our class key, sent as the header “Authorization: Bearer ” followed by CLASS_KEY, and our group name, {{GROUP}}, sent as the header “X-Group”. If the group name is YOUR-GROUP-NAME, ask me for our group name first.
+The coordinator requires two things on every request: our class key, sent as the header “Authorization: Bearer ” followed by the value of the CLASS_KEY secret, and our group name, {{GROUP}}, sent as the header “X-Group”. If the group name is YOUR-GROUP-NAME, ask me for our group name first.
 
-Create a protected Lovable secret called CLASS_KEY and ask me to enter its value. Never place the class key in the page, browser code, logs or AI instructions.
+Create a protected Lovable secret called CLASS_KEY and ask me to enter its value. Never place the class key in the page, browser code, logs or AI instructions. All requests to the coordinator must be made from the backend.
 
-Once you have established the connection, explain the tools that are available.
+Once you have established the connection, explain the tools that are available. Show the connection status and the tools, with their descriptions, in a “Coordinator connection” section on the page.

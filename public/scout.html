@@ -77,7 +77,7 @@
   </section>
   <section class="step" id="step-2">
     <h3 class="step-title"><span class="step-num">Step 2</span>Add the Recipe Scout agent</h3>
-    <div class="step-goal"><p class="step-label">Goal</p><p>Add an AI agent that decides how to search, examines the results and selects five recipes. This is the first step with a “What the Scout is doing” panel.</p></div>
+    <div class="step-goal"><p class="step-label">Goal</p><p>Add an AI agent that decides how to search, examines the results and selects five recipes. This is the first step with a “What the Scout Agent is doing” panel.</p></div>
     <div class="prompt scout">
       <div class="prompt-head">
         <p class="prompt-kind">Sample prompt</p>
@@ -136,6 +136,7 @@
       <div><p class="step-label">What you should see</p><ul><li>The Scout Agent discovers the coordinator tools at the beginning of the run and learns how to work with the coordinator.</li><li>The Scout Agent follows the formats, rules and limits returned by the coordinator.</li><li>It searches and examines real recipes through TheMealDB and submits recipes to the coordinator.</li><li>Accepted and rejected submissions are clearly identified and the Scout Agent tries to correct rejected recipes.</li><li>Five accepted recipes appear on the <a href="/coordinator">Coordinator page</a> and the <a href="/pricer">Recipe Pricer</a> queues or begins processing the accepted recipes.</li></ul></div>
       <div><p class="step-label">Things you can try</p><ul><li>Run the same theme twice and observe duplicate handling.</li><li>Try a contradictory theme.</li><li>Open a rejected exchange on the Coordinator page and compare it with an accepted one.</li><li>Change one Scout instruction and compare its behavior.</li></ul></div>
     </div>
+    <p class="step-note">Each group can save a limited number of recipes in total (the coordinator tells your agent how many), so plan your runs: once the limit is reached, further saves are rejected.</p>
 
   </section>
 

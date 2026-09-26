@@ -14,7 +14,7 @@ These are the goals and rules for the Scout agent:
 - Before selecting a recipe, it has to retrieve and examine its complete ingredients and instructions.
 - The Scout cannot invent a recipe.
 - It has to choose a varied set and briefly explain why each recipe fits the theme.
-- It cannot select the same recipe twice for the same theme.
+- It cannot select the same recipe twice.
 - If it cannot find five suitable recipes, it should stop and explain what prevented it from completing the request.
 
 Run each action requested by the Scout, return the result to it, and let it decide what to do next. Continue until the Scout finishes, uses 25 actions, or reaches two minutes. Record why it stopped.
@@ -29,7 +29,7 @@ Update the page:
 
 - The “Scout recipes” button starts the Scout
 - Hide or remove the temporary Recipe Tool Lab
-- Add a “What the Scout is doing” area that shows searches, recipe lookups, results and errors as they happen
+- Add a “What the Scout Agent is doing” area that shows searches, recipe lookups, results and errors as they happen
 - Show selected recipes with their photos, names, cuisines and selection reasons
 - Show how many actions the Scout has used
 - Disable the button while the Scout is working

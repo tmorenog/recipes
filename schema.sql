@@ -332,3 +332,28 @@ create table if not exists backup_runs (
   finished_at timestamptz
 );
 create index if not exists backup_runs_created_idx on backup_runs (created_at desc);
+
+-- Step prompts edited on the site that don't say how to send the group name
+-- (the X-Group header): add it, once, to the versions saved on 2026-09-26.
+update prompt_overrides set
+  text = replace(replace(replace(replace(text,
+    'The coordinator requires two things on every request: our class key and our group name.',
+    'The coordinator requires two things on every request: our class key, sent as the header “Authorization: Bearer ” followed by the value of the CLASS_KEY secret, and our group name, {{GROUP}}, sent as the header “X-Group”. All requests to the coordinator must be made from the backend.'),
+    'Ask me for the group name too.', 'If the group name is YOUR-GROUP-NAME, ask me for our group name first.'),
+    'Do not give the tools to the Recipe Scout yet, and do not change how the Scout works.', 'Do not give the tools to the Scout Agent yet, and do not change how it works.'),
+    'Once you have established the connection, explain the tools that are available.',
+    'Once you have established the connection, explain the tools that are available. Show the connection status and the tools, with their descriptions, in a “Coordinator connection” section on the page.'),
+  updated_at = now()
+where agent = 'scout' and step = 13 and text like '%our class key and our group name.%';
+
+update prompt_overrides set
+  text = replace(replace(text,
+    'followed by CLASS_KEY, and our group name.',
+    'followed by the value of the CLASS_KEY secret, and our group name, {{GROUP}}, sent as the header “X-Group”.'),
+    'If you don''t have our group name, ask me.', 'If the group name is YOUR-GROUP-NAME, ask me for our group name first.'),
+  updated_at = now()
+where agent = 'planner' and step = 11 and text like '%followed by CLASS_KEY, and our group name.%';
+
+-- Meal Planner step 1: the instructor chose their own version with its typos
+-- fixed, which is now the file; the older saved copy goes.
+delete from prompt_overrides where agent = 'planner' and step = 10 and text like '%Scouting Agents%';

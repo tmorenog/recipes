@@ -1,6 +1,6 @@
 Build a web app called “Meal Planner” for a class exercise.
 
-The goal of Meal Planner is to plan five dinners, Monday through Friday, using recipes that Scout Agents have found and Pricer Agents have priced. It will eventually use AI to:
+The goal of Meal Planner is to plan five dinners, Monday through Friday, using recipes that Scout Agents have found and the Pricer Agent has priced. It will eventually use AI to:
 
 - Take a budget, dietary requirements and preferences from the user
 - Read the recipes saved by the class, with their prices

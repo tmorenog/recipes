@@ -2,7 +2,7 @@ Now let the Scout Agent use the coordinator tools discovered in the previous ste
 
 At the beginning of every run, ask the MCP server which tools are currently available. Give those tools to the Scout Agent exactly as the coordinator describes them. Preserve their names, descriptions and input requirements.
 
-Do not write the coordinator’s tool names, recipe format, validation rules or limits into the app.
+Do not write the coordinator’s recipe format, validation rules or limits into the app. You may use its tool names and a recipe’s meal_id only for the app checks below.
 
 Replace the Scout Agent’s local recipe-selection action from Step 2 with the appropriate coordinator tool. Keep the actions that search TheMealDB and the action that ends the run.
 
@@ -31,7 +31,7 @@ Update the page:
 - Show coordinator requests and responses in “What the Scout Agent is doing”
 - Make acceptances and rejections easy to distinguish
 - Highlight rejection feedback without presenting it as a technical failure
-- Show how many actions the Scout Agent has used
+- Show how many of the 35 available actions the Scout Agent has used
 - Add a link to the class Coordinator page: {{SITE}}/coordinator
 - Keep a history of completed runs that can be reopened
 

@@ -1,6 +1,6 @@
 Now turn the app into an AI Meal Planner using Lovable’s built-in AI.
 
-At the start of every run, get the coordinator’s tools from the MCP server and give them to the Planner Agent exactly as the coordinator describes them. Don’t write the coordinator’s tool names, formats, checks or limits into the app. Also give the Planner Agent a way to end the run with a summary.
+At the start of every run, get the coordinator’s tools from the MCP server and give them to the Planner Agent exactly as the coordinator describes them. Don’t write the coordinator’s formats, checks or limits into the app; you may use its tool names only for the app checks below. Also give the Planner Agent a way to end the run with a summary.
 
 Pass the page’s inputs to the Planner Agent (“none” for an empty box).
 
@@ -22,9 +22,9 @@ Update the page:
 - “Plan my week” starts the Planner Agent and is disabled while it works
 - “What the Planner Agent is doing” shows its actions, the coordinator’s answers and errors as they happen, with the actions used and the time left; make failed checks and rejections easy to spot without showing them as crashes
 - “The week” shows the saved plan: for each day the photo, name, cost per serving, the groups that picked it (and how many), why it was chosen and a link to the recipe on TheMealDB (https://www.themealdb.com/meal/MEAL_ID); below the days, the average cost of a dinner against the budget and each check with ✓ or ✗
-- A “Shopping list”: the ingredients for the five dinners, each listed once, with the week’s total price from the coordinator
-- The outcome area: “Valid plan found”, “No feasible plan found” or “Run failed”, with the explanation
+- A “Shopping list”: the ingredients for the five dinners, each listed once, with the week’s cost per person from the coordinator
+- The outcome area, with the explanation: “Valid plan found” when the saved plan passes every check; “No feasible plan found” when the closest plan was saved or nothing could be saved; “Run failed” when the run stopped on an error or a limit
 - A link to the class Coordinator page ({{SITE}}/coordinator), credit to TheMealDB for the photos, and a history of past runs that can be reopened
-- Keep the Step 2 sections as collapsible sections
+- Keep “How the coordinator works” and “Available recipes” as collapsible sections
 
 Save what happens (actions, results, errors), but not the AI model’s private reasoning.

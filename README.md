@@ -6,7 +6,7 @@ The site for Meal Squad, a class exercise in agent systems. Groups build AI agen
 - **Welcome** (`/`): what the exercise is, how the pieces fit, and a check that the class key works.
 - **Recipe Scout** (`/scout`) and **Meal Planner** (`/planner`): goals, copy-ready Lovable prompts with this site's address filled in, test checklists and troubleshooting. Each agent connects to `/api/mcp?agent=…` and reads its rules from `get_contract`.
   The sample prompts are plain text files in [`public/prompts/`](public/prompts/README.md) (`scout/step-1.txt` … `planner/step-3.txt`). Signed in on the Admin page, you can also edit any step on the page itself (**Edit**); edits are stored in the database (`/api/prompts`) and shown to everyone at once.
-- **Coordinator** (`/coordinator`, formerly `/database`): a live log of every MCP request agents send and the coordinator's answer (with rejections and why), plus every recipe and meal plan, filterable by group. The log keeps the newest 2,000 exchanges; headers, and so the class key, are never stored.
+- **Coordinator** (`/coordinator`; `/database` redirects there): a live log of every MCP request agents send and the coordinator's answer (with rejections and why), plus every recipe and meal plan, filterable by group. The log keeps the newest 2,000 exchanges; headers, and so the class key, are never stored.
 
 **API** (used by the students' agents)
 - **REST** under `/api/…` for Lovable backends. Same data, same rules, same error messages as MCP.
@@ -50,9 +50,9 @@ The Recipe Pricer (agent 2) is already built and only prices. It is a separate a
 
 The **Pricer page** (`/pricer`) has three parts:
 
-1. **Try it on a sample list**: signed in with the admin key, run the agent on a short ingredient list (real AI, real Kroger) and watch its steps and the products it picks. Nothing is saved to the recipes.
-2. **Its instructions**: edit the agent’s prompt (e.g. the number of people), test the draft with part 1, then **Save** or **Save and re-price every recipe**.
-3. **Recipe carts**: every recipe, grouped by stage (waiting, being priced, priced, couldn’t price), with when it was priced and whether with the current instructions; each recipe’s cart and every step the agent took.
+1. **Check the instructions**: the agent’s prompt. Signed in with the admin key, edit it (e.g. the number of people), test the draft with part 2, then **Save**; **Reprice all** in part 3 applies it to recipes already priced.
+2. **See it work on a sample recipe**: signed in, run the agent on a short ingredient list (real AI, real Kroger) and watch its steps and the products it picks. Nothing is saved to the recipes.
+3. **View how the Pricer Agent works**: every recipe, grouped by stage (waiting, being priced, priced, couldn’t price), with when it was priced and whether with the current instructions; each recipe’s cart and every step the agent took.
 
 The Pricer’s result is stored on each recipe (`price_status`, `cost_per_serving_usd`, `cart_usd`, `priced_for`, `price_estimated`, `estimated_lines`, `priced_at`), kept in step by a database trigger. Each recipe from `list_recipes` / `GET /api/recipes` carries it as a `pricing` object: `status` (`unpriced`, `pending`, `pricing`, `priced` or `failed`) and, once priced, `people`, `cart_usd`, `cost_per_serving_usd`, `estimated` (any ingredient price estimated because Kroger had none), `estimated_lines` and `priced_at`.
 
@@ -71,6 +71,7 @@ The **Admin** page (`/admin`, linked in the footer) opens with `ADMIN_KEY`. From
 - **Restore** a backup file. It replaces everything, in one step; the file is checked first, and if anything in it is wrong nothing changes.
 - **Edit** a recipe (same rules as saving one), set it back to `new` or mark it processed, or **delete** it.
 - **Delete** meal plans, **clear** the activity log, or **delete everything** to start over between classes.
+- **Run a backup agent** (`/backup`): your own Scout Agent or Planner Agent, run from the site if a group's Lovable app isn't working. They use the coordinator over MCP like any student agent, under a group name you choose, with `ANTHROPIC_API_KEY` (model: `BACKUP_MODEL`, default `claude-opus-5`).
 
 Neon also keeps its own history: from Vercel's Storage tab, "Open in Neon" lets you restore the database to an earlier point in time.
 
@@ -105,7 +106,7 @@ Add `?agent=scout` or `?agent=planner` to show only that agent's tools. Every an
 
 | Tool | What it does |
 | --- | --- |
-| `get_contract` | The agent's goal, steps and rules, and every field `save_recipe` or `save_meal_plan` accepts, with where its value comes from. Built from the same schemas that check each save, so agents don't need the format written into their code. Takes `agent` (`scout` or `planner`); defaults to the `?agent=` value. |
+| `get_contract` | How to work with the coordinator: the agent's role, its tools, every field `save_recipe` or `save_meal_plan` accepts and where its value comes from, the checks and the limits (not the agent's goals, which come from the students' prompts). Built from the same schemas that check each save, so agents don't need the format written into their code. Takes `agent` (`scout` or `planner`); defaults to the `?agent=` value. |
 | `save_recipe` | Saves one recipe under your group. |
 | `list_recipes` | Recipes from every group, newest first. Options: `status` (`new`, the default; `processed`; or `all`), `theme`, `group`, `limit` (default 50, max 500). |
 | `mark_processed` | Takes one `recipe_id`. Marks that recipe as used by your group, so it drops out of the `new` list. Marking it again changes nothing. |
@@ -221,7 +222,7 @@ GitHub Actions runs all of them, with a throwaway Postgres, on every push and pu
 | `lib/store/` | The database queries (`postgres.js`) |
 | `lib/env.js`, `lib/db.js` | Finding the database connection string |
 | `lib/admin.js`, `api/admin.js`, `public/admin.*` | The Admin page: edit, delete, backup, restore, reset |
-| `public/` | The site: Welcome, Scout and Planner instructions, Database |
+| `public/` | The site: Welcome, Scout and Planner instructions, Pricer, Coordinator, FAQ, Admin and backup agents |
 | `tests/` | Tests |
 
 ## Security notes
