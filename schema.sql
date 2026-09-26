@@ -305,3 +305,13 @@ create table if not exists coordinator_settings (
 -- get_expectations was renamed get_contract: bring step prompts edited on the site in line.
 update prompt_overrides set text = replace(text, 'get_expectations', 'get_contract'), updated_at = now()
 where text like '%get\_expectations%';
+
+-- Meal Planner step 2 edited on the site: add the fix for a blank page when
+-- the page parses an already-parsed coordinator result (once only).
+update prompt_overrides set
+  text = replace(text, 'If there are no priced recipes yet, say so plainly instead of showing an error.',
+    E'Each coordinator tool returns its answer as text that contains JSON. Parse it once, in the backend, and send the page ready-to-use data; the page should not parse it again. If a section can’t be shown, display a short message in that section instead of breaking the page.\n\nIf there are no priced recipes yet, say so plainly instead of showing an error.'),
+  updated_at = now()
+where agent = 'planner' and step = 11
+  and text like '%If there are no priced recipes yet, say so plainly instead of showing an error.%'
+  and text not like '%Parse it once, in the backend%';
