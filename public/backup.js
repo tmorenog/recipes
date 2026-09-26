@@ -1,4 +1,4 @@
-// Backup agents page: sign in with ADMIN_KEY, start a Scout or Planner Agent
+// Backup agents page: sign in with ADMIN_KEY, start a Scout or Meal Planner Agent
 // run, and follow it step by step. Runs happen on the server (/api/admin/agent-runs).
 (() => {
   'use strict';
@@ -14,7 +14,7 @@
   };
   const time = (iso) => new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   const when = (iso) => new Date(iso).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
-  const NAMES = { scout: 'Scout Agent', planner: 'Planner Agent', shopper: 'Shopper Agent' };
+  const NAMES = { scout: 'Scout Agent', planner: 'Meal Planner Agent', shopper: 'Shopper Agent' };
 
   async function api(method, { id, body } = {}) {
     const res = await fetch(`/api/admin/agent-runs${id ? `?id=${encodeURIComponent(id)}` : ''}`, {

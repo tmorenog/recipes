@@ -18,7 +18,7 @@
   // ---------------------------------------------------------------- the class's plan
   function renderChoice(choice, history) {
     if (!choice?.plan) {
-      $('choice').replaceChildren(el('p', { className: 'empty small', textContent: 'No plan chosen yet. The instructor runs the Shopper Agent once the Planner Agents have saved their plans.' }));
+      $('choice').replaceChildren(el('p', { className: 'empty small', textContent: 'No plan chosen yet. The instructor runs the Shopper Agent once the Meal Planner Agents have saved their plans.' }));
       return;
     }
     $('choice').replaceChildren(...[window.shoppingPlan(choice),

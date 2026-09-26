@@ -101,7 +101,7 @@ for (const backend of BACKENDS) {
       assert.equal(await getStore().recentAttempts('team-1', new Date(Date.now() - 60_000).toISOString()), 2);
     });
 
-    test('Planner Agents see every recipe, including ones marked processed', async () => {
+    test('Meal Planner Agents see every recipe, including ones marked processed', async () => {
       const r = await save('team-1');
       await markPriced(db.pool, [r.id]);
       await rest.POST(new Request(`http://x/api/recipes?id=${r.id}&action=processed`, { method: 'POST', headers: as('team-2') }));

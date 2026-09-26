@@ -83,13 +83,13 @@
     </div>
     <div class="step-after">
       <div><p class="step-label">What you should see</p><ul><li>A successful connection message</li><li>The tools provided by the coordinator and a description of what each tool does</li><li>How the coordinator works: the plan format, the checks and the limits</li><li>A table of the class’s priced recipes. If it is empty, the Scout Agents haven’t saved recipes yet or the Pricer Agent is still working on them.</li></ul></div>
-      <div><p class="step-label">Things you can try</p><ul><li>Read the checks the coordinator applies to every plan.</li><li>Look for your connection on the <a href="/coordinator">Coordinator page</a>.</li><li>Find the cheapest and the most popular recipes in the table.</li><li>Discuss which tools the Planner Agent should use, and in what order.</li></ul></div>
+      <div><p class="step-label">Things you can try</p><ul><li>Read the checks the coordinator applies to every plan.</li><li>Look for your connection on the <a href="/coordinator">Coordinator page</a>.</li><li>Find the cheapest and the most popular recipes in the table.</li><li>Discuss which tools the Meal Planner Agent should use, and in what order.</li></ul></div>
     </div>
     <p class="step-note"><strong>The Meal Planner never talks to the Scout Agents or the Pricer Agent directly.</strong> It reads their work from the coordinator, which stores the recipes and prices and describes how to use them.</p>
   </section>
 
   <section class="step" id="step-3">
-    <h3 class="step-title"><span class="step-num">Step 3</span>Add the Planner Agent</h3>
+    <h3 class="step-title"><span class="step-num">Step 3</span>Add the Meal Planner Agent</h3>
     <div class="step-goal"><p class="step-label">Goal</p><p>Add an AI agent that learns how to work with the coordinator, chooses five dinners, asks the coordinator to check the plan, improves it and saves it so the rest of the class can see it.</p></div>
     <div class="prompt planner">
       <div class="prompt-head">
@@ -99,8 +99,8 @@
       <div class="prompt-body" id="q3" data-prompt="/prompts/planner/step-3.txt" data-step="12"></div>
     </div>
     <div class="step-after">
-      <div><p class="step-label">What you should see</p><ul><li>The Planner Agent learns how to work with the coordinator at the beginning of the run.</li><li>It drafts a plan, asks the coordinator to check it and changes dinners when a check fails.</li><li>Five dinners fill Monday to Friday, each showing which groups picked it, with a shopping list, the average cost of a dinner against the budget and each check marked ✓ or ✗.</li><li>The outcome: valid plan found, no feasible plan found, or run failed, with an explanation.</li><li>The saved plan appears on the <a href="/coordinator">Coordinator page</a> under your group.</li></ul></div>
-      <div><p class="step-label">Things you can try</p><ul><li>A tiny budget, such as $1 a dinner. Does it explain that it can’t be done, or pretend?</li><li><em>Vegetarian only</em> when there are fewer than five vegetarian recipes.</li><li>A rule of your own, such as <em>no dinner over 45 minutes</em>.</li><li>Change one Planner Agent instruction and compare its behavior.</li></ul></div>
+      <div><p class="step-label">What you should see</p><ul><li>The Meal Planner Agent learns how to work with the coordinator at the beginning of the run.</li><li>It drafts a plan, asks the coordinator to check it and changes dinners when a check fails.</li><li>Five dinners fill Monday to Friday, each showing which groups picked it, with a shopping list, the average cost of a dinner against the budget and each check marked ✓ or ✗.</li><li>The outcome: valid plan found, no feasible plan found, or run failed, with an explanation.</li><li>The saved plan appears on the <a href="/coordinator">Coordinator page</a> under your group.</li></ul></div>
+      <div><p class="step-label">Things you can try</p><ul><li>A tiny budget, such as $1 a dinner. Does it explain that it can’t be done, or pretend?</li><li><em>Vegetarian only</em> when there are fewer than five vegetarian recipes.</li><li>A rule of your own, such as <em>no dinner over 45 minutes</em>.</li><li>Change one Meal Planner Agent instruction and compare its behavior.</li></ul></div>
     </div>
     <p class="step-note">The important question is not only “Did it save a plan?” Also ask: “Did it fix the checks that failed, and are its explanations honest?”</p>
     <details class="panel" id="rules">
@@ -112,7 +112,7 @@
         <li>At least one vegetarian or vegan dinner</li>
       </ul>
       <p class="small muted" id="plan-limits"></p>
-      <p class="small muted">All worked out from real data: the Pricer Agent’s costs and each recipe’s cuisine and category. Nutrition isn’t checked; making the week nutritious is a goal for your Planner Agent. A plan that fails a check is still saved, with the check marked ✗.</p>
+      <p class="small muted">All worked out from real data: the Pricer Agent’s costs and each recipe’s cuisine and category. Nutrition isn’t checked; making the week nutritious is a goal for your Meal Planner Agent. A plan that fails a check is still saved, with the check marked ✗.</p>
     </details>
   </section>
 

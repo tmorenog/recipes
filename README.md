@@ -10,7 +10,7 @@ The site for Meal Squad, a class exercise in agent systems. Groups build AI agen
 
 **API** (used by the students' agents)
 - **REST** under `/api/…` for Lovable backends. Same data, same rules, same error messages as MCP.
-- **MCP** at `/api/mcp` with eight tools: `get_contract`, `save_recipe`, `list_recipes`, `mark_processed`, `check_meal_plan`, `save_meal_plan`, `find_kroger_stores`, `search_kroger_products`. With `?agent=planner` the Planner sees `get_contract`, `list_recipes`, `check_meal_plan` and `save_meal_plan`.
+- **MCP** at `/api/mcp` with eight tools: `get_contract`, `save_recipe`, `list_recipes`, `mark_processed`, `check_meal_plan`, `save_meal_plan`, `find_kroger_stores`, `search_kroger_products`. With `?agent=planner` the Meal Planner Agent sees `get_contract`, `list_recipes`, `check_meal_plan` and `save_meal_plan`.
 
 Everyone shares one class key. Each group also sends its chosen group name (header `X-Group`), so each recipe and plan records who made it. Kroger lookups use the instructor's Kroger credentials, so students need none.
 
@@ -71,7 +71,7 @@ The **Admin** page (`/admin`, linked in the footer) opens with `ADMIN_KEY`. From
 - **Restore** a backup file. It replaces everything, in one step; the file is checked first, and if anything in it is wrong nothing changes.
 - **Edit** a recipe (same rules as saving one), set it back to `new` or mark it processed, or **delete** it.
 - **Delete** meal plans, **clear** the activity log, or **delete everything** to start over between classes.
-- **Run a backup agent** (`/backup`, API `/api/admin/agent-runs`): your own Scout Agent or Planner Agent, run from the site if a group's Lovable app isn't working. They use the coordinator over MCP like any student agent, under a group name you choose, with `ANTHROPIC_API_KEY` (model: `BACKUP_MODEL`, default `claude-opus-5`).
+- **Run a backup agent** (`/backup`, API `/api/admin/agent-runs`): your own Scout Agent or Meal Planner Agent, run from the site if a group's Lovable app isn't working. They use the coordinator over MCP like any student agent, under a group name you choose, with `ANTHROPIC_API_KEY` (model: `BACKUP_MODEL`, default `claude-opus-5`).
 
 Neon also keeps its own history: from Vercel's Storage tab, "Open in Neon" lets you restore the database to an earlier point in time.
 
@@ -222,7 +222,7 @@ GitHub Actions runs all of them, with a throwaway Postgres, on every push and pu
 | `lib/store/` | The database queries (`postgres.js`) |
 | `lib/env.js`, `lib/db.js` | Finding the database connection string |
 | `lib/admin.js`, `api/admin.js`, `public/admin.*` | The Admin page: edit, delete, backup, restore, reset |
-| `public/` | The site: Welcome, Scout and Planner instructions, Pricer, Coordinator, FAQ, Admin and backup agents |
+| `public/` | The site: Welcome, Recipe Scout and Meal Planner instructions, Pricer, Coordinator, FAQ, Admin and backup agents |
 | `tests/` | Tests |
 
 ## Security notes

@@ -32,14 +32,14 @@
   <div class="page-head">
     <span class="agent-tag pricer">Agent 2 · already built</span>
     <h1>The Pricer Agent</h1>
-    <p class="lede">Turns every recipe the Scout Agents save into a Kroger shopping cart with prices, so the Planner Agents can compare recipes by cost. Nobody has to start it: it prices each new recipe by itself.</p>
+    <p class="lede">Turns every recipe the Scout Agents save into a Kroger shopping cart with prices, so the Meal Planner Agents can compare recipes by cost. Nobody has to start it: it prices each new recipe by itself.</p>
   </div>
 
   <ol class="how-strip" aria-label="How the Pricer Agent works">
     <li><strong>A Scout Agent saves a recipe</strong><span>The coordinator hands it to the Pricer Agent straight away.</span></li>
     <li><strong>The Pricer Agent builds a shopping cart</strong><span>For each ingredient it searches Kroger, picks a product, and decides how much the recipe needs.</span></li>
     <li><strong>The Pricer Agent does the maths</strong><span>Packages to buy, the cart total and the cost per serving.</span></li>
-    <li><strong>The Pricer Agent saves the price</strong><span>To the coordinator, where the Planner Agents read it.</span></li>
+    <li><strong>The Pricer Agent saves the price</strong><span>To the coordinator, where the Meal Planner Agents read it.</span></li>
   </ol>
   <p class="small per-person-note"><strong>Why per person?</strong> The Meal Planners compare dinners by what one serving costs. The class’s recipes will be cooked for many people, so the Pricer Agent prices each recipe at scale (a cart for 50 people) and each serving pays only for the share of each package it uses. The <a href="/shopper">Shopper Agent</a> later turns the chosen plan into one real cart for the number of people shopping, in whole packages.</p>
   <p class="pricer-facts small" id="facts"></p>

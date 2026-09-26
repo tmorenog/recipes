@@ -97,7 +97,7 @@ for (const backend of BACKENDS) {
       assert.match(JSON.stringify(ex), /tools\/list/);
     });
 
-    test('the Planner Agent must check the exact plan before saving it, and saves once', async () => {
+    test('the Meal Planner Agent must check the exact plan before saving it, and saves once', async () => {
       const ids = [];
       for (const [n, cuisine] of ['Indian', 'Italian', 'Thai', 'Mexican', 'Greek'].entries()) {
         const res = await rest.POST(new Request('http://x/api/recipes', { method: 'POST', headers: { ...as(`team-${n}`), 'content-type': 'application/json' }, body: JSON.stringify(recipe({ cuisine, category: n < 2 ? 'Vegetarian' : ['Beef', 'Chicken', 'Pork'][n - 2] })) }));

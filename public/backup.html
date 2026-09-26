@@ -31,7 +31,7 @@
 <main class="wrap">
   <p class="eyebrow">For the instructor</p>
   <h1>Backup agents</h1>
-  <p class="lede" style="margin-top:10px">Run any of the four agents from here. Your own Scout Agent and Planner Agent are a backup if a group’s Lovable app isn’t working: they work like the students’ agents, over MCP, under the group you choose. The Recipe Pricer and the Shopper Agent run on the site. Everything shows up on the <a href="/coordinator">Coordinator page</a>.</p>
+  <p class="lede" style="margin-top:10px">Run any of the four agents from here. Your own Scout Agent and Meal Planner Agent are a backup if a group’s Lovable app isn’t working: they work like the students’ agents, over MCP, under the group you choose. The Recipe Pricer and the Shopper Agent run on the site. Everything shows up on the <a href="/coordinator">Coordinator page</a>.</p>
 
   <section class="panel narrow" id="signin" style="margin-top:28px">
     <form class="keycheck" id="signin-form" autocomplete="off">
@@ -55,13 +55,13 @@
         <button class="btn primary" type="submit">Run the Scout Agent</button>
       </form>
       <form class="panel" id="planner-form" autocomplete="off">
-        <h2 style="margin-top:0"><span class="agent-tag planner">Agent 3</span> Planner Agent</h2>
+        <h2 style="margin-top:0"><span class="agent-tag planner">Agent 3</span> Meal Planner Agent</h2>
         <p class="small muted">Plans five dinners, Monday to Friday, from the priced recipes, checks the plan with the coordinator and saves it.</p>
         <label>Group <input name="group" required maxlength="40" value="instructor" spellcheck="false"></label>
         <label>Budget per person per dinner, on average ($) <input name="budget_usd" type="number" min="0.5" max="1000" step="0.5" value="3" required></label>
         <label>Dietary requirements <input name="requirements" maxlength="500" placeholder="e.g. no pork"></label>
         <label>Preferences <input name="preferences" maxlength="500" placeholder="e.g. we like spicy food"></label>
-        <button class="btn primary" type="submit">Run the Planner Agent</button>
+        <button class="btn primary" type="submit">Run the Meal Planner Agent</button>
       </form>
       <section class="panel" id="pricer-panel" aria-labelledby="pricer-title">
         <h2 id="pricer-title" style="margin-top:0"><span class="agent-tag pricer">Agent 2</span> Recipe Pricer</h2>

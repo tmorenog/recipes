@@ -316,7 +316,7 @@ where agent = 'planner' and step = 11
   and text like '%If there are no priced recipes yet, say so plainly instead of showing an error.%'
   and text not like '%Parse it once, in the backend%';
 
--- Runs of the instructor's backup agents (a Scout or Planner Agent run from
+-- Runs of the instructor's backup agents (a Scout or Meal Planner Agent run from
 -- the site): the input, every step as it happens, and how it ended.
 create table if not exists backup_runs (
   id          uuid primary key default gen_random_uuid(),

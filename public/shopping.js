@@ -66,7 +66,7 @@
         el('div', {},
           choice.status ? el('span', { className: `pill plan-status ${choice.status}`, textContent: choice.status === 'active' ? 'Active shopping plan' : 'Earlier choice' }) : null,
           el('strong', { textContent: ` Created by ${plan.group_name}` }),
-          el('span', { className: 'small muted', textContent: ` · their Planner Agent saved it ${when(plan.created_at)} · chosen ${when(choice.created_at)}` })),
+          el('span', { className: 'small muted', textContent: ` · their Meal Planner Agent saved it ${when(plan.created_at)} · chosen ${when(choice.created_at)}` })),
         el('span', { className: 'plan-total' }, money(plan.total_cost_usd),
           el('small', { textContent: ['per person for the week', perDinner != null ? `${money(perDinner)} a dinner` : null, plan.budget_usd != null ? `budget ${money(plan.budget_usd)} a dinner` : null].filter(Boolean).join(' · ') }))),
       el('blockquote', { className: 'choice-reason', textContent: choice.reason }),

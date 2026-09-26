@@ -432,13 +432,13 @@
     { group: 'Meal Planner (students’ sample prompts)', items: [
       ['planner', 10, 'Step 1 · Build the interface', '/prompts/planner/step-1.txt', 'planner-step-1.txt'],
       ['planner', 11, 'Step 2 · Connect to the coordinator', '/prompts/planner/step-2.txt', 'planner-step-2.txt'],
-      ['planner', 12, 'Step 3 · Add the Planner Agent', '/prompts/planner/step-3.txt', 'planner-step-3.txt'],
+      ['planner', 12, 'Step 3 · Add the Meal Planner Agent', '/prompts/planner/step-3.txt', 'planner-step-3.txt'],
     ] },
     { group: 'Agents that run on the site (their instructions)', items: [
       ['pricer', 1, 'Recipe Pricer', null, 'pricer.txt'],
       ['shopper', 1, 'Shopper Agent', null, 'shopper.txt'],
       ['backup_scout', 1, 'Backup Scout Agent', null, 'backup-scout.txt'],
-      ['backup_planner', 1, 'Backup Planner Agent', null, 'backup-planner.txt'],
+      ['backup_planner', 1, 'Backup Meal Planner Agent', null, 'backup-planner.txt'],
     ] },
   ];
   const ALL_PROMPTS = PROMPTS.flatMap((g) => g.items);

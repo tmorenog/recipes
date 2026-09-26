@@ -296,7 +296,7 @@
     keepState($('shopping-history'), () => $('shopping-history').replaceChildren(...history.map((c) => el('details', { className: 'history-item', 'data-key': c.id },
       el('summary', {}, `${new Date(c.created_at).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}: ${c.plan.group_name}’s plan, cart ${money(c.total_usd)}`),
       window.shoppingPlan(c)))));
-    return [choice ? 1 : 0, 'No shopping plan yet. The instructor runs the Shopper Agent once the Planner Agents have saved their plans.'];
+    return [choice ? 1 : 0, 'No shopping plan yet. The instructor runs the Shopper Agent once the Meal Planner Agents have saved their plans.'];
   }
 
   function render() {
