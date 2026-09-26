@@ -13,7 +13,7 @@ export function OPTIONS() {
     headers: {
       'access-control-allow-origin': '*',
       'access-control-allow-methods': 'GET',
-      'access-control-allow-headers': 'authorization, x-group',
+      'access-control-allow-headers': 'authorization, x-group, x-group-name, x-api-key, x-class-key',
       'access-control-max-age': '600',
     },
   });

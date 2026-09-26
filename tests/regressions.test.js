@@ -221,3 +221,19 @@ for (const backend of BACKENDS) {
     });
   });
 }
+
+test('the coordinator accepts the likely ways to send the class key and group, and one rejection explains both headers', async () => {
+  const { checkCaller } = await import('../lib/auth.js');
+  const { CLASS_KEY } = await import('./helpers.js');
+  const call = (headers, url = 'http://x/api/mcp?agent=scout') => checkCaller(new Request(url, { method: 'POST', headers }));
+  assert.deepEqual(call({ authorization: `Bearer ${CLASS_KEY}`, 'x-group': 'Team 3' }), { group: 'team-3' });
+  assert.deepEqual(call({ 'x-api-key': CLASS_KEY, 'x-group-name': 'team-3' }), { group: 'team-3' });
+  assert.deepEqual(call({ 'x-class-key': CLASS_KEY }, 'http://x/api/mcp?agent=scout&group=team-3'), { group: 'team-3' });
+  const noKey = call({ 'x-group': 'team-3' });
+  assert.equal(noKey.status, 401);
+  assert.match(noKey.error, /"Authorization: Bearer <class key>" and "X-Group: <your group name>"/);
+  const noGroup = call({ authorization: `Bearer ${CLASS_KEY}` });
+  assert.equal(noGroup.status, 400);
+  assert.match(noGroup.error, /^Missing group name\. Send two headers/);
+  assert.equal(call({}, `http://x/api/mcp?key=${CLASS_KEY}&group=team-3`).status, 401, 'never the key in the address');
+});
