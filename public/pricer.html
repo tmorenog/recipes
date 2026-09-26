@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=JetBrains+Mono:wght@400;500&family=Source+Sans+3:wght@400;600&display=swap">
 <link rel="stylesheet" href="/site.css">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
 </head>
 <body>
 <header class="site-head">
@@ -116,7 +117,7 @@
       </div>
     </div>
     <aside class="agent-feed" aria-live="polite">
-      <h3>What the Pricer Agent is doing</h3>
+      <h2>What the Pricer Agent is doing</h2>
       <p class="agent-now" id="test-now"></p>
       <ol class="feed" id="test-feed"></ol>
     </aside>
@@ -142,6 +143,7 @@
       <button class="btn danger small-btn" type="button" id="clear-all" data-confirm="Click again to remove every price">Clear all prices</button>
     </div>
   </div>
+  <p class="small stale-note" id="stale" aria-live="polite" hidden></p>
   <div class="carts-layout">
     <section class="recipe-list" id="queue" aria-label="Recipes"></section>
     <aside class="agent-feed" aria-live="polite">

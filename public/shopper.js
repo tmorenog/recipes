@@ -16,6 +16,18 @@
   const when = (iso) => new Date(iso).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
   const time = (iso) => new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
+  // No answer at all (offline, server down) comes back like any other failed call.
+  const OFFLINE = 'Couldn’t reach the server. Check your connection and try again.';
+  async function post(url, body) {
+    try {
+      const res = await fetch(url, { method: 'POST', headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' }, body: body === undefined ? undefined : JSON.stringify(body) });
+      const out = await res.json().catch(() => ({}));
+      return { ok: res.ok, status: res.status, body: out, errors: out.errors || (res.ok ? [] : [`HTTP ${res.status}`]) };
+    } catch {
+      return { ok: false, status: 0, body: {}, errors: [OFFLINE] };
+    }
+  }
+
   // ---------------------------------------------------------------- the class's plan
   function renderChoice(choice, history) {
     if (!choice?.plan) {
@@ -56,17 +68,26 @@
   }
 
   let timer;
+  let lastOk = null; // when the plan on screen was loaded
   async function load() {
     clearTimeout(timer);
     let running = false;
     try {
-      const res = await fetch('/api/meal-plans?choice=latest', { cache: 'no-store' });
-      const body = await res.json();
+      const res = await fetch('/api/meal-plans?choice=latest', { cache: 'no-store' }).catch(() => { throw new Error('no connection'); });
+      const body = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error((body.errors || [`HTTP ${res.status}`]).join(' '));
       renderChoice(body.choice, body.history);
       running = renderRun(body.run);
+      lastOk = new Date();
+      $('stale').hidden = true;
     } catch (e) {
-      $('choice').replaceChildren(el('p', { className: 'errors', textContent: `Couldn’t load the class’s plan: ${e.message}` }));
+      // Once a plan is on screen, a failed refresh keeps it and says how old it is.
+      if (lastOk) {
+        $('stale').textContent = `Couldn’t refresh (${e.message}). Showing ${lastOk.toLocaleTimeString()}.`;
+        $('stale').hidden = false;
+      } else {
+        $('choice').replaceChildren(el('p', { className: 'errors', textContent: `Couldn’t load the class’s plan: ${e.message}` }));
+      }
     }
     $('run').disabled = running;
     timer = setTimeout(load, running ? 2000 : 20000);
@@ -94,12 +115,9 @@
     $('prompt-state').className = `small ${dirty ? 'unsaved' : 'muted'}`;
   });
   $('save-prompt').addEventListener('click', async () => {
-    const res = await fetch('/api/prompts', {
-      method: 'POST', headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' }, body: JSON.stringify({ agent: 'shopper', step: 1, text: $('prompt').value }),
-    });
-    const body = await res.json().catch(() => ({}));
+    const res = await post('/api/prompts', { agent: 'shopper', step: 1, text: $('prompt').value });
     if (res.status === 401) return signOut('Your admin key was rejected. Sign in again.');
-    $('prompt-msg').textContent = res.ok ? 'Saved.' : (body.errors || [`HTTP ${res.status}`]).join(' ');
+    $('prompt-msg').textContent = res.ok ? 'Saved.' : res.errors.join(' ');
     $('prompt-msg').className = `small ${res.ok ? 'good' : 'bad'}`;
     if (res.ok) { dirty = false; await loadPrompt(); }
   });
@@ -125,7 +143,14 @@
     e.preventDefault();
     const candidate = $('admin-key').value.trim();
     if (!candidate) return;
-    const res = await fetch('/api/admin/check', { headers: { authorization: `Bearer ${candidate}` }, cache: 'no-store' });
+    let res;
+    try {
+      res = await fetch('/api/admin/check', { headers: { authorization: `Bearer ${candidate}` }, cache: 'no-store' });
+    } catch {
+      $('signin-result').textContent = OFFLINE;
+      $('signin-result').className = 'keycheck-result bad';
+      return;
+    }
     if (!res.ok) {
       const out = await res.json().catch(() => ({}));
       $('signin-result').textContent = out.errors?.[0] || 'That key didn’t work.';
@@ -151,21 +176,17 @@
     }
     delete clear.dataset.armed;
     clear.textContent = clearLabel;
-    const res = await fetch('/api/admin/clear-choices', { method: 'POST', headers: { authorization: `Bearer ${key}` } });
-    const body = await res.json().catch(() => ({}));
+    const res = await post('/api/admin/clear-choices');
     if (res.status === 401) return signOut('Your admin key was rejected. Sign in again.');
-    $('run-msg').textContent = res.ok ? 'The class’s plan is cleared.' : (body.errors || [`HTTP ${res.status}`]).join(' ');
+    $('run-msg').textContent = res.ok ? 'The class’s plan is cleared.' : res.errors.join(' ');
     load();
   });
   $('run').addEventListener('click', async () => {
     $('run').disabled = true;
     $('run-msg').textContent = 'Starting…';
-    const res = await fetch('/api/admin/agent-runs', {
-      method: 'POST', headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' }, body: JSON.stringify({ agent: 'shopper', people: Number($('people').value) || 50 }),
-    });
-    const body = await res.json().catch(() => ({}));
+    const res = await post('/api/admin/agent-runs', { agent: 'shopper', people: Number($('people').value) || 50 });
     if (res.status === 401) return signOut('Your admin key was rejected. Sign in again.');
-    $('run-msg').textContent = res.ok ? 'Running: follow it below.' : (body.errors || [`HTTP ${res.status}`]).join(' ');
+    $('run-msg').textContent = res.ok ? 'Running: follow it below.' : res.errors.join(' ');
     if (!res.ok) $('run').disabled = false;
     load();
   });

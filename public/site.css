@@ -223,6 +223,7 @@ pre.code {
 .seg input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: -2px; }
 .db-meta { margin: 0 0 8px auto; font: 13px var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; text-align: right; }
 .db-meta .stale { color: var(--new-ink); }
+.stale-note { margin: 0 0 12px; color: var(--new-ink); }
 
 .photo { position: relative; aspect-ratio: 4 / 3; background: var(--surface-2); }
 .photo img { width: 100%; height: 100%; object-fit: cover; }
@@ -423,8 +424,6 @@ h2 .count, .step-title .count { font: 500 15px var(--mono); color: var(--muted);
 }
 
 .instructor-on { margin: 18px 0 0; }
-.section-num { display: inline-grid; place-items: center; width: 1.35em; height: 1.35em; margin-right: 10px; border-radius: 50%; font-size: .75em; vertical-align: .1em;
-  background: var(--pricer); color: #fff; }
 
 .try-input { display: grid; gap: 10px; }
 .try-input textarea { width: 100%; box-sizing: border-box; font: 14px/1.5 var(--mono); padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); resize: vertical; }
@@ -472,7 +471,7 @@ details.trace > summary { cursor: pointer; padding: 8px 0; }
 .rl-detail .detail-status { margin: 12px 0 0 !important; }
 .rl-detail .detail-status a { margin-left: 6px; }
 .agent-feed { position: sticky; top: 12px; max-height: calc(100vh - 24px); overflow-y: auto; padding: 14px 16px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); }
-.agent-feed h3 { margin: 0 0 8px; font-size: 17px; }
+.agent-feed :is(h2, h3) { margin: 0 0 8px; font: 700 17px/1.3 var(--display); letter-spacing: normal; text-wrap: wrap; }
 .agent-now { margin: 0 0 10px; padding: 8px 10px; border-radius: 8px; background: var(--pricer-soft); color: var(--pricer); font-size: 14px; }
 .agent-now .dot { display: inline-block; width: 8px; height: 8px; margin-right: 8px; border-radius: 50%; background: var(--muted); vertical-align: 1px; }
 .agent-now .dot.on { background: var(--pricer); animation: pulse 1.2s ease-in-out infinite; }
@@ -520,7 +519,7 @@ details.trace > summary { cursor: pointer; padding: 8px 0; }
 .feed li:not(:has(.feed-recipe)) .feed-time { grid-row: auto; }
 
 .try-input input[type="text"] { width: 100%; box-sizing: border-box; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; font: 15px/1.4 var(--body); background: var(--surface); color: var(--ink); }
-.test-title { margin: 0 0 6px; font-size: 20px; }
+.test-title { margin: 0 0 6px; font: 700 20px/1.3 var(--display); letter-spacing: normal; text-wrap: wrap; }
 
 /* Database: recipes as a list */
 .db-list { margin: 8px 0 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
@@ -804,8 +803,8 @@ section.step.substep:not(:has(+ section.step.substep))::before { bottom: 50%; }
 .plan-fold[open] > summary { margin-bottom: 8px; }
 .plan-whys, .plan-checks { margin: 8px 0 0; padding-left: 18px; }
 .plan-checks li.good { color: var(--good-ink); } .plan-checks li.bad { color: var(--bad-ink); }
-.why-chosen h4 { margin: 4px 0 8px; font: 700 18px/1.3 var(--display); }
 .class-plan h3 { margin: 6px 0 0; }
+.why-chosen h3 { margin: 4px 0 8px; font: 700 18px/1.3 var(--display); }
 .choice-reason { margin: 0; padding: 12px 16px; border-left: 4px solid var(--shopper); background: var(--shopper-soft); border-radius: 0 10px 10px 0; font-style: italic; }
 .cart-table td, .cart-table th { vertical-align: top; }
 .cart-thumb { flex: none; width: 40px; height: 40px; border-radius: 8px; background: #fff; border: 1px solid var(--line); display: grid; place-items: center; overflow: hidden; }
@@ -849,8 +848,9 @@ body:has(.agent-tag.shopper) .per-person-note { border-left-color: var(--shopper
 .more-info > summary:hover { color: var(--accent); }
 .more-info[open] { flex-basis: 100%; order: 1; margin-top: 6px; padding: 12px 18px 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
 .more-info[open] > summary { color: var(--ink); font-weight: 600; margin-bottom: 6px; }
+.admin-part .step-title { letter-spacing: normal; text-wrap: wrap; }
 .admin-part .step-title .step-num { color: var(--hub-edge); }
-.prompt-group h4 { margin: 18px 0 8px; font: 700 15px/1.3 var(--display); }
+.prompt-group h3 { margin: 18px 0 8px; font: 700 15px/1.3 var(--display); }
 .prompt-item { margin: 0 0 8px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
 .prompt-item > summary { cursor: pointer; padding: 10px 14px; }
 .prompt-item-body { display: grid; gap: 10px; padding: 0 14px 14px; }

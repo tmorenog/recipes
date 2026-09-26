@@ -107,7 +107,7 @@
       planner,
       el('div', { className: 'plan-folds' }, shopping, said),
       el('div', { className: 'why-chosen' },
-        el('h4', { textContent: 'Why the Shopper Agent chose it' }),
+        el('h3', { textContent: 'Why the Shopper Agent chose it' }),
         el('blockquote', { className: 'choice-reason', textContent: choice.reason })));
   };
 })();

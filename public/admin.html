@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=JetBrains+Mono:wght@400;500&family=Source+Sans+3:wght@400;600&display=swap">
 <link rel="stylesheet" href="/site.css">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
 </head>
 <body>
 <header class="site-head">
@@ -47,7 +48,7 @@
     <p class="toast" id="toast" role="status" aria-live="polite" hidden></p>
 
     <section class="step admin-part" id="part-notes">
-      <h3 class="step-title"><span class="step-num">For the class</span>Class notes</h3>
+      <h2 class="step-title"><span class="step-num">For the class</span>Class notes</h2>
     <p class="small" style="margin-top:0">Notes for the whole class, shown at the top of the <a href="/faq">FAQ page</a>. Students see a change within half a minute, without reloading. Leave a blank line between paragraphs; start a line with “- ” for a bullet. Links are made clickable.</p>
     <form class="panel notes-form" id="notes-form" autocomplete="off">
       <label for="notes-text" class="small"><strong>Notes</strong> <span class="muted" id="notes-updated"></span></label>
@@ -60,12 +61,12 @@
     </form>
     </section>
     <section class="step admin-part" id="part-prompts">
-      <h3 class="step-title"><span class="step-num">For the class</span>Prompts</h3>
+      <h2 class="step-title"><span class="step-num">For the class</span>Prompts</h2>
     <p class="small" style="margin-top:0">Every prompt in one place. Each prompt has two versions. <strong>Live</strong> is what students see and the site agents use: a saved prompt goes live for everyone at once (students see it within a minute or on reload; the agents on their next run). The <strong>safe copy</strong> is a known-good version kept aside: if a live edit goes wrong, <strong>Restore the safe copy</strong> puts it back. It starts as the original, and you can replace it with <strong>Save as the safe copy too</strong> or by uploading files. In the students’ prompts, <code data-literal>{{SITE}}</code> and <code data-literal>{{GROUP}}</code> are filled in on the page.</p>
     <div id="prompt-editors"><p class="small muted">Loading the prompts…</p></div>
     </section>
     <section class="step admin-part" id="part-coordinator">
-      <h3 class="step-title"><span class="step-num">Coordinator</span>Limits and checks</h3>
+      <h2 class="step-title"><span class="step-num">Coordinator</span>Limits and checks</h2>
     <p class="small" style="margin-top:0">The limits and checks the coordinator enforces. Agents read them from the coordinator (<code>get_contract</code>), so a change applies at once, without rebuilding any agent. <strong>0</strong> means no limit.</p>
     <form class="panel settings-form" id="settings-form" autocomplete="off">
       <fieldset>
@@ -84,6 +85,12 @@
         <legend>Every group</legend>
         <label>Save attempts per minute <input type="number" min="0" max="1000" step="1" name="max_saves_per_minute"></label>
         <p class="small muted">Recipes and plans, accepted or not. Stops a runaway agent.</p>
+        <label>Kroger searches per group a minute, at most <input type="number" min="0" max="1000" step="1" name="max_kroger_per_minute" value="30"></label>
+      </fieldset>
+      <fieldset>
+        <legend>The whole class</legend>
+        <label>Save attempts for the whole class a minute, at most <input type="number" min="0" max="1000" step="1" name="max_class_saves_per_minute" value="120"></label>
+        <label>Kroger searches for the whole class a minute, at most <input type="number" min="0" max="1000" step="1" name="max_class_kroger_per_minute" value="300"></label>
       </fieldset>
       <fieldset>
         <legend>Recipe Pricer</legend>
@@ -114,7 +121,7 @@
     </div>
     </section>
     <section class="step admin-part" id="part-agents">
-      <h3 class="step-title"><span class="step-num">Coordinator</span>Agents and Kroger</h3>
+      <h2 class="step-title"><span class="step-num">Coordinator</span>Agents and Kroger</h2>
     <div class="grid-2">
     <div class="panel">
       <p class="small" style="margin-top:0"><strong>Run any agent from the site</strong> on the <a href="/backup">agents page</a>: your own Scout Agent or Meal Planner Agent if a group’s Lovable app isn’t working (under a group name you choose), the Recipe Pricer’s controls, and the Shopper Agent. They use the AI key the Pricer Agent uses.</p>
@@ -128,7 +135,7 @@
     </div>
     </section>
     <section class="step admin-part" id="part-recipes">
-      <h3 class="step-title"><span class="step-num">Data</span><span>Recipes <span class="count" id="n-recipes"></span></span></h3>
+      <h2 class="step-title"><span class="step-num">Data</span><span>Recipes <span class="count" id="n-recipes"></span></span></h2>
     <div class="filters">
       <label class="field"><span>Group</span><select id="f-group"><option value="">All groups</option></select></label>
       <label class="field"><span>Search</span><input id="f-search" type="search" placeholder="Name or theme"></label>
@@ -142,7 +149,7 @@
     </div>
     </section>
     <section class="step admin-part" id="part-plans">
-      <h3 class="step-title"><span class="step-num">Data</span><span>Meal plans <span class="count" id="n-plans"></span></span></h3>
+      <h2 class="step-title"><span class="step-num">Data</span><span>Meal plans <span class="count" id="n-plans"></span></span></h2>
     <div class="table-wrap admin-table">
       <table>
         <thead><tr><th>Group</th><th>Saved</th><th>Total</th><th>Summary</th><th></th></tr></thead>
@@ -153,7 +160,7 @@
       <span class="small muted">Removes the Shopper Agent’s chosen plan, its earlier choices and past runs; the meal plans stay. E.g. before class starts.</span></p>
     </section>
     <section class="step admin-part" id="part-backup">
-      <h3 class="step-title"><span class="step-num">Data</span>Backup and restore</h3>
+      <h2 class="step-title"><span class="step-num">Data</span>Backup and restore</h2>
     <div class="grid-2">
       <div class="panel">
         <h3 style="margin-top:0">Back up</h3>
@@ -186,7 +193,7 @@
     <p class="small muted">Neon also keeps its own history of the database. If a backup file isn’t enough, open the database from Vercel’s Storage tab (“Open in Neon”) and use its restore feature to go back to a point in time.</p>
     </section>
     <section class="step admin-part" id="part-logs">
-      <h3 class="step-title"><span class="step-num">Maintenance</span>Logs</h3>
+      <h2 class="step-title"><span class="step-num">Maintenance</span>Logs</h2>
     <div class="grid-2">
       <div class="panel">
         <h3 style="margin-top:0">Exchange log</h3>
@@ -201,7 +208,7 @@
     </div>
     </section>
     <section class="step admin-part" id="part-reset">
-      <h3 class="step-title"><span class="step-num">Maintenance</span>Start over</h3>
+      <h2 class="step-title"><span class="step-num">Maintenance</span>Start over</h2>
     <div class="panel narrow danger-zone">
       <p class="small" style="margin-top:0">Deletes <strong>all</strong> recipes, meal plans and activity, for example between two classes. Download a backup first.</p>
       <div class="confirm-row">

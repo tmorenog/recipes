@@ -12,9 +12,11 @@
   let overview = null;
   let selected = hashId() || null;
   let detail = null;
+  let detailError = null; // why the open cart couldn't be loaded
   let test = null;
   let promptDirty = false;
   let timer = null;
+  let lastOk = null; // when the recipes on screen were loaded
 
   // ---------------------------------------------------------------- helpers
   // Props with a dash (aria-expanded, aria-label) are attributes; the rest are properties.
@@ -56,20 +58,27 @@
   const thumb = (u) => (/^https:\/\/www\.themealdb\.com\/images\//i.test(u) ? `${u}/small` : u);
   const pill = (status) => el('span', { className: `pill price-${status}`, textContent: STATUS[status] || status });
 
+  // No answer at all (offline, server down) comes back like any other failed call.
+  const OFFLINE = 'Couldn’t reach the server. Check your connection and try again.';
   async function getJson(url) {
-    const res = await fetch(url, { cache: 'no-store' });
+    const res = await fetch(url, { cache: 'no-store' }).catch(() => { throw new Error('no connection'); });
     const body = await res.json().catch(() => ({}));
     if (!res.ok) throw Object.assign(new Error((body.errors || [`HTTP ${res.status}`]).join(' ')), { status: res.status });
     return body;
   }
 
   async function control(action, body = {}) {
-    const res = await fetch(`/api/pricer?action=${action}`, {
-      method: 'POST',
-      headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' },
-      body: JSON.stringify(body),
-      cache: 'no-store',
-    });
+    let res;
+    try {
+      res = await fetch(`/api/pricer?action=${action}`, {
+        method: 'POST',
+        headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' },
+        body: JSON.stringify(body),
+        cache: 'no-store',
+      });
+    } catch {
+      return { ok: false, status: 0, body: {}, errors: [OFFLINE] };
+    }
     const out = await res.json().catch(() => ({}));
     if (res.status === 401) signOut('Your admin key was rejected. Sign in again.');
     return { ok: res.ok, body: out, errors: out.errors || (res.ok ? [] : [`HTTP ${res.status}`]) };
@@ -120,7 +129,14 @@
     e.preventDefault();
     const candidate = $('admin-key').value.trim();
     if (!candidate) return;
-    const res = await fetch('/api/admin/check', { headers: { authorization: `Bearer ${candidate}` }, cache: 'no-store' });
+    let res;
+    try {
+      res = await fetch('/api/admin/check', { headers: { authorization: `Bearer ${candidate}` }, cache: 'no-store' });
+    } catch {
+      $('signin-result').textContent = OFFLINE;
+      $('signin-result').className = 'keycheck-result bad';
+      return;
+    }
     if (!res.ok) {
       const out = await res.json().catch(() => ({}));
       $('signin-result').textContent = out.errors?.[0] || 'That key didn’t work.';
@@ -172,22 +188,26 @@
     }
     $('try').open = true;
     $('try').scrollIntoView({ behavior: 'smooth', block: 'start' });
-    await loadTest(r.body.id);
+    await loadTest(r.body.id).catch(() => {}); // the next refresh says so
     schedule();
   }
   $('run-test').addEventListener('click', runTest);
 
   async function loadTest(id = 'latest') {
+    const idle = () => {
+      $('test-now').replaceChildren(el('span', { className: 'dot' }), 'Idle: no test yet.');
+      $('test-feed').replaceChildren(el('li', { className: 'muted small', textContent: 'The Pricer Agent’s steps appear here while a test runs.' }));
+    };
     try {
       test = await getJson(`/api/pricer?test=${encodeURIComponent(id)}`);
     } catch (e) {
-      if (e.status === 404) {
-        $('test-now').replaceChildren(el('span', { className: 'dot' }), 'Idle: no test yet.');
-        $('test-feed').replaceChildren(el('li', { className: 'muted small', textContent: 'The Pricer Agent’s steps appear here while a test runs.' }));
-      }
+      if (e.status === 404) idle();
+      if (e.status !== 404 && test) throw e; // the test on screen stays; refresh() says it's stale
       if (e.status !== 404) $('test-result').replaceChildren(el('p', { className: 'errors', textContent: e.message }));
       return;
     }
+    // No test has run yet: { test: null } (older servers answer 404, above).
+    if (test?.test === null) { test = null; idle(); return; }
     renderTest();
   }
 
@@ -212,7 +232,7 @@
     const byLine = new Map((t.basket || []).map((e) => [e.line, e]));
     const running = t.status === 'running';
     const seconds = Math.round((new Date(t.updated_at) - new Date(t.created_at)) / 1000);
-    const title = el('h3', { className: 'test-title', textContent: t.name || 'Sample recipe' });
+    const title = el('h2', { className: 'test-title', textContent: t.name || 'Sample recipe' });
     const status = running
       ? el('p', { className: 'test-status running' }, pill('pricing'), ` Working… ${byLine.size} of ${t.ingredients.length} ingredients done`)
       : t.status === 'done'
@@ -343,7 +363,8 @@
             el('button', { type: 'button', className: 'btn small-btn linklike-btn', textContent: open ? 'Hide cart' : 'Cart', 'aria-expanded': String(open), onclick: () => toggle(p.meal_id) }),
           ),
         ),
-        open ? el('div', { className: 'rl-detail', id: 'detail' }, detail && detail.meal_id === p.meal_id ? detailBody(detail) : el('p', { className: 'muted small', textContent: 'Loading…' })) : null,
+        open ? el('div', { className: 'rl-detail', id: 'detail' }, detail && detail.meal_id === p.meal_id ? detailBody(detail)
+          : detailError ? el('p', { className: 'errors', textContent: `Couldn’t load the cart: ${detailError}` }) : el('p', { className: 'muted small', textContent: 'Loading…' })) : null,
       );
       return row;
     })));
@@ -353,8 +374,9 @@
     selected = selected === mealId ? null : mealId;
     history.replaceState(null, '', selected ? `#${encodeURIComponent(selected)}` : location.pathname);
     detail = null;
+    detailError = null;
     renderQueue();
-    if (selected) loadDetail();
+    if (selected) loadDetail().catch(() => {}); // the next refresh says so
   }
 
   // What the agent is doing: a one-line summary, then its latest steps across recipes.
@@ -376,12 +398,17 @@
 
   async function loadDetail() {
     if (!selected) return;
+    let failed = null;
     try {
       detail = await getJson(`/api/pricer?meal_id=${encodeURIComponent(selected)}`);
+      detailError = null;
     } catch (e) {
-      detail = null;
+      detailError = e.message;
+      if (detail?.meal_id !== selected) detail = null; // the cart on screen stays
+      failed = e;
     }
     renderQueue();
+    if (failed) throw failed;
   }
 
   function stepCard(s) {
@@ -473,10 +500,18 @@
   async function refresh() {
     try {
       overview = await getJson('/api/pricer');
+      lastOk = new Date();
       renderOverview();
       await Promise.all([selected ? loadDetail() : null, loadTest(test?.status === 'running' ? test.id : 'latest')]);
+      $('stale').hidden = true;
     } catch (e) {
-      $('queue').replaceChildren(el('p', { className: 'errors', textContent: `Couldn’t load the Pricer Agent: ${e.message}` }));
+      // Once something is on screen, a failed refresh keeps it and says how old it is.
+      if (overview) {
+        $('stale').textContent = `Couldn’t refresh (${e.message}). Showing ${lastOk.toLocaleTimeString()}.`;
+        $('stale').hidden = false;
+      } else {
+        $('queue').replaceChildren(el('p', { className: 'errors', textContent: `Couldn’t load the Pricer Agent: ${e.message}` }));
+      }
     }
     schedule();
   }

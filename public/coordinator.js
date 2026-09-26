@@ -286,7 +286,6 @@
     return [shown.length, data.exchanges.length ? 'Nothing matches these filters.' : 'No exchanges yet. They appear here as soon as an agent talks to the coordinator.'];
   }
 
-  // ---------------------------------------------------------------- render
   // ---------------------------------------------------------------- shopping
   // The active shopping plan and the earlier choices (drawn by shopping.js).
   function renderShopping() {
@@ -296,6 +295,7 @@
     keepState($('shopping-history'), () => $('shopping-history').replaceChildren(...history.map((c) => el('details', { className: 'history-item', 'data-key': c.id },
       el('summary', {}, `${new Date(c.created_at).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}: ${c.plan.group_name}’s plan, cart ${money(c.total_usd)}`),
       window.shoppingPlan(c)))));
+    $('shown').textContent = choice ? `Active plan${history.length ? ` · ${history.length} earlier` : ''}` : '';
     return [choice ? 1 : 0, 'No shopping plan yet. The instructor runs the Shopper Agent once the Meal Planner Agents have saved their plans.'];
   }
 
@@ -319,7 +319,8 @@
     fillSelect($('f-theme'), [...new Set(data.recipes.flatMap((r) => (r.picks?.length ? r.picks.map((p) => p.theme) : [r.theme])))].sort(), state.theme, 'All themes');
 
     const [count, emptyText] = state.view === 'recipes' ? renderRecipes() : state.view === 'plans' ? renderPlans() : state.view === 'shopping' ? renderShopping() : renderExchanges();
-    $('empty').hidden = count > 0 || !$('notice').hidden;
+    // Nothing loaded yet: the stamp says why, so no "nothing here yet" text.
+    $('empty').hidden = count > 0 || !$('notice').hidden || !lastOk;
     $('empty').textContent = emptyText;
   }
 
@@ -340,7 +341,7 @@
   }
 
   async function getJson(url) {
-    const res = await fetch(url, { cache: 'no-store' });
+    const res = await fetch(url, { cache: 'no-store' }).catch(() => { throw new Error('no connection'); });
     const body = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(body.errors?.[0] || `HTTP ${res.status}`);
     return body;
