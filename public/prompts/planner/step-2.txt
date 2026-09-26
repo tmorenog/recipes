@@ -1,4 +1,4 @@
-Enable Lovable Cloud. Connect Meal Planner’s backend to the coordinator using MCP. The MCP server is at this address: {{SITE}}/api/mcp?agent=planner
+Enable Lovable Cloud. Connect Meal Planner’s backend to the coordinator using MCP. The app itself talks to the coordinator while it runs. The MCP server is at this address: {{SITE}}/api/mcp?agent=planner
 
 For now, only establish the connection, discover the tools offered by the coordinator and use them to show the class’s recipes. Do not add an AI agent yet.
 
