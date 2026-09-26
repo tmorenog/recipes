@@ -819,6 +819,8 @@ section.step.substep:not(:has(+ section.step.substep))::before { bottom: 50%; }
 .history-item > summary { cursor: pointer; padding: 8px 0; font-weight: 600; }
 .people-field { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; }
 .people-field input { width: 6em; font: inherit; font-weight: 400; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); }
+.group-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.group-row .group-input { flex: 1; min-width: 160px; }
 .group-gate { max-width: none; margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 10px 16px; border-bottom: 1px solid var(--line); background: var(--surface); }
 .group-gate-label { margin: 0; font-weight: 600; font-size: 14px; }
 .group-gate input { max-width: 240px; }

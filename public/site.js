@@ -184,6 +184,7 @@
     for (const input of document.querySelectorAll('.group-input')) input.value = group;
     fill();
     updateGates();
+    for (const f of shows) f();
   });
 
   // Sample prompts: the text files under /prompts/ (<div data-prompt="/prompts/scout/step-2.txt" data-step="12">),
@@ -363,42 +364,62 @@
     return usedGroups;
   };
 
+  // A group-name box: type a name, then "Use this name" (or Enter) saves it,
+  // fills it into the prompts and unlocks the prompts that need it.
+  const shows = [];
   for (const input of document.querySelectorAll('.group-input')) wireGroupInput(input);
   function wireGroupInput(input) {
-    const note = input.closest('.group-box')?.querySelector('.group-note');
+    const box = input.closest('.group-box');
+    const note = box?.querySelector('.group-note');
+    const use = Object.assign(document.createElement('button'), { type: 'button', className: 'btn primary group-use', textContent: 'Use this name' });
+    const row = Object.assign(document.createElement('div'), { className: 'group-row' });
+    input.before(row);
+    row.append(input, use);
     let timer;
     const show = () => {
+      const typed = normalize(input.value);
+      use.disabled = !typed || typed === group;
       if (!note) return;
       note.className = 'group-note small';
-      if (!group) {
-        note.textContent = input.value.trim() ? 'Use letters, numbers and dashes, e.g. team-3.' : 'Type your group name; the prompts fill it in.';
+      clearTimeout(timer);
+      if (typed && typed !== group) {
+        note.textContent = `Press “Use this name” (or Enter) to use “${typed}”.`;
         return;
       }
-      note.textContent = `The prompts use “${group}”.`;
+      if (!typed) {
+        note.textContent = input.value.trim() ? 'Use letters, numbers and dashes, e.g. team-3.' : group ? `The prompts use “${group}”.` : 'Type your group name, then press “Use this name”.';
+        return;
+      }
+      note.textContent = `Saved: the prompts use “${group}”.`;
+      note.classList.add('ok');
       // Is the name already taken? Only worth saying if another group might be using it.
-      clearTimeout(timer);
       timer = setTimeout(async () => {
         const used = await groupsInUse();
         if (!used || normalize(input.value) !== group) return;
         if (used.has(group)) {
-          note.textContent = `“${group}” already has saved work on the Coordinator page. If that isn’t your group, choose another name.`;
-          note.classList.add('warn');
+          note.textContent = `Saved, but “${group}” already has saved work on the Coordinator page. If that isn’t your group, choose another name.`;
+          note.className = 'group-note small warn';
         } else {
-          note.textContent = `“${group}” is free, and the prompts use it.`;
-          note.classList.add('ok');
+          note.textContent = `Saved: “${group}” is free, and the prompts use it.`;
         }
       }, 400);
     };
-    input.value = group;
-    show();
-    input.addEventListener('input', () => {
-      group = normalize(input.value);
-      try { group ? localStorage.setItem(GROUP_KEY, group) : localStorage.removeItem(GROUP_KEY); } catch { /* ignore */ }
-      for (const other of document.querySelectorAll('.group-input')) if (other !== input) other.value = input.value;
+    const commit = () => {
+      const typed = normalize(input.value);
+      if (!typed) return show();
+      group = typed;
+      try { localStorage.setItem(GROUP_KEY, group); } catch { /* ignore */ }
+      for (const other of document.querySelectorAll('.group-input')) other.value = group;
       fill();
-      show();
       updateGates();
-    });
+      for (const f of shows) f();
+    };
+    input.value = group;
+    shows.push(show);
+    show();
+    input.addEventListener('input', show);
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); commit(); } });
+    use.addEventListener('click', commit);
   }
 
   // Prompts that use the group name (the steps that connect to the coordinator)
