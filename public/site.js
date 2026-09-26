@@ -508,12 +508,12 @@
       out.textContent = 'Checking…';
       try {
         const res = await fetch('/api/whoami', { headers: { authorization: `Bearer ${key}` }, cache: 'no-store' });
-        const body = await res.json();
         if (res.ok) {
           out.textContent = 'This key works.';
           out.classList.add('ok');
         } else {
-          out.textContent = body.errors?.[0] || 'That isn’t the class key.';
+          // The API's own error is written for agents ("Send two headers…"); students get plain words.
+          out.textContent = res.status === 401 ? 'That class key isn’t right. Check it with your instructor.' : `Couldn’t check the key (HTTP ${res.status}). Try again in a minute.`;
           out.classList.add('bad');
         }
       } catch {
