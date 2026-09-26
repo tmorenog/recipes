@@ -258,7 +258,7 @@
     const r = await control('prompt', { prompt: $('prompt').value });
     if (!r.ok) return toast(r.errors.join(' '), true);
     promptDirty = false;
-    toast('Saved. Recipes priced from now on use these instructions; Reprice all (section 3) applies them to the rest.');
+    toast('Saved. Recipes priced from now on use these instructions; Reprice all, under View how the Pricer Agent works, applies them to the rest.');
     refresh();
   });
 
@@ -366,7 +366,7 @@
     const line = now.length
       ? `Pricing ${now.map((p) => `${p.name} (${p.lines_done ?? 0} of ${p.lines ?? '?'} ingredients)`).join(' and ')}${waiting ? `; ${waiting} waiting` : ''}.`
       : waiting ? `${waiting} recipe${waiting === 1 ? '' : 's'} waiting; the agent starts within a minute.`
-        : testRunning ? 'Running a test on the sample recipe (section 2).'
+        : testRunning ? 'Running a test on the sample recipe (see it under Learn more).'
           : o.problem ? 'Stopped: see the message at the top of the page.' : 'Idle: nothing to price right now.';
     $('agent-now').replaceChildren(el('span', { className: `dot ${now.length || testRunning ? 'on' : ''}` }), line);
     $('feed').replaceChildren(...(o.activity || []).map((s) => feedItem(s,

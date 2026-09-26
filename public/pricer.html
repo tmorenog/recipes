@@ -57,8 +57,6 @@
       <p class="flow-note">to the coordinator, where the Meal Planner Agents compare recipes by cost</p>
     </div>
   </figure>
-  <p class="small per-person-note"><strong>Why per person?</strong> The Meal Planners compare dinners by what one serving costs. The class’s recipes will be cooked for many people, so the Pricer Agent prices each recipe at scale (a cart for 50 people) and each serving pays only for the share of each package it uses. The <a href="/shopper">Shopper Agent</a> later turns the chosen plan into one real cart for the number of people shopping, in whole packages.</p>
-  <p class="pricer-facts small" id="facts"></p>
   <section class="notice" id="problem" hidden></section>
 
   <details class="instructor-signin" id="signin">
@@ -78,7 +76,8 @@
   <details class="more-info" id="instructions">
   <summary>The Pricer Agent’s instructions</summary>
   <p>The prompt the Pricer Agent follows: how many people the cart feeds, how to choose products, and when to skip an ingredient.</p>
-  <p class="small muted instructor-only" hidden>A test in section 2 uses what’s in the box, saved or not, so you can try a change before saving it. Saved instructions apply to recipes priced from then on; <strong>Reprice all</strong> in section 3 applies them to the rest.</p>
+  <p class="pricer-facts small" id="facts"></p>
+  <p class="small muted instructor-only" hidden>A test under <strong>See it work on a sample recipe</strong> uses what’s in the box, saved or not, so you can try a change before saving it. Saved instructions apply to recipes priced from then on; <strong>Reprice all</strong>, under <strong>View how the Pricer Agent works</strong>, applies them to the rest.</p>
   <div class="prompt pricer">
     <div class="prompt-head">
       <p class="prompt-kind" id="prompt-kind">Prompt</p>
@@ -89,6 +88,11 @@
   <div class="row-actions prompt-actions" id="prompt-actions" hidden>
     <button class="btn primary" type="button" id="save-prompt">Save</button>
   </div>
+  </details>
+
+  <details class="more-info" id="per-serving">
+  <summary>Why prices are per serving</summary>
+  <p>The class’s recipes will be cooked for many people, so the Pricer Agent prices each recipe at scale (a cart for 50 people): each serving pays only for its share of each package. The <a href="/shopper">Shopper Agent</a> later buys whole packages for the class, so its cart costs a little more per person.</p>
   </details>
 
   <details class="more-info" id="try">
