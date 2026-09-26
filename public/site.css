@@ -811,3 +811,5 @@ section.step.collapsed { padding-block: 10px; }
 @media (prefers-reduced-motion: reduce) { .prompt-toggle::before { transition: none; } }
 .prompt-head { flex-wrap: wrap; justify-content: flex-start; gap: 8px; }
 .prompt-head .prompt-kind { margin-right: auto; }
+.prompt-head.toggles { cursor: pointer; }
+.prompt-head.toggles:hover .prompt-toggle { color: var(--ink); }

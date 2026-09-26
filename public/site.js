@@ -121,6 +121,10 @@
       promptsOpen[body.id] = open;
       try { localStorage.setItem(promptMemoryKey, JSON.stringify(promptsOpen)); } catch { /* ignore */ }
     });
+    // The whole header bar opens and closes it too, except its other buttons.
+    const head = label.closest('.prompt-head');
+    head.classList.add('toggles');
+    head.addEventListener('click', (e) => { if (!e.target.closest('button, a, input, textarea')) toggle.click(); });
     setOpen(promptsOpen[body.id] ?? false);
   }
 
@@ -201,7 +205,8 @@
     const head = frame?.querySelector('.prompt-head');
     if (!head) return;
     const make = (tag, props) => Object.assign(document.createElement(tag), props);
-    const label = head.querySelector('.prompt-kind');
+    // Relabel the text only: the label holds the button that opens and closes the prompt.
+    const label = head.querySelector('.prompt-kind .prompt-toggle') ?? head.querySelector('.prompt-kind');
     const showLabel = () => { if (label) label.textContent = p.edited ? 'Sample prompt · edited by the instructor' : 'Sample prompt'; };
     showLabel();
     const editBtn = make('button', { type: 'button', className: 'btn', textContent: 'Edit' });
