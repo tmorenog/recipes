@@ -2,7 +2,7 @@ We are going to use TheMealDB API to find real recipes. Read and follow the impl
 
 https://www.themealdb.com/AGENTS.md
 
-Use TheMealDB’s free developer key “1.”
+Use TheMealDB’s free developer key, which is the number 1, as in https://www.themealdb.com/api/json/v1/1/search.php?s=soup
 
 Enable Lovable Cloud. All requests to TheMealDB must be made from the backend.
 
