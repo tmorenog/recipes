@@ -8,6 +8,10 @@ import { poolConfig } from '../lib/db.js';
 import { setStore } from '../lib/store/index.js';
 import { postgresStore } from '../lib/store/postgres.js';
 import { forgetSettings } from '../lib/settings.js';
+import { setMealDbForTests } from '../lib/mealdb.js';
+
+// Test recipes have made-up meal_ids: only the TheMealDB test checks them.
+setMealDbForTests({ enabled: false });
 
 export const TEST_DB = process.env.TEST_DATABASE_URL;
 

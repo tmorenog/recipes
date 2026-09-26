@@ -51,6 +51,8 @@
         <legend>Recipe Scouts</legend>
         <label>Recipes per group <input type="number" min="0" max="1000" step="1" name="max_recipes_per_group"></label>
         <p class="small muted">Every pick counts, including a recipe another group had already saved.</p>
+        <label class="check"><input type="checkbox" name="verify_recipes"> Check every recipe against TheMealDB before storing it</label>
+        <p class="small muted">The recipe must exist there, with the same name and ingredients. Untick only if TheMealDB is misbehaving; if it can’t be reached, recipes are accepted with a note anyway.</p>
       </fieldset>
       <fieldset>
         <legend>Meal Planners</legend>

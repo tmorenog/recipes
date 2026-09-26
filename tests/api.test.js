@@ -126,6 +126,45 @@ for (const backend of BACKENDS) {
       assert.equal(checked.format_notes.length, 7);
     });
 
+    test('only real recipes are stored: each is checked against TheMealDB', async () => {
+      const { setMealDbForTests } = await import('../lib/mealdb.js');
+      const meals = { 52772: { idMeal: '52772', strMeal: 'Chickpea curry', strIngredient1: 'Chickpeas', strIngredient2: 'Salt', strIngredient3: '' } };
+      let lookups = 0;
+      let down = false;
+      setMealDbForTests({
+        enabled: null,
+        fetch: async (url) => {
+          lookups += 1;
+          if (down) throw new Error('offline');
+          const id = new URL(url).searchParams.get('i');
+          return new Response(JSON.stringify({ meals: meals[id] ? [meals[id]] : null }), { headers: { 'content-type': 'application/json' } });
+        },
+      });
+      try {
+        const client = await mcp('team-8');
+        const save = async (r) => client.callTool({ name: 'save_recipe', arguments: r });
+        const wrongName = await save(recipe({ meal_id: '52772', name: 'Chicken tikka' }));
+        assert.match(wrongName.content[0].text, /meal_id 52772 is “Chickpea curry” on TheMealDB, not “Chicken tikka”/);
+        const madeUp = await save(recipe({ meal_id: '11111' }));
+        assert.match(madeUp.content[0].text, /does not exist on TheMealDB/);
+        const invented = await save(recipe({ meal_id: '52772', ingredients: [{ name: 'chickpeas', amount: 1, unit: null, raw: '1' }, { name: 'saffron', amount: 1, unit: null, raw: '1' }] }));
+        assert.match(invented.content[0].text, /missing Salt; not in this recipe on TheMealDB: saffron/);
+
+        const ok = await save(recipe({ meal_id: '52772', name: 'CHICKPEA  Curry' }));
+        assert.equal(ok.isError, undefined, ok.content[0].text);
+        assert.equal(lookups, 2, 'each meal is looked up once, then cached');
+
+        // TheMealDB down: accepted, with a note.
+        down = true;
+        meals[52773] = null;
+        const unchecked = out(await save(recipe({ meal_id: '52773', theme: 'another theme' })));
+        assert.equal(unchecked.saved, true);
+        assert.match(unchecked.format_notes.join(' '), /could not be reached/);
+      } finally {
+        setMealDbForTests({ enabled: false, fetch: null });
+      }
+    });
+
     test('save_recipe stores each recipe once, counts every group that picks it, and rejects repeats and incomplete recipes', async () => {
       const client = await mcp('team-2');
       const r = recipe({ meal_id: '52772' });
