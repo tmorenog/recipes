@@ -168,9 +168,11 @@
   function planCard(p, recipesById) {
     // Plans store the week's cost per person (older plans: the shopping list total).
     const perPerson = p.meals.some((m) => typeof m.day === 'string');
-    const over = p.budget_usd != null && p.total_cost_usd > p.budget_usd;
+    // The budget is the most a dinner may cost on average, per person.
+    const perDinner = perPerson && p.meals.length ? p.total_cost_usd / p.meals.length : null;
+    const over = p.budget_usd != null && perDinner != null && perDinner > p.budget_usd + 0.005;
     const total = el('span', { className: `plan-total${over ? ' over' : ''}` }, money(p.total_cost_usd),
-      el('small', { textContent: [perPerson ? 'per person for the week' : 'total', p.budget_usd != null ? `budget ${money(p.budget_usd)}${over ? ', over' : ''}` : null].filter(Boolean).join(' · ') }));
+      el('small', { textContent: [perPerson ? 'per person for the week' : 'total', perDinner != null ? `${money(perDinner)} a dinner` : null, p.budget_usd != null && perPerson ? `budget ${money(p.budget_usd)} a dinner${over ? ', over' : ''}` : null].filter(Boolean).join(' · ') }));
 
     const meals = el('ul', { className: 'meals' },
       ...[...p.meals].sort((a, b) => dayIndex(a.day) - dayIndex(b.day)).map((m) => {

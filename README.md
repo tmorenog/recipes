@@ -160,11 +160,11 @@ curl -X POST https://<your-site>.vercel.app/api/recipes \
 ```
 
 ### Meal plans
-A plan is `{ budget_usd, summary, meals }`: the budget in US dollars per person for the week, and five dinners, each `{ day, recipe_id, why }`, optionally with `nutrition_per_serving` (the agent’s own estimate, shown but not checked). The coordinator fills in each dinner’s cost per serving from the Pricer and adds up the week, so no cost in a plan comes from the AI.
+A plan is `{ budget_usd, summary, meals }`: the budget (the most a dinner may cost on average, in US dollars per person), and five dinners, each `{ day, recipe_id, why }`, optionally with `nutrition_per_serving` (the agent’s own estimate, shown but not checked). The coordinator fills in each dinner’s cost per serving from the Pricer and adds up the week, so no cost in a plan comes from the AI.
 
 Rejected (nothing saved): a day missing or repeated (Monday to Friday, each once), a recipe used twice, an unknown `recipe_id`, or a recipe that isn’t priced yet.
 
-Checked and reported with ✓ or ✗ (the plan is saved either way): the week’s cost per person within the budget; at least 3 cuisines; no category more than twice; at least one vegetarian or vegan dinner. All are worked out from the stored data. The instructor can change the numbers on the Admin page; the rules are in `lib/plans.js`.
+Checked and reported with ✓ or ✗ (the plan is saved either way): the average cost of a dinner per person within the budget; at least 3 cuisines; no category more than twice; at least one vegetarian or vegan dinner. All are worked out from the stored data. The instructor can change the numbers on the Admin page; the rules are in `lib/plans.js`.
 
 ## Checking the setup
 
