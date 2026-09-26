@@ -1,6 +1,6 @@
 # Meal Squad
 
-The site for Meal Squad, a class exercise in agent systems. Groups build AI agents in Lovable: a **Recipe Scout** that finds recipes, and a **Meal Planner** that turns them into five balanced, affordable dinners. A third agent, the **Recipe Pricer**, is already built and prices each recipe at Kroger. This site hosts the instructions and the coordinator: the shared database, reached over MCP, that connects the agents.
+The site for Meal Squad, a class exercise in agent systems. Groups build AI agents in Lovable: a **Scout Agent** that finds recipes, and a **Meal Planner Agent** that turns them into five varied, affordable dinners. Two more agents run on this site: the **Pricer Agent** prices each recipe at Kroger, and the **Shopper Agent** chooses the class's plan and builds its Kroger cart. This site hosts the instructions and the coordinator: the shared database, reached over MCP, that connects the agents.
 
 **Pages**
 - **Welcome** (`/`): what the exercise is, how the pieces fit, and a check that the class key works.
@@ -13,6 +13,26 @@ The site for Meal Squad, a class exercise in agent systems. Groups build AI agen
 - **MCP** at `/api/mcp` with eight tools: `get_contract`, `save_recipe`, `list_recipes`, `mark_processed`, `check_meal_plan`, `save_meal_plan`, `find_kroger_stores`, `search_kroger_products`. With `?agent=planner` the Meal Planner Agent sees `get_contract`, `list_recipes`, `check_meal_plan` and `save_meal_plan`.
 
 Everyone shares one class key. Each group also sends its chosen group name (header `X-Group`), so each recipe and plan records who made it. Kroger lookups use the instructor's Kroger credentials, so students need none.
+
+## The coordinator
+
+The coordinator is the hub the agents work through. It is not an agent: it uses no AI, follows fixed rules and gives the same answer every time. The agents never talk to each other; each saves its work to the coordinator, which:
+
+- **checks** what it receives: the format, that a recipe is real (looked up on TheMealDB), the per-group limits, and the class's rules for a meal plan;
+- **stores** recipes, meal plans and the class's choice, and shows every request and answer on the Coordinator page;
+- **works out the numbers** itself (a plan's cost comes from the Pricer's prices, never from an agent);
+- **describes itself** over MCP: each agent sees only its own tools (`?agent=scout|planner|shopper`), and `get_contract` returns its role, formats, checks and limits, built from the live settings, so agents need none of it written into their code.
+
+It deliberately says nothing about an agent's goals: those come from the students' prompts. Where the code lives:
+
+| Part | File |
+| --- | --- |
+| The MCP endpoint, key and group check | `api/mcp.js`, `lib/auth.js` |
+| Tools, their descriptions and the connection message | `lib/mcp.js` |
+| What `get_contract` returns | `lib/contract.js` |
+| Recipe, meal-plan and cart rules | `lib/recipes.js`, `lib/plans.js`, `lib/shopper.js` |
+| The limits and rules set on the Admin page | `lib/settings.js` |
+| Storage and the request log | `lib/store/postgres.js`, `schema.sql`, `lib/exchanges.js` |
 
 ## Deploy
 
