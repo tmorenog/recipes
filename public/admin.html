@@ -98,14 +98,30 @@
         <p class="small muted">Unticked, new recipes wait as “not priced” until you use <em>Price unpriced recipes</em> on the <a href="/pricer">Recipe Pricer page</a>.</p>
         <label>Recipes priced per hour <input type="number" min="0" max="1000" step="1" name="max_priced_per_hour"></label>
       </fieldset>
+      <fieldset>
+        <legend>Meal Planners and the Shopper</legend>
+        <label>Start the Shopper Agent by itself after this many meal plans <input type="number" min="0" max="1000" step="1" name="auto_shopper_after_plans"></label>
+        <p class="small muted">Only while the class has no plan yet, and at most once every 30 minutes. 0: only when you run it.</p>
+      </fieldset>
       <fieldset class="checks-set">
-        <legend>Meal plan checks</legend>
-        <p class="small muted" style="margin-top:0">What <code>check_meal_plan</code> and <code>save_meal_plan</code> report for every plan, besides the budget.</p>
+        <legend>Meal plan rules</legend>
+        <p class="small muted" style="margin-top:0">What <code>check_meal_plan</code> and <code>save_meal_plan</code> report for every plan. The budget is always checked; each rule below is off at 0, unticked or empty.</p>
+        <div class="preset-row">
+          <label>Preset <select id="preset-select"><option value="">Choose a preset…</option></select></label>
+          <button class="btn" type="button" id="preset-use">Use this preset</button>
+        </div>
+        <p class="small muted" id="preset-about"></p>
         <div class="settings-grid">
-          <label>Different cuisines, at least <input type="number" min="0" max="5" name="checks.min_cuisines"></label>
-          <label>Same category, at most <input type="number" min="1" max="5" name="checks.max_same_category"></label>
+          <label>Different cuisines, at least <input type="number" min="0" max="5" step="1" name="checks.min_cuisines"></label>
+          <label>Same category, at most <input type="number" min="0" max="5" step="1" name="checks.max_same_category"></label>
+          <label>Most a dinner may cost, $ per person <input type="number" min="0" max="100" step="0.25" name="checks.max_dinner_usd"></label>
+          <label>Longest cooking time, minutes <input type="number" min="0" max="600" step="5" name="checks.max_minutes"></label>
+          <label>Dinners picked by 2+ groups, at least <input type="number" min="0" max="5" step="1" name="checks.min_popular"></label>
         </div>
         <label class="check"><input type="checkbox" name="checks.require_vegetarian"> At least one vegetarian or vegan dinner</label>
+        <label class="check"><input type="checkbox" name="checks.no_category_twice_in_a_row"> No category (e.g. Beef) on two days in a row</label>
+        <label class="wide">No dinner contains (comma-separated) <input type="text" maxlength="300" name="checks.excluded_ingredients" placeholder="e.g. peanut, shrimp"></label>
+        <p class="small muted">Checked against ingredient names only: “peanut” also catches “peanut butter”. Free-text dietary needs stay the Meal Planner Agent’s job.</p>
       </fieldset>
       <div class="row-actions">
         <button class="btn primary" type="submit">Save limits and checks</button>

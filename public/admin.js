@@ -105,6 +105,7 @@
     $('admin').hidden = false;
     describeSample();
     loadSettings();
+    loadPresets();
     loadNotes();
     loadPrompts();
     await load();
@@ -354,7 +355,7 @@
   function readSettings() {
     const out = { checks: {} };
     for (const el of form.querySelectorAll('input[name]')) {
-      const value = el.type === 'checkbox' ? el.checked : Number(el.value);
+      const value = el.type === 'checkbox' ? el.checked : el.type === 'text' ? el.value.trim() : Number(el.value);
       if (el.name.startsWith('checks.')) out.checks[el.name.slice(7)] = value; else out[el.name] = value;
     }
     return out;
@@ -363,6 +364,27 @@
     const r = await api('GET', 'settings');
     if (r.ok) fillSettings(r.body.settings); else settingsResult(`Couldn’t load the current settings: ${r.errors.join(' ')}`, true);
   }
+
+  // Presets fill in every meal-plan rule; nothing is saved until you press Save.
+  let presets = {};
+  async function loadPresets() {
+    try {
+      presets = (await (await fetch('/api/settings')).json()).plan_presets || {};
+    } catch {
+      presets = {};
+    }
+    $('preset-select').replaceChildren(el('option', { value: '', textContent: 'Choose a preset…' }),
+      ...Object.entries(presets).map(([key, p]) => el('option', { value: key, textContent: p.name })));
+  }
+  $('preset-select').addEventListener('change', () => {
+    $('preset-about').textContent = presets[$('preset-select').value]?.about ?? '';
+  });
+  $('preset-use').addEventListener('click', () => {
+    const p = presets[$('preset-select').value];
+    if (!p) return settingsResult('Choose a preset first.', true);
+    for (const [k, v] of Object.entries(p.checks)) setField(`checks.${k}`, v);
+    settingsResult(`${p.name} filled in: adjust anything, then save.`);
+  });
   function settingsResult(text, bad = false) {
     $('settings-result').textContent = text;
     $('settings-result').className = `small ${bad ? 'bad' : 'good'}`;
