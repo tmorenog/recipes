@@ -411,6 +411,7 @@
       try { localStorage.setItem(GROUP_KEY, group); } catch { /* ignore */ }
       for (const other of document.querySelectorAll('.group-input')) other.value = group;
       fill();
+      for (const g of gates) g.editing = false; // a saved name folds the "Change" boxes back
       updateGates();
       for (const f of shows) f();
     };
@@ -437,21 +438,37 @@
     }
     if (p.gate) return updateGates();
     const make = (tag, props = {}, ...kids) => { const n = Object.assign(document.createElement(tag), props); n.append(...kids); return n; };
+    // With a name: a quiet line saying the prompt uses it, and "Change".
+    const name = make('strong');
+    const change = make('button', { type: 'button', className: 'linklike', textContent: 'Change' });
+    const view = make('p', { className: 'group-gate-view small' }, 'This prompt uses your group name: ', name, ' · ', change);
+    // Without one (or after "Change"): the name box, as on the Welcome page.
     const label = make('p', { className: 'group-gate-label' });
     const input = make('input', { className: 'group-input', type: 'text', placeholder: 'e.g. team-3', autocomplete: 'off', spellcheck: false, value: group });
     input.setAttribute('aria-label', 'Your group name');
-    const el = make('div', { className: 'group-gate group-box' }, label, input, make('p', { className: 'group-note small' }));
+    const cancel = make('button', { type: 'button', className: 'linklike group-cancel', textContent: 'Cancel' });
+    const edit = make('div', { className: 'group-box group-gate-edit' }, label, input, make('p', { className: 'group-note small' }));
+    const el = make('div', { className: 'group-gate' }, view, edit);
     frame.querySelector('.prompt-head')?.after(el);
     wireGroupInput(input);
-    p.gate = { el, btn, label };
-    gates.push(p.gate);
+    input.closest('.group-row')?.append(cancel);
+    const gate = { el, btn, label, name, view, edit, input, cancel, editing: false };
+    change.addEventListener('click', () => { gate.editing = true; updateGates(); input.focus(); input.select(); });
+    cancel.addEventListener('click', () => { gate.editing = false; input.value = group; input.dispatchEvent(new Event('input')); updateGates(); });
+    p.gate = gate;
+    gates.push(gate);
     updateGates();
   }
   function updateGates() {
     for (const g of gates) {
+      const editing = !group || g.editing;
       g.btn.disabled = !group;
       g.btn.title = group ? '' : 'Enter your group name first';
-      g.label.textContent = group ? 'Your group name (the prompt uses it)' : 'Enter your group name first: this prompt uses it';
+      g.name.textContent = group;
+      g.view.hidden = editing;
+      g.edit.hidden = !editing;
+      g.cancel.hidden = !group;
+      g.label.textContent = group ? 'Change your group name (every prompt uses it)' : 'Enter your group name first: this prompt uses it';
       g.el.classList.toggle('missing', !group);
     }
   }

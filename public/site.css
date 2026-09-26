@@ -823,6 +823,9 @@ section.step.substep:not(:has(+ section.step.substep))::before { bottom: 50%; }
 .group-row .group-input { flex: 1; min-width: 160px; }
 .group-gate { max-width: none; margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 10px 16px; border-bottom: 1px solid var(--line); background: var(--surface); }
 .group-gate-label { margin: 0; font-weight: 600; font-size: 14px; }
+.group-gate-view { margin: 0; flex-basis: 100%; }
+.group-gate-edit { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin: 0; max-width: none; flex-basis: 100%; }
+.group-gate-edit[hidden], .group-gate-view[hidden] { display: none; }
 .group-gate input { max-width: 240px; }
 .group-gate .group-note { margin: 0; flex-basis: 100%; }
 .group-gate.missing { background: var(--new-bg); }
