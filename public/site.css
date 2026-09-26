@@ -305,7 +305,7 @@ details summary { cursor: pointer; font-weight: 600; font-size: 14px; color: var
 .edit-row td { background: var(--surface-2); }
 .json-edit { width: 100%; font: 13px/1.5 var(--mono); padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); margin: 6px 0 8px; }
 .danger-zone { border-color: color-mix(in srgb, var(--bad-ink) 35%, var(--line)); }
-h2 .count { font: 500 15px var(--mono); color: var(--muted); margin-left: 6px; }
+h2 .count, .step-title .count { font: 500 15px var(--mono); color: var(--muted); margin-left: 6px; }
 
 /* A build step: title and what it does, then the sample prompt in a framed box. */
 .step { margin: 40px 0; }
