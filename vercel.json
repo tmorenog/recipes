@@ -25,10 +25,6 @@
   ],
   "rewrites": [
     {
-      "source": "/favicon.ico",
-      "destination": "/favicon.svg"
-    },
-    {
       "source": "/api/mcp/",
       "destination": "/api/mcp"
     },
@@ -50,6 +46,11 @@
       "source": "/database",
       "destination": "/coordinator",
       "permanent": false
+    },
+    {
+      "source": "/favicon.ico",
+      "destination": "/favicon.svg",
+      "permanent": true
     }
   ]
 }
