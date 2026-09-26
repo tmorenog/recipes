@@ -1,5 +1,0 @@
-Improve the page:
-- "Plan my week" is disabled until the run ends.
-- "What the agent is doing" shows tool names and inputs, results collapsed (click for JSON), failed rules and coordinator rejections in red, a counter like "12 / 30 tool calls" and the time left.
-- Each dinner links to its recipe on TheMealDB (https://www.themealdb.com/meal/MEAL_ID). Credit TheMealDB for the photos.
-- Keep a list of past runs so I can reopen any earlier trace and plan.

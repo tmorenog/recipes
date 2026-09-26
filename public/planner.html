@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Meal Planner · Meal Squad</title>
-<meta name="description" content="Step-by-step Lovable prompts for Agent 2, the Meal Planner: a balanced, cheap Monday-to-Friday plan within a budget.">
+<meta name="description" content="Step-by-step Lovable prompts for Agent 3, the Meal Planner: a balanced, cheap Monday-to-Friday plan within a budget.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=JetBrains+Mono:wght@400;500&family=Source+Sans+3:wght@400;600&display=swap">
@@ -31,191 +31,90 @@
   <div class="page-head">
     <span class="agent-tag planner">Agent 3</span>
     <h1>Build the Meal Planner</h1>
-    <p class="lede">An agent that takes a budget, reads the recipes the class has found, and plans five dinners, Monday to Friday, that are nutritious, varied and cheap. It shows the week and saves the plan to the coordinator.</p>
+    <p class="lede">An agent that takes a budget, reads the recipes the Scout Agents found and the Pricer Agent priced, and plans five dinners, Monday to Friday, that are nutritious, varied and cheap. It shows the week and saves the plan to the coordinator.</p>
   </div>
 
 
-  <h2 id="goal">The goal</h2>
-  <div class="panel narrow">
-    <p style="margin-top:0"><strong>Your Planner is done when:</strong> you enter a budget, press a button, watch it work step by step, and a Monday-to-Friday plan appears in your app and on the <a href="/coordinator">Coordinator page</a> under your group.</p>
-    <ul class="checklist">
-      <li>It uses only recipes the class saved, with the prices the <a href="/pricer">Pricer</a> worked out.</li>
-      <li>It estimates each dinner’s nutrition from the ingredients, and says these are estimates.</li>
-      <li>It considers popularity: recipes picked by more groups are ones the class likes.</li>
-      <li>It learns how to work with the coordinator (<code>get_contract</code>: formats, checks, limits) instead of having them written into its code. Its goals come from your instructions.</li>
-      <li>It checks its plan with the coordinator, and improves it until the rules pass or it can explain why they can’t.</li>
-      <li>Costs are added up by the coordinator, never guessed by the AI.</li>
-      <li>You can see its progress, tool calls and results.</li>
-    </ul>
+  <h2 id="build">Build it in stages</h2>
+  <div class="stages-intro">
+    <p>You’ll build Meal Planner in three stages. First, you’ll create a simple interface. Then you’ll connect it to the class coordinator to read the recipes the Scout Agents found and the Pricer Agent priced. Finally, you’ll add an AI agent that plans the week, checks it with the coordinator and saves it.</p>
+    <p>You will change and rework parts of the app as you go. That is intentional. The goal is to understand how the system develops—not to build the perfect application on the first attempt.</p>
+    <p class="action-def">As in Recipe Scout, an <strong>action</strong> is something the agent can do, such as reading the recipes or checking a plan. These actions are sometimes called <strong>tools</strong>.</p>
   </div>
-
-  <h2 id="build">Build it in Lovable, step by step</h2>
-  <p>Each step says what it adds, then gives a <strong>sample prompt</strong>. Copy the prompt into Lovable as it is, or edit it to make the app your own, then check the result before moving on. Your app uses Lovable Cloud for its backend and Lovable’s built-in AI for the agent, so the only key you need is the class key.</p>
+  <p class="small muted">Each step has a goal, a <strong>sample prompt</strong> to copy into Lovable (use it as it is or change it), what you should see, and things you can try before moving on.</p>
 
   <section class="step" id="step-1">
-    <h3 class="step-title"><span class="step-num">Step 1 of 5</span>Build the interface</h3>
-    <p class="step-what">Sets up your Lovable project and the page: a budget, dietary requirements (hard constraints) and preferences, a button, an empty Monday-to-Friday week and an outcome area. No agent yet.</p>
+    <h3 class="step-title"><span class="step-num">Step 1</span>Build the interface</h3>
+    <div class="step-goal"><p class="step-label">Goal</p><p>Create the page where you enter a budget, dietary requirements and preferences, and where the week will appear. There is no AI, backend or recipe data yet.</p></div>
     <div class="prompt planner">
       <div class="prompt-head">
         <p class="prompt-kind">Sample prompt</p>
         <button class="btn" type="button" data-copy="q1">Copy prompt</button>
       </div>
-      <div class="prompt-body" id="q1" data-prompt="/prompts/planner/step-1.txt"></div>
+      <div class="prompt-body" id="q1" data-prompt="/prompts/planner/step-1.txt" data-step="10"></div>
     </div>
-    <p class="step-check"><strong>Checkpoint:</strong> the inputs, button, progress panel, five day cards and outcome area appear.</p>
+    <div class="step-after">
+      <div><p class="step-label">What you should see</p><ul><li>The budget, dietary requirements and preferences inputs</li><li>A “Plan my week” button that does nothing yet</li><li>An empty “What the Planner Agent is doing” panel</li><li>Five empty day cards and an empty outcome area</li></ul></div>
+      <div><p class="step-label">Things you can try</p><ul><li>Ask Lovable to change the colors or visual style.</li><li>Add another example dietary requirement or preference.</li><li>Change the title or button text.</li><li>Ask Lovable to make one small layout improvement.</li></ul></div>
+    </div>
+    <p class="step-note">Don’t spend too long polishing. You will change the interface as the agent develops.</p>
   </section>
 
-  <h3 id="coordinator">Before step 2: how your agent talks to the coordinator</h3>
-  <p>Step 2 connects your app to the coordinator over MCP. Your app’s backend asks the coordinator what tools it has, then calls them when the AI decides to. Each call is a request and a response:</p>
-  <figure class="mcp-seq" aria-label="How your agent talks to the coordinator">
-    <div class="mcp-lanes"><span>Your app’s backend<small>in Lovable</small></span><span>Coordinator<small>this site, an MCP server</small></span></div>
-    <ol class="mcp-msgs">
-      <li class="mcp-req"><span class="mcp-label"><code>tools/list</code></span><span class="mcp-detail">What tools do you offer?</span></li>
-      <li class="mcp-res"><span class="mcp-label"><code>get_contract</code>, <code>list_recipes</code>, <code>check_meal_plan</code>, <code>save_meal_plan</code></span><span class="mcp-detail">each with a description and its inputs</span></li>
-      <li class="mcp-req"><span class="mcp-label"><code>tools/call get_contract</code></span><span class="mcp-detail">What must I do?</span></li>
-      <li class="mcp-res"><span class="mcp-label">its role, the plan format, the checks and the limits</span></li>
-      <li class="mcp-req"><span class="mcp-label"><code>tools/call list_recipes</code> with <code>{"priced": true}</code></span></li>
-      <li class="mcp-res"><span class="mcp-label">the priced recipes, each with its cost per serving</span></li>
-      <li class="mcp-req"><span class="mcp-label"><code>tools/call check_meal_plan</code> with a draft plan</span></li>
-      <li class="mcp-res"><span class="mcp-label">the week’s cost, and each rule ✓ or ✗</span><span class="mcp-detail">the agent swaps dinners and checks again, then saves with <code>save_meal_plan</code></span></li>
-    </ol>
-    <figcaption class="small muted">Every request carries two headers: <code>Authorization: Bearer</code> + the class key (from the Lovable secret), and <code>X-Group: {{GROUP}}</code>. The AI model decides which tool to call; your backend sends the request and hands the answer back to the model.</figcaption>
-  </figure>
-  <div class="callout warn"><p><strong>The class key never goes in a prompt.</strong> Step 2 asks Lovable to create a secret. Lovable then shows a secure box where you paste the key. The prompts use your group name from <a href="/#before-you-start">Before you start</a> on the Welcome page: <code>{{GROUP}}</code>.</p></div>
-
   <section class="step" id="step-2">
-    <h3 class="step-title"><span class="step-num">Step 2 of 5</span>Connect to the coordinator</h3>
-    <p class="step-what">Connects your app to the class coordinator, which has the recipes with their prices and the rules for a good plan. No AI yet.</p>
+    <h3 class="step-title"><span class="step-num">Step 2</span>Connect to the coordinator</h3>
+    <div class="step-goal"><p class="step-label">Goal</p><p>Connect the app to the coordinator’s MCP server, look at the actions (tools) it offers and use them to show the recipes the class has saved, with the prices the <a href="/pricer">Pricer Agent</a> worked out. There is no AI yet.</p></div>
+    <div class="handoff" id="coordinator" role="img" aria-label="The Scout Agents and the Pricer Agent save recipes and prices to the coordinator, which passes them to the Meal Planner">
+      <span class="handoff-node scout">Recipe Scout</span>
+      <span class="handoff-arrow" aria-hidden="true">+</span>
+      <span class="handoff-node pricer">Recipe Pricer</span>
+      <span class="handoff-arrow" aria-hidden="true">→</span>
+      <span class="handoff-node hub">Coordinator</span>
+      <span class="handoff-arrow" aria-hidden="true">→</span>
+      <span class="handoff-node planner">Meal Planner</span>
+    </div>
+    <div class="callout warn"><p><strong>The class key never goes in a prompt.</strong> This step asks Lovable to create a secret. Lovable then shows a secure box where you paste the key. The prompt uses your group name from <a href="/#before-you-start">Before you start</a> on the Welcome page: <code>{{GROUP}}</code>.</p></div>
     <div class="prompt planner">
       <div class="prompt-head">
         <p class="prompt-kind">Sample prompt</p>
         <button class="btn" type="button" data-copy="q2">Copy prompt</button>
       </div>
-      <div class="prompt-body" id="q2" data-prompt="/prompts/planner/step-2.txt"></div>
+      <div class="prompt-body" id="q2" data-prompt="/prompts/planner/step-2.txt" data-step="11"></div>
     </div>
-    <p class="step-check"><strong>You should see:</strong> four coordinator tools, the contract from <code>get_contract</code> (the Meal Planner’s role, the plan format, the checks and the limits), and a table of priced recipes. If the table is empty, the class hasn’t saved recipes yet, or the <a href="/pricer">Pricer</a> is still working on them.</p>
+    <div class="step-after">
+      <div><p class="step-label">What you should see</p><ul><li>A successful connection message</li><li>The tools provided by the coordinator and a description of what each tool does</li><li>How the coordinator works: the plan format, the checks and the limits</li><li>A table of the class’s priced recipes. If it is empty, the Scout Agents haven’t saved recipes yet or the Pricer Agent is still working on them.</li></ul></div>
+      <div><p class="step-label">Things you can try</p><ul><li>Read the checks the coordinator applies to every plan.</li><li>Look for your connection on the <a href="/coordinator">Coordinator page</a>.</li><li>Find the cheapest and the most popular recipes in the table.</li><li>Discuss which tools the Planner Agent should use, and in what order.</li></ul></div>
+    </div>
+    <p class="step-note"><strong>The Meal Planner never talks to the Scout Agents or the Pricer Agent directly.</strong> It reads their work from the coordinator, which stores the recipes and prices and describes how to use them.</p>
   </section>
+
   <section class="step" id="step-3">
-    <h3 class="step-title"><span class="step-num">Step 3 of 5</span>Add the agent and show the week</h3>
-    <p class="step-what">Adds the AI. The model reads the recipes, estimates their nutrition, drafts five dinners, asks the coordinator to check them, and improves the plan. The week appears in your app, not saved yet.</p>
+    <h3 class="step-title"><span class="step-num">Step 3</span>Add the Planner Agent</h3>
+    <div class="step-goal"><p class="step-label">Goal</p><p>Add an AI agent that learns how to work with the coordinator, chooses five dinners, asks the coordinator to check the plan, improves it and saves it so the rest of the class can see it.</p></div>
     <div class="prompt planner">
       <div class="prompt-head">
         <p class="prompt-kind">Sample prompt</p>
         <button class="btn" type="button" data-copy="q3">Copy prompt</button>
       </div>
-      <div class="prompt-body" id="q3" data-prompt="/prompts/planner/step-3.txt"></div>
+      <div class="prompt-body" id="q3" data-prompt="/prompts/planner/step-3.txt" data-step="12"></div>
     </div>
-    <p class="step-check"><strong>You should see:</strong> press the button, watch it list recipes and check drafts, and five dinners fill Monday to Friday, with the week’s cost against the budget, a ✓ or ✗ for each rule, and the outcome: valid plan, no feasible plan, or run failed.</p>
-  </section>
-  <section class="step" id="step-4">
-    <h3 class="step-title"><span class="step-num">Step 4 of 5</span>Save the plan to the coordinator</h3>
-    <p class="step-what">Lets the agent save its best plan to the class database, where everyone can see it.</p>
-    <div class="prompt planner">
-      <div class="prompt-head">
-        <p class="prompt-kind">Sample prompt</p>
-        <button class="btn" type="button" data-copy="q4">Copy prompt</button>
-      </div>
-      <div class="prompt-body" id="q4" data-prompt="/prompts/planner/step-4.txt"></div>
+    <div class="step-after">
+      <div><p class="step-label">What you should see</p><ul><li>The Planner Agent learns how to work with the coordinator at the beginning of the run.</li><li>It drafts a plan, asks the coordinator to check it and changes dinners when a check fails.</li><li>Five dinners fill Monday to Friday, with the week’s cost against the budget and each check marked ✓ or ✗.</li><li>The outcome: valid plan found, no feasible plan found, or run failed, with an explanation.</li><li>The saved plan appears on the <a href="/coordinator">Coordinator page</a> under your group.</li></ul></div>
+      <div><p class="step-label">Things you can try</p><ul><li>A tiny budget, such as $3. Does it explain that it can’t be done, or pretend?</li><li><em>Vegetarian only</em> when there are fewer than five vegetarian recipes.</li><li>A rule of your own, such as <em>no dinner over 45 minutes</em>.</li><li>Change one Planner Agent instruction and compare its behavior.</li></ul></div>
     </div>
-    <p class="step-check"><strong>You should see:</strong> a run that ends with <code>save_meal_plan</code>, and the plan on the <a href="/coordinator">Coordinator page</a> under Meal plans.</p>
-  </section>
-  <section class="step" id="step-5">
-    <h3 class="step-title"><span class="step-num">Step 5 of 5</span>Show the agent working</h3>
-    <p class="step-what">Makes the agent’s work easy to follow: a live trace with a counter, failed rules in red, and a history of past runs.</p>
-    <div class="prompt planner">
-      <div class="prompt-head">
-        <p class="prompt-kind">Sample prompt</p>
-        <button class="btn" type="button" data-copy="q5">Copy prompt</button>
-      </div>
-      <div class="prompt-body" id="q5" data-prompt="/prompts/planner/step-5.txt"></div>
-    </div>
-    <p class="step-check"><strong>You should see:</strong> a clear, live trace, and a list of past runs you can reopen.</p>
-  </section>
-
-  <h2 id="test">Test it</h2>
-  <div class="grid-2">
-    <div class="panel">
-      <h3 style="margin-top:0">It works when…</h3>
-      <ul class="checklist">
-        <li>The trace starts with <code>get_contract</code></li>
-        <li>It calls <code>check_meal_plan</code> before saving, and fixes failed rules</li>
-        <li>A run with a $15 budget saves a plan, Monday to Friday</li>
-        <li>The plan appears on the <a href="/coordinator">Coordinator page</a> with its rule checks</li>
+    <p class="step-note">The important question is not only “Did it save a plan?” Also ask: “Did it fix the checks that failed, and are its explanations honest?”</p>
+    <details class="panel" id="rules">
+      <summary><strong>The checks</strong> the coordinator applies to every plan</summary>
+      <ul id="plan-checks">
+        <li>The week costs no more than the budget, per person</li>
+        <li>Every dinner has 400 to 800 calories, at least 20 g protein, at least 5 g fibre and less than 1,500 mg sodium per serving</li>
+        <li>At least 3 different cuisines</li>
+        <li>No category (e.g. Beef, Chicken) more than 2 times</li>
+        <li>At least one vegetarian or vegan dinner</li>
       </ul>
-    </div>
-    <div class="panel">
-      <h3 style="margin-top:0">Now try to break it</h3>
-      <ul>
-        <li><strong>A tiny budget:</strong> $3 for the week. Does it explain that it can’t be done, or pretend?</li>
-        <li><strong>A clash:</strong> “vegetarian only” with fewer than five vegetarian recipes. What does it choose?</li>
-        <li><strong>A rule of your own:</strong> “no dinner over 45 minutes”. Does it follow it, and say so?</li>
-        <li><strong>A tight limit:</strong> ask Lovable to set the limit to 6 tool calls. What does it do when it runs out?</li>
-      </ul>
-    </div>
-  </div>
-
-  <h2 id="reference">Reference</h2>
-  <details class="panel" id="how">
-    <summary><strong>How it works</strong></summary>
-    <p>Recipes reach your Planner in two steps. The Scouts save recipes to the coordinator. Then the <a href="/pricer">Recipe Pricer</a>, a separate agent that’s already built, prices each one at Kroger and saves the price to the coordinator. Your Planner estimates nutrition, chooses and explains; the coordinator adds up costs and checks the rules.</p>
-    <p class="small"><code>{{SITE}}/api/mcp?agent=planner</code> offers the Planner four tools. Every request carries <code>Authorization: Bearer &lt;class key&gt;</code> and <code>X-Group: {{GROUP}}</code>.</p>
-    <div class="table-wrap"><table>
-      <tr><th>Tool</th><th>Does</th></tr>
-      <tr><td><code>get_contract</code></td><td>How to work with the coordinator: the Meal Planner’s role, the tools, the plan format, the checks, the limits and what happens to a saved plan</td></tr>
-      <tr><td><code>list_recipes</code></td><td>The class’s recipes, each stored once, with their ingredients, <code>pick_count</code> and <code>picked_by</code> (how many groups chose it: its popularity). With <code>{"priced": true}</code>, only priced ones, each with <code>pricing.cost_per_serving_usd</code> and <code>pricing.estimated</code></td></tr>
-      <tr><td><code>check_meal_plan</code></td><td>Checks a draft without saving: the week’s cost per person, and every rule with ✓ or ✗</td></tr>
-      <tr><td><code>save_meal_plan</code></td><td>Saves the plan with its numbers and rule checks</td></tr>
-    </table></div>
-  </details>
-
-  <details class="panel" id="rules">
-    <summary><strong>The checks</strong> the coordinator reports for every plan (your agent reads them from <code>get_contract</code>)</summary>
-    <ul id="plan-checks">
-      <li>The week costs no more than the budget, per person</li>
-      <li>Every dinner has 400 to 800 calories, at least 20 g protein, at least 5 g fibre and less than 1,500 mg sodium per serving</li>
-      <li>At least 3 different cuisines</li>
-      <li>No category (e.g. Beef, Chicken) more than 2 times</li>
-      <li>At least one vegetarian or vegan dinner</li>
-    </ul>
-    <p class="small muted" id="plan-limits"></p>
-    <p class="small muted">Classroom rules, not dietary advice. Nutrition is your agent’s own estimate from each recipe’s ingredients. Discuss as a group whether you’d change them; the model’s instructions can add rules of your own.</p>
-  </details>
-
-  <details class="panel" id="format">
-    <summary><strong>The meal plan format</strong></summary>
-    <div class="table-wrap"><table>
-      <tr><th>Field</th><th>What goes in it</th></tr>
-      <tr><td><code>budget_usd</code></td><td>The budget: US dollars per person for the whole week</td></tr>
-      <tr><td><code>summary</code></td><td>How the five dinners balance nutrition, variety and cost, and any trade-offs</td></tr>
-      <tr><td><code>meals</code></td><td>Exactly 5: <code>day</code> (Monday to Friday, each once), <code>recipe_id</code> (a priced recipe from <code>list_recipes</code>, each once), <code>why</code> (one sentence) and <code>nutrition_per_serving</code> (your estimate: <code>calories</code>, <code>protein_g</code>, <code>fiber_g</code>, <code>sodium_mg</code>)</td></tr>
-    </table></div>
-    <p class="small muted">That’s all the agent sends. The coordinator adds each dinner’s cost from the Pricer, the week’s total, and the rule checks. A plan that breaks a balance rule is still saved, with the rule marked ✗.</p>
-  </details>
-
-  <details class="panel" id="help">
-    <summary><strong>When things go wrong</strong></summary>
-    <div class="table-wrap"><table>
-      <tr><th>You see</th><th>Try</th></tr>
-      <tr><td><code>401</code> “Missing or wrong class key”</td><td>Re-enter the CLASS_KEY secret. Then ask Lovable: “Check that every request to the coordinator sends Authorization: Bearer followed by the CLASS_KEY secret.”</td></tr>
-      <tr><td><code>400</code> about <code>X-Group</code></td><td>“Send the header X-Group: {{GROUP}} on every request to the coordinator.”</td></tr>
-      <tr><td>“isn’t priced yet”</td><td>The Pricer hasn’t finished that recipe. Ask Lovable to call <code>list_recipes</code> with <code>{"priced": true}</code>, or check the <a href="/pricer">Pricer page</a>.</td></tr>
-      <tr><td>No priced recipes</td><td>The Scouts haven’t saved any yet, or the Pricer is still working. Look at the <a href="/pricer">Pricer page</a>.</td></tr>
-      <tr><td>Nutrition numbers look made up</td><td>“Estimate nutrition from each ingredient’s amount, divided by the recipe’s servings, and show your working in the trace.”</td></tr>
-      <tr><td>The agent adds up costs itself</td><td>“Make sure the agent uses check_meal_plan for every total, and shows the coordinator’s numbers.”</td></tr>
-      <tr><td>A CORS error in the browser console</td><td>The page is calling the coordinator directly. “Move every call to the coordinator into a backend function.”</td></tr>
-    </table></div>
-  </details>
-
-  <details class="panel" id="rest">
-    <summary><strong>Without MCP: the REST addresses</strong></summary>
-    <div class="table-wrap"><table>
-      <tr><th>What</th><th>Call</th></tr>
-      <tr><td>Priced recipes</td><td><code>GET {{SITE}}/api/recipes?priced=true</code></td></tr>
-      <tr><td>Check a plan</td><td><code>POST {{SITE}}/api/meal-plans?check=true</code></td></tr>
-      <tr><td>Save a plan</td><td><code>POST {{SITE}}/api/meal-plans</code></td></tr>
-    </table></div>
-    <p class="small muted">Send the same two headers. Over REST the agent can’t read the rules itself, so they have to go into the model’s instructions.</p>
-  </details>
+      <p class="small muted" id="plan-limits"></p>
+      <p class="small muted">Classroom rules, not dietary advice. Nutrition is the Planner Agent’s own estimate from each recipe’s ingredients. A plan that fails a check is still saved, with the check marked ✗.</p>
+    </details>
+  </section>
 
   <p><a class="btn primary" href="/coordinator">Go to the Coordinator</a></p>
 </main>

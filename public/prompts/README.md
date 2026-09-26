@@ -5,7 +5,7 @@ Each file here is one step's sample prompt, shown on the site with a **Copy prom
 | File | Page |
 | --- | --- |
 | `scout/step-0.txt`, `step-1.txt`, `step-2.txt`, `step-3a.txt`, `step-3b.txt` | Recipe Scout (`/scout`), steps 0, 1, 2, 3a and 3b |
-| `planner/step-1.txt` … `planner/step-5.txt` | Meal Planner (`/planner`), steps 1 to 5 |
+| `planner/step-1.txt`, `step-2.txt`, `step-3.txt` | Meal Planner (`/planner`), steps 1, 2 and 3 |
 
 There are two ways to change a prompt:
 

@@ -1,7 +1,15 @@
-Our class coordinator has the recipes the class found, already priced at Kroger. Connect to it from backend code. No AI yet.
+Enable Lovable Cloud. Connect Meal Planner’s backend to the class coordinator using MCP. The MCP server is at this address: {{SITE}}/api/mcp?agent=planner
 
-Add a secret named CLASS_KEY and ask me to enter its value. It is our class key. Only backend functions may use it: never put it in the page, the browser, or the code.
+For this step, only establish the connection, discover the tools offered by the coordinator and use them to show the class’s recipes. Do not add an AI agent yet.
 
-The coordinator is an MCP server (Streamable HTTP) at {{SITE}}/api/mcp?agent=planner. Send the headers "Authorization: Bearer " + CLASS_KEY and "X-Group: {{GROUP}}" on every request. Load its tools with tools/list and give them to the agent exactly as the server describes them: don't write the plan format or the rules into our code. A result with "isError": true is a rejection to pass back to the agent, not a crash.
+The coordinator requires two things on every request: our class key, sent as the header “Authorization: Bearer ” followed by CLASS_KEY, and our group name, {{GROUP}}, sent as the header “X-Group”. If the group name is YOUR-GROUP-NAME, ask me for our group name first.
 
-Test it: list the coordinator's tools, call get_contract, and call list_recipes with {"priced": true}. Show the priced recipes in a table under the panels: photo, name, cuisine and cost per serving.
+Create a protected Lovable secret called CLASS_KEY and ask me to enter its value. Never place the class key in the page, browser code, logs or AI instructions. All requests to the coordinator must be made from the backend.
+
+Once you have established the connection:
+
+- Explain the tools that are available and the information each one requires.
+- Use the coordinator tool that explains how to work with the coordinator, and show its answer in a collapsible “How the coordinator works” section.
+- Get the recipes the class has saved that already have a price, and show them in an “Available recipes” table below the week: photo, name, cuisine, cost per serving and how many groups picked it.
+
+If there are no priced recipes yet, say so plainly instead of showing an error.

@@ -770,6 +770,7 @@ details.trace > summary { cursor: pointer; padding: 8px 0; }
 .handoff-node { padding: 8px 14px; border-radius: 10px; font: 700 16px/1.2 var(--display); background: var(--surface); border: 1px solid var(--line); border-top: 4px solid var(--accent); }
 .handoff-node.hub { background: var(--hub); color: var(--hub-ink); border-color: var(--hub); border-top-color: var(--hub-edge); }
 .handoff-node.pricer { border-top-color: var(--pricer); }
+.handoff-node.planner { border-top-color: var(--planner); }
 .handoff-arrow { font: 700 20px/1 var(--body); color: var(--muted); }
 
 /* Admin: the coordinator's limits and checks */
