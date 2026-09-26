@@ -95,6 +95,27 @@ The **Admin** page (`/admin`, linked in the footer) opens with `ADMIN_KEY`. From
 - **Delete** meal plans, **clear** the activity log, or **delete everything** to start over between classes.
 - **Run a backup agent** (`/backup`, API `/api/admin/agent-runs`): your own Scout Agent or Meal Planner Agent, run from the site if a group's Lovable app isn't working. They use the coordinator over MCP like any student agent, under a group name you choose, with `ANTHROPIC_API_KEY` (model: `BACKUP_MODEL`, default `claude-opus-5`).
 
+### Meal plan rules
+
+The coordinator checks every meal plan against the class's rules and reports each one as passed or not (a plan that breaks one is still saved, marked). On the Admin page, under **Limits and checks**, each rule has an on/off setting and one value; **Presets** fill them all in one click, and you can adjust them before saving. The budget (the average dinner within the budget the Meal Planner Agent was given) is always checked.
+
+| Rule | Setting (off at 0, unticked or empty) |
+| --- | --- |
+| At least N different cuisines | `min_cuisines` |
+| No category (e.g. Beef) more than N times | `max_same_category` |
+| At least one vegetarian or vegan dinner | `require_vegetarian` |
+| No category on two days in a row | `no_category_twice_in_a_row` |
+| No dinner costs more than $X per person | `max_dinner_usd` |
+| No dinner takes more than N minutes (the Scout Agent's estimate) | `max_minutes` |
+| No dinner contains these ingredients (comma-separated; `peanut` matches “peanut butter”, not “nutmeg”) | `excluded_ingredients` |
+| At least N dinners picked by two or more groups | `min_popular` |
+
+Presets: **Standard** (3 cuisines, a category at most twice, one vegetarian night: the default), **Budget week**, **Allergy-aware**, **World tour**, **Quick dinners** and **Crowd favourites**.
+
+Agents never have the rules written into them: `get_contract` lists the rules in force, the Meal Planner page shows them under “The checks”, and every check result names its rule, so a change applies from the next check. Plans already saved keep the results they were saved with. The rules are classroom rules, not dietary advice: an excluded-ingredients rule only checks ingredient names, so free-text dietary needs remain the Meal Planner Agent's job.
+
+Also under **Limits and checks**: when the class has no plan yet, the Shopper Agent starts by itself once `auto_shopper_after_plans` meal plans are saved (10 by default; 0 = only when you run it), at most once every 30 minutes.
+
 Neon also keeps its own history: from Vercel's Storage tab, "Open in Neon" lets you restore the database to an earlier point in time.
 
 ## The recipe format
