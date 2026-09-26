@@ -35,12 +35,30 @@
     <p class="lede">Compares the meal plans the Meal Planner Agents saved, chooses the one the class will cook, and does the class’s shopping: the week’s Kroger cart for it.</p>
   </div>
 
-  <ol class="how-strip" aria-label="How the Shopper Agent works">
-    <li><strong>The Meal Planner Agents save plans</strong><span>All plans go to the coordinator.</span></li>
-    <li><strong>The Shopper Agent compares them</strong><span>Checks passed, cost, variety and popularity.</span></li>
-    <li><strong>The Shopper Agent builds the cart</strong><span>The plan is priced per person; the cart scales it to the number of people shopping, in whole packages. It checks Kroger today, and buys an ingredient several dinners share once.</span></li>
-    <li><strong>The class’s plan appears here</strong><span>With the reason it was chosen.</span></li>
-  </ol>
+  <figure class="agent-flow shopper" aria-label="What the Shopper Agent does: it reads every meal plan the Meal Planner Agents saved; it compares them and chooses one, then lists every ingredient for the number of people shopping, checks each product at Kroger today, and combines shared ingredients and replaces missing ones, until everything is in the cart; then it saves the class's plan and its Kroger cart.">
+    <div class="flow-in">
+      <p class="flow-label">The Meal Planner Agents saved</p>
+      <div class="flow-plans" aria-hidden="true"><span>team-1’s week</span><span>team-3’s week</span><span>team-5’s week</span></div>
+    </div>
+    <div class="flow-arrow" aria-hidden="true"></div>
+    <div class="flow-agent">
+      <p class="flow-label">The Shopper Agent</p>
+      <ol class="flow-loop">
+        <li><span class="flow-icon" aria-hidden="true">⚖️</span>Compares the plans and chooses one</li>
+        <li><span class="flow-icon" aria-hidden="true">📝</span>Lists every ingredient, for 50 people</li>
+        <li><span class="flow-icon" aria-hidden="true">🏷️</span>Checks each product at Kroger today</li>
+        <li><span class="flow-icon" aria-hidden="true">🧺</span>Buys shared ingredients once; replaces missing ones</li>
+      </ol>
+      <p class="flow-repeat"><span aria-hidden="true">↻</span> until every ingredient is in the cart</p>
+    </div>
+    <div class="flow-arrow" aria-hidden="true"></div>
+    <div class="flow-out">
+      <p class="flow-label">It saves</p>
+      <div class="flow-card"><span class="flow-kicker">the class’s plan</span><strong>team-3’s week</strong></div>
+      <div class="flow-card flow-price"><strong>$206</strong><span class="flow-kicker">the Kroger cart for 50 people</span></div>
+      <p class="flow-note">shown below, with why it was chosen</p>
+    </div>
+  </figure>
 
   <details class="instructor-signin" id="signin">
     <summary class="small">Instructor sign-in</summary>

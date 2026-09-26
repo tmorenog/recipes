@@ -380,19 +380,15 @@ h2 .count, .step-title .count { font: 500 15px var(--mono); color: var(--muted);
 #kroger-result.bad { color: var(--bad-ink); }
 
 /* Pricer page, v2 */
-.how-strip { list-style: none; counter-reset: how; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin: 24px 0 8px; padding: 0; }
-.how-strip li { counter-increment: how; position: relative; padding: 14px 16px 14px 52px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); }
-.how-strip li::before { content: counter(how); position: absolute; left: 14px; top: 14px; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center;
-  font: 700 14px/1 var(--display); background: var(--pricer-soft); color: var(--pricer); }
-body:has(.agent-tag.scout) .how-strip li::before { background: var(--scout-soft); color: var(--accent); }
-body:has(.agent-tag.planner) .how-strip li::before { background: var(--planner-soft); color: var(--planner); }
-body:has(.agent-tag.shopper) .how-strip li::before { background: var(--shopper-soft); color: var(--shopper); }
-.how-strip strong { display: block; }
-.how-strip span { font-size: 14px; color: var(--muted); }
 
 /* What an agent does, drawn: what goes in, the agent's loop, what comes out. */
 .agent-flow { --flow: var(--accent); --flow-soft: var(--scout-soft); margin: 24px 0 8px; display: grid; grid-template-columns: minmax(0, 1fr) 40px minmax(0, 1.35fr) 40px minmax(0, 1fr); align-items: center; }
 .agent-flow.planner { --flow: var(--planner); --flow-soft: var(--planner-soft); }
+.agent-flow.pricer { --flow: var(--pricer); --flow-soft: var(--pricer-soft); }
+.agent-flow.shopper { --flow: var(--shopper); --flow-soft: var(--shopper-soft); }
+.flow-card.flow-price strong { font-size: 26px; color: var(--flow); }
+.flow-plans { display: grid; gap: 6px; }
+.flow-plans span { padding: 8px 12px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--planner); font-size: 14px; font-weight: 600; }
 .agent-flow > div:not(.flow-arrow) { display: flex; flex-direction: column; gap: 8px; }
 .flow-label { margin: 0; font: 600 12px/1.4 var(--mono); letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
 .flow-card { display: flex; flex-direction: column; padding: 10px 14px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); }

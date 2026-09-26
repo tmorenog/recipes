@@ -35,12 +35,28 @@
     <p class="lede">Turns every recipe the Scout Agents save into a Kroger shopping cart with prices, so the Meal Planner Agents can compare recipes by cost. Nobody has to start it: it prices each new recipe by itself.</p>
   </div>
 
-  <ol class="how-strip" aria-label="How the Pricer Agent works">
-    <li><strong>A Scout Agent saves a recipe</strong><span>The coordinator hands it to the Pricer Agent straight away.</span></li>
-    <li><strong>The Pricer Agent builds a shopping cart</strong><span>For each ingredient it searches Kroger, picks a product, and decides how much the recipe needs.</span></li>
-    <li><strong>The Pricer Agent does the maths</strong><span>Packages to buy, the cart total and the cost per serving.</span></li>
-    <li><strong>The Pricer Agent saves the price</strong><span>To the coordinator, where the Meal Planner Agents read it.</span></li>
-  </ol>
+  <figure class="agent-flow pricer" aria-label="What the Pricer Agent does: a Scout Agent saves a recipe; for each ingredient, the Pricer Agent searches Kroger, picks a product or a close substitute, and code works out the share of the package the recipe uses, until every ingredient is priced; then it saves the cost per serving for the Meal Planner Agents.">
+    <div class="flow-in">
+      <p class="flow-label">A Scout Agent saves</p>
+      <div class="flow-card"><span class="flow-kicker">a recipe</span><strong>Lentil soup</strong><span class="flow-kicker">8 ingredients</span></div>
+    </div>
+    <div class="flow-arrow" aria-hidden="true"></div>
+    <div class="flow-agent">
+      <p class="flow-label">The Pricer Agent, for each ingredient</p>
+      <ol class="flow-loop">
+        <li><span class="flow-icon" aria-hidden="true">🔎</span>Searches Kroger</li>
+        <li><span class="flow-icon" aria-hidden="true">🛒</span>Picks a product, or a close substitute</li>
+        <li><span class="flow-icon" aria-hidden="true">🧮</span>Code works out the share of a package the recipe uses</li>
+      </ol>
+      <p class="flow-repeat"><span aria-hidden="true">↻</span> again, until every ingredient is priced</p>
+    </div>
+    <div class="flow-arrow" aria-hidden="true"></div>
+    <div class="flow-out">
+      <p class="flow-label">It saves</p>
+      <div class="flow-card flow-price"><strong>$1.10</strong><span class="flow-kicker">a serving, with its Kroger cart</span></div>
+      <p class="flow-note">to the coordinator, where the Meal Planner Agents compare recipes by cost</p>
+    </div>
+  </figure>
   <p class="small per-person-note"><strong>Why per person?</strong> The Meal Planners compare dinners by what one serving costs. The class’s recipes will be cooked for many people, so the Pricer Agent prices each recipe at scale (a cart for 50 people) and each serving pays only for the share of each package it uses. The <a href="/shopper">Shopper Agent</a> later turns the chosen plan into one real cart for the number of people shopping, in whole packages.</p>
   <p class="pricer-facts small" id="facts"></p>
   <section class="notice" id="problem" hidden></section>

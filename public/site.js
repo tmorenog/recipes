@@ -60,13 +60,15 @@
   // Collapsible steps (Recipe Scout, Meal Planner and Admin): the step title
   // opens and closes the step. Every step starts closed, so the page is a short
   // list of steps (on Admin, the first part starts open); what a student opens
-  // is remembered in this browser, and a link to a step opens it.
+  // stays open while they work in this tab, even through a reload, but a new
+  // visit starts folded again. A link to a step opens it.
+  try { localStorage.removeItem(`rc-steps:${location.pathname}`); localStorage.removeItem(`rc-prompts:${location.pathname}`); } catch { /* ignore */ }
   const stepSections = [...document.querySelectorAll('section.step')];
   if (stepSections.length) {
     const memoryKey = `rc-steps:${location.pathname}`;
     let remembered = {};
-    try { remembered = JSON.parse(localStorage.getItem(memoryKey)) || {}; } catch { /* storage unavailable */ }
-    const remember = () => { try { localStorage.setItem(memoryKey, JSON.stringify(remembered)); } catch { /* ignore */ } };
+    try { remembered = JSON.parse(sessionStorage.getItem(memoryKey)) || {}; } catch { /* storage unavailable */ }
+    const remember = () => { try { sessionStorage.setItem(memoryKey, JSON.stringify(remembered)); } catch { /* ignore */ } };
     const setOpen = (sec, open) => {
       sec.classList.toggle('collapsed', !open);
       sec.querySelector(':scope > .step-title .step-toggle').setAttribute('aria-expanded', String(open));
@@ -116,11 +118,11 @@
   }
 
   // Collapsible sample prompts: "Sample prompt" in the prompt's header shows or
-  // hides it, like the steps. Closed at first; remembered in this browser.
+  // hides it, like the steps. Closed at first; remembered in this tab, like the steps.
   // Copy prompt copies the whole prompt either way.
   const promptMemoryKey = `rc-prompts:${location.pathname}`;
   let promptsOpen = {};
-  try { promptsOpen = JSON.parse(localStorage.getItem(promptMemoryKey)) || {}; } catch { /* storage unavailable */ }
+  try { promptsOpen = JSON.parse(sessionStorage.getItem(promptMemoryKey)) || {}; } catch { /* storage unavailable */ }
   for (const body of document.querySelectorAll('.prompt-body[data-prompt]')) {
     const frame = body.closest('.prompt');
     const label = frame?.querySelector('.prompt-head .prompt-kind');
@@ -142,7 +144,7 @@
       const open = frame.classList.contains('collapsed');
       setOpen(open);
       promptsOpen[body.id] = open;
-      try { localStorage.setItem(promptMemoryKey, JSON.stringify(promptsOpen)); } catch { /* ignore */ }
+      try { sessionStorage.setItem(promptMemoryKey, JSON.stringify(promptsOpen)); } catch { /* ignore */ }
     });
     // The whole header bar opens and closes it too, except its other buttons.
     const head = label.closest('.prompt-head');
