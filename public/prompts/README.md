@@ -9,8 +9,8 @@ Each file here is one step's sample prompt, shown on the site with a **Copy prom
 
 There are two ways to change a prompt:
 
-- **On the site (quickest):** sign in on the Admin page, then open the Recipe Scout or Meal Planner page. Each step has an **Edit** button; your version is saved in the database and every student sees it straight away. **Back to the default** returns the step to its file.
-- **In the file (permanent):** edit it on GitHub (open the file, click the pencil, then **Commit changes**). Vercel redeploys in a minute or two. A step edited on the site keeps showing the site version until you use **Back to the default**.
+- **On the site (quickest):** sign in on the Admin page, then open the Recipe Scout or Meal Planner page. Each step has an **Edit** button; your version is saved in the database and every student sees it straight away (it goes **live**). **Save as the safe copy too** also keeps it as the step’s safe copy; **Restore the safe copy** puts the safe copy back live if an edit goes wrong. The safe copy starts as this file.
+- **In the file (permanent):** edit it on GitHub (open the file, click the pencil, then **Commit changes**). Vercel redeploys in a minute or two. A step edited on the site keeps showing the site version until you use **Restore the safe copy** (and, if you replaced the safe copy, **Reset the safe copy to the original** on the Admin page).
 
 The whole file is the prompt, so don't add notes or comments inside it.
 

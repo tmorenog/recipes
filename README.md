@@ -5,7 +5,7 @@ The site for Meal Squad, a class exercise in agent systems. Groups build AI agen
 **Pages**
 - **Welcome** (`/`): what the exercise is, how the pieces fit, and a check that the class key works.
 - **Recipe Scout** (`/scout`) and **Meal Planner** (`/planner`): goals, copy-ready Lovable prompts with this site's address filled in, test checklists and troubleshooting. Each agent connects to `/api/mcp?agent=…` and reads its rules from `get_contract`.
-  The sample prompts are plain text files in [`public/prompts/`](public/prompts/README.md) (`scout/step-1.txt` … `planner/step-3.txt`). Signed in on the Admin page, you can also edit any step on the page itself (**Edit**); edits are stored in the database (`/api/prompts`) and shown to everyone at once.
+  The sample prompts are plain text files in [`public/prompts/`](public/prompts/README.md) (`scout/step-1.txt` … `planner/step-3.txt`). Signed in on the Admin page, you can also edit any step on the page itself (**Edit**); edits are stored in the database (`/api/prompts`) and shown to everyone at once. Every prompt (the students’ steps and the site agents’ instructions) has two versions there: **live**, what students see and the agents use, and a **safe copy**, a known-good version to restore if a live edit goes wrong. The Admin page’s **Prompts** part edits both, and downloads or uploads either set as `.txt` files (e.g. `scout-step-2.txt`).
 - **Coordinator** (`/coordinator`; `/database` redirects there): a live log of every MCP request agents send and the coordinator's answer (with rejections and why), plus every recipe and meal plan, filterable by group. The log keeps the newest 2,000 exchanges; headers, and so the class key, are never stored.
 
 **API** (used by the students' agents)

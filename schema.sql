@@ -391,3 +391,14 @@ where agent = 'scout' and text ~ '(find five real recipes|five suitable recipes|
 -- The site agents' instructions can be edited on the Admin page too.
 alter table prompt_overrides drop constraint if exists prompt_overrides_agent_check;
 alter table prompt_overrides add constraint prompt_overrides_agent_check check (agent in ('scout', 'planner', 'backup_scout', 'backup_planner', 'shopper'));
+
+-- Defaults the instructor replaced (the original defaults are the text files
+-- in public/prompts/ and the defaults in the code). "Back to the default"
+-- returns a prompt to its default: this one if set, otherwise the original.
+create table if not exists prompt_defaults (
+  agent       text not null check (agent in ('scout', 'planner', 'pricer', 'backup_scout', 'backup_planner', 'shopper')),
+  step        int  not null check (step between 1 and 20),
+  text        text not null,
+  updated_at  timestamptz not null default now(),
+  primary key (agent, step)
+);

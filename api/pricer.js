@@ -17,7 +17,7 @@ import { getStore } from '../lib/store/index.js';
 import { checkAdmin } from '../lib/admin.js';
 import { json, guarded } from '../lib/http.js';
 import { createHash } from 'node:crypto';
-import { pricerInfo, currentPrompt, DEFAULT_PROMPT, SAMPLE_RECIPE, SAMPLE_INGREDIENTS, kickPricer, resumePricer, runQueue, startTest } from '../lib/pricer.js';
+import { pricerInfo, currentPrompt, defaultPrompt, DEFAULT_PROMPT, SAMPLE_RECIPE, SAMPLE_INGREDIENTS, kickPricer, resumePricer, runQueue, startTest } from '../lib/pricer.js';
 
 const md5 = (text) => createHash('md5').update(text).digest('hex');
 
@@ -42,7 +42,8 @@ export const GET = guarded(async (request) => {
   const pricings = (await store.listPricings({ limit: 300 })).map(({ prompt_md5, ...p }) => ({ ...p, prompt_current: prompt_md5 == null ? null : prompt_md5 === current }));
   const counts = Object.fromEntries(['unpriced', 'pending', 'pricing', 'priced', 'failed'].map((s) => [s, pricings.filter((p) => p.status === s).length]));
   const activity = await store.recentPricerSteps(40);
-  return json(200, { ...pricerInfo(), prompt, prompt_is_default: prompt === DEFAULT_PROMPT, default_prompt: DEFAULT_PROMPT, sample_recipe: SAMPLE_RECIPE, sample_ingredients: SAMPLE_INGREDIENTS, counts, pricings, activity });
+  const fallback = await defaultPrompt();
+  return json(200, { ...pricerInfo(), prompt, prompt_is_default: prompt === fallback, default_prompt: fallback, sample_recipe: SAMPLE_RECIPE, sample_ingredients: SAMPLE_INGREDIENTS, counts, pricings, activity });
 });
 
 export const POST = guarded(async (request) => {
@@ -61,7 +62,7 @@ export const POST = guarded(async (request) => {
     case 'prompt': {
       if (body.reset) {
         await store.setPricerConfig('prompt', null);
-        return json(200, { saved: true, prompt: DEFAULT_PROMPT });
+        return json(200, { saved: true, prompt: await defaultPrompt() });
       }
       const prompt = typeof body.prompt === 'string' ? body.prompt.trim() : '';
       if (prompt.length < 50) return json(400, { errors: ['The prompt is too short: give the agent its instructions (at least 50 characters).'] });

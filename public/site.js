@@ -182,15 +182,19 @@
     fill();
   };
   const agents = [...new Set(boxes.map((p) => p.agent).filter(Boolean))];
-  const editsFor = Object.fromEntries(agents.map((a) => [a, fetch(`/api/prompts?agent=${a}`, { cache: 'no-store' })
-    .then((res) => (res.ok ? res.json() : { steps: {} }))
-    .then((body) => body.steps || {})
-    .catch(() => ({}))]));
+  // A step shows the live edit, else the instructor's safe copy, else its file.
+  const promptSets = (a) => fetch(`/api/prompts?agent=${a}`, { cache: 'no-store' })
+    .then((res) => (res.ok ? res.json() : {}))
+    .then((body) => ({ steps: body.steps || {}, defaults: body.defaults || {} }))
+    .catch(() => ({ steps: {}, defaults: {} }));
+  const setsFor = Object.fromEntries(agents.map((a) => [a, promptSets(a)]));
   const loadPrompt = async (p) => {
     p.box.textContent = 'Loading the prompt…';
-    const edit = p.agent && p.step ? (await editsFor[p.agent])[p.step] : undefined;
+    const sets = p.agent && p.step ? await setsFor[p.agent] : { steps: {}, defaults: {} };
+    const edit = sets.steps[p.step];
     if (edit) { p.edited = true; return setPrompt(p, edit.trim()); }
     p.edited = false;
+    if (sets.defaults[p.step]) return setPrompt(p, sets.defaults[p.step].trim());
     try {
       const res = await fetch(p.file, { cache: 'no-cache' });
       if (!res.ok) throw new Error(res.status);
@@ -207,22 +211,19 @@
     setInterval(async () => {
       if (document.hidden) return;
       for (const a of agents) {
-        let steps;
-        try {
-          const res = await fetch(`/api/prompts?agent=${a}`, { cache: 'no-store' });
-          if (!res.ok) continue;
-          steps = (await res.json()).steps || {};
-        } catch { continue; }
+        const { steps, defaults } = await promptSets(a);
         for (const p of boxes.filter((b) => b.agent === a && b.step && b.template != null)) {
           if (p.box.closest('.prompt')?.querySelector('.prompt-editor')?.dataset.editing === '1') continue;
-          const edit = steps[p.step]?.trim();
-          if (edit && edit !== p.template) { p.edited = true; setPrompt(p, edit); }
-          if (!edit && p.edited) {
+          let next = steps[p.step]?.trim() || defaults[p.step]?.trim();
+          if (!next) {
             try {
               const res = await fetch(p.file, { cache: 'no-cache' });
-              if (res.ok) { p.edited = false; setPrompt(p, (await res.text()).trim()); }
-            } catch { /* tried again next minute */ }
+              if (!res.ok) continue;
+              next = (await res.text()).trim();
+            } catch { continue; }
           }
+          p.edited = Boolean(steps[p.step]);
+          if (next !== p.template) setPrompt(p, next);
         }
       }
     }, 60_000);
@@ -253,11 +254,12 @@
     const area = make('textarea', { className: 'prompt-edit', rows: 12, spellcheck: true });
     const note = make('p', { className: 'small muted prompt-edit-note', textContent: 'Write {{SITE}} for this site’s address and {{GROUP}} for the group name; students see them filled in.' });
     const msg = make('span', { className: 'small', role: 'status' });
-    const save = make('button', { type: 'button', className: 'btn primary', textContent: 'Save' });
-    const reset = make('button', { type: 'button', className: 'btn', textContent: 'Back to the default' });
+    const save = make('button', { type: 'button', className: 'btn primary', textContent: 'Save', title: 'Students see this version now' });
+    const saveDefault = make('button', { type: 'button', className: 'btn', textContent: 'Save as the safe copy too', title: 'Also keep this as the safe copy: the known-good version to restore if something goes wrong' });
+    const reset = make('button', { type: 'button', className: 'btn', textContent: 'Restore the safe copy' });
     const cancel = make('button', { type: 'button', className: 'btn', textContent: 'Cancel' });
     const bar = make('div', { className: 'prompt-edit-bar' });
-    bar.append(save, reset, cancel, msg);
+    bar.append(save, saveDefault, reset, cancel, msg);
     const editor = make('div', { className: 'prompt-editor' });
     editor.append(area, note, bar);
     editor.hidden = true;
@@ -294,15 +296,24 @@
       showLabel();
       open(false);
     });
+    // Saved as both: live, and kept as the safe copy to restore in case of error.
+    saveDefault.addEventListener('click', async () => {
+      const out = await send({ text: area.value });
+      if (!out || !(await send({ set: 'default', text: area.value }))) return;
+      p.edited = true;
+      setPrompt(p, out.text);
+      showLabel();
+      open(false);
+    });
     reset.addEventListener('click', async () => {
       if (!reset.dataset.armed) {
         reset.dataset.armed = '1';
-        reset.textContent = 'Click again to go back to the text file';
-        setTimeout(() => { delete reset.dataset.armed; reset.textContent = 'Back to the default'; }, 4000);
+        reset.textContent = 'Click again: the safe copy goes live';
+        setTimeout(() => { delete reset.dataset.armed; reset.textContent = 'Restore the safe copy'; }, 4000);
         return;
       }
       if (!(await send({ reset: true }))) return;
-      editsFor[p.agent] = Promise.resolve({});
+      setsFor[p.agent] = promptSets(p.agent);
       await loadPrompt(p);
       showLabel();
       open(false);

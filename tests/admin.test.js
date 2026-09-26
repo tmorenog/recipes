@@ -244,4 +244,38 @@ describe('edited sample prompts', { skip: BACKENDS[0].skip }, () => {
     assert.equal((await write({ agent: 'scout', step: 1, reset: true })).status, 200);
     assert.deepEqual((await read('scout')).steps, {});
   });
+
+  test('two sets: live and the safe copy, one at a time or as files; the site agents too', async () => {
+    await BACKENDS[0].fresh();
+    const promptsApi = await import('../api/prompts.js');
+    const read = async (agent) => (await promptsApi.GET(new Request(`http://x/api/prompts?agent=${agent}`))).json();
+    const write = (body) =>
+      promptsApi.POST(new Request('http://x/api/prompts', { method: 'POST', headers: { authorization: `Bearer ${process.env.ADMIN_KEY}`, 'content-type': 'application/json' }, body: JSON.stringify(body) }));
+    const safe = 'A known-good version of step two, for {{GROUP}} at {{SITE}}.';
+    const live = 'A live edit of step two that went wrong, for {{GROUP}}.';
+
+    assert.equal((await write({ set: 'default', agent: 'scout', step: 12, text: safe })).status, 200);
+    assert.equal((await write({ agent: 'scout', step: 12, text: live })).status, 200);
+    let s = await read('scout');
+    assert.equal(s.steps[12], live);
+    assert.equal(s.defaults[12], safe);
+    assert.equal(s.defaults_replaced[12], true);
+    await write({ agent: 'scout', step: 12, reset: true }); // restore the safe copy
+    assert.deepEqual((await read('scout')).steps, {});
+    await write({ set: 'default', agent: 'scout', step: 12, reset: true }); // back to the original file
+    assert.deepEqual((await read('scout')).defaults, {});
+
+    // The site agents have a code default, and one prompt each.
+    assert.match((await read('shopper')).defaults[1], /Shopper Agent/);
+    assert.equal((await write({ agent: 'shopper', step: 2, text: 'x'.repeat(30) })).status, 400);
+    assert.equal((await write({ agent: 'shopper', step: 1, text: 'Use {{SITE}} somewhere in here please.' })).status, 400);
+
+    // Uploaded files: all or nothing.
+    const bad = await write({ set: 'default', prompts: [{ agent: 'planner', step: 11, text: safe }, { agent: 'planner', step: 12, text: 'short' }] });
+    assert.equal(bad.status, 400);
+    assert.deepEqual((await read('planner')).defaults, {});
+    assert.equal((await write({ set: 'current', prompts: [{ agent: 'planner', step: 11, text: safe }, { agent: 'pricer', step: 1, text: 'Price one serving of each recipe, bought at scale.' }] })).status, 200);
+    assert.equal((await read('planner')).steps[11], safe);
+    assert.match((await read('pricer')).steps[1], /one serving/);
+  });
 });
