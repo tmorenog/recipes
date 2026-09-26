@@ -13,6 +13,9 @@ import { saveSettings } from '../lib/settings.js';
 import { setPricerForTests, runQueue, startTest } from '../lib/pricer.js';
 import * as pricerApi from '../api/pricer.js';
 import { resetKroger } from '../lib/kroger.js';
+import { setBackupForTests, LIMITS as AGENT_LIMITS } from '../lib/backup-agents.js';
+import { createShopper } from '../lib/shopper-agent.js';
+import { choiceSchema } from '../lib/shopper.js';
 import { BACKENDS, as, recipe, mealPlan, markPriced, closeDatabase } from './helpers.js';
 
 const ADMIN_KEY = 'admin-key-for-tests';
@@ -46,8 +49,28 @@ async function fakeKroger(url) {
   throw new Error(`unexpected fetch ${u}`);
 }
 
+// The Shopper's view of a plan: two needs, one with a very long substitute note.
+const shopperPlan = {
+  plan_id: '00000000-0000-4000-8000-000000000001', group: 'team-1',
+  dinners: [{ day: 'Monday', name: 'Rice and beans', pricer_people: 50, needs: [
+    { need_id: 'mon-1', ingredient: 'rice', estimated: false, product: { id: 'rice-1', description: 'Rice', size: '2 lb', price_usd: 3 }, packages_for_pricer_people: 0.5, substitute_for: `brown rice: ${'none at this store, '.repeat(20)}` },
+    { need_id: 'mon-2', ingredient: 'beans', estimated: false, product: { id: 'beans-1', description: 'Beans', size: '15 oz', price_usd: 1 }, packages_for_pricer_people: 2 },
+  ] }],
+};
+const shopperCoord = async () => ({ text: JSON.stringify(shopperPlan), isError: false });
+async function shopperKroger(url) {
+  const u = String(url);
+  if (u.includes('/connect/oauth2/token')) return reply({ access_token: 't', expires_in: 1800 });
+  if (u.includes('/locations')) return reply({ data: [{ locationId: '01400943', name: 'Kroger Test', address: {} }] });
+  const id = u.match(/\/products\/([^?]+)/)?.[1];
+  const sizes = { 'rice-1': '2 lb', 'beans-1': '15 oz', 'box-1': '1 ea', 'rice-2': '2 lb' };
+  if (!sizes[id]) return new Response('{}', { status: 404 });
+  return reply({ data: { productId: id, description: `Product ${id}`, items: [{ size: sizes[id], price: { regular: 2 } }] } });
+}
+
 after(async () => {
   setPricerForTests({ model: null, fetch: null, auto: true });
+  setBackupForTests({ model: null, fetch: null, background: true });
   await closeDatabase();
 });
 
@@ -323,6 +346,69 @@ for (const backend of BACKENDS) {
       } finally {
         store.addPricerTestStep = saved.step;
         store.updatePricerTest = saved.update;
+      }
+    });
+
+    test('a backup agent that never calls a tool gives up after three nudges', async () => {
+      let calls = 0;
+      setBackupForTests({ background: false, model: async () => { calls += 1; return { stop_reason: 'end_turn', content: [{ type: 'text', text: 'Thinking…' }] }; } });
+      const started = await admin('POST', 'agent-runs', { agent: 'scout', group: 'team-1', theme: 'soup' });
+      assert.equal(started.status, 202, JSON.stringify(started.body));
+      const run = await getStore().getBackupRun(started.body.id);
+      assert.equal(run.status, 'failed');
+      assert.match(run.summary, /stopped 4 times without using a tool/);
+      assert.equal(calls, AGENT_LIMITS.nudges + 1);
+    });
+
+    test('a backup agent’s deadline is checked between its tools too, and says the real limit', async () => {
+      const runMs = AGENT_LIMITS.runMs;
+      let searches = 0;
+      const slowFetch = async () => { searches += 1; await new Promise((r) => setTimeout(r, 250)); return new Response(JSON.stringify({ meals: [] })); };
+      const model = async () => ({ stop_reason: 'tool_use', content: [1, 2, 3].map((n) => ({ type: 'tool_use', id: `s${n}`, name: 'search_meals', input: { name: `soup ${n}` } })) });
+      setBackupForTests({ background: false, fetch: slowFetch, model });
+      AGENT_LIMITS.runMs = 100;
+      try {
+        const started = await admin('POST', 'agent-runs', { agent: 'scout', group: 'team-1', theme: 'soup' });
+        const run = await getStore().getBackupRun(started.body.id);
+        assert.match(run.summary, /^Ran out of time \(/);
+        assert.equal(searches, 1, 'the other two tools of that turn never ran');
+      } finally {
+        AGENT_LIMITS.runMs = runMs;
+      }
+      assert.equal(`${AGENT_LIMITS.runMs / 60_000}`, '4', 'the real limit: 4 minutes');
+    });
+
+    test('the Shopper stops at the run’s deadline, keeps its cart within the coordinator’s limits, and buying again doesn’t add packages twice', async () => {
+      process.env.KROGER_CLIENT_ID = 'test-id';
+      process.env.KROGER_CLIENT_SECRET = 'test-secret';
+      resetKroger();
+      setPricerForTests({ fetch: shopperKroger });
+      try {
+        const late = createShopper({ people: 50, coordCall: shopperCoord, deadline: Date.now() - 1 });
+        await late.run('start_cart', { plan_id: shopperPlan.plan_id });
+        const stopped = await late.run('buy_as_priced', {});
+        assert.match(stopped.stopped, /out of time/);
+        assert.deepEqual(stopped.still_needed, ['mon-1', 'mon-2']);
+
+        const shopper = createShopper({ people: 50, coordCall: shopperCoord });
+        await shopper.run('start_cart', { plan_id: shopperPlan.plan_id });
+        await shopper.run('buy_as_priced', {});
+        const line = (id) => shopper.cart().lines.find((l) => l.product_id === id);
+        assert.ok(line('rice-1').substitutes[0].length <= 300);
+        const parsed = choiceSchema.shape.cart.safeParse(shopper.cart());
+        assert.ok(parsed.success, JSON.stringify(parsed.error?.issues));
+
+        // 15 oz of beans can't be converted into "1 ea": packages are given, and giving them again sets them.
+        const buyBox = () => shopper.run('buy', { items: [{ product_id: 'box-1', needs: ['mon-2'], packages: 3, note: 'a box of beans' }] });
+        assert.equal((await buyBox()).results[0].packages, 3);
+        assert.equal((await buyBox()).results[0].packages, 3, 'not 6');
+        assert.equal(line('box-1').note, 'a box of beans');
+        await shopper.run('buy', { items: [{ product_id: 'beans-1', needs: ['mon-2'] }] });
+        assert.equal(line('box-1'), undefined, 'moved back: the box line is gone');
+        assert.equal((await buyBox()).results[0].packages, 3, 'and its packages went with it');
+      } finally {
+        setPricerForTests({ fetch: null });
+        resetKroger();
       }
     });
   });
