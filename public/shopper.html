@@ -42,16 +42,44 @@
     <li><strong>The class’s plan appears here</strong><span>With the reason it was chosen.</span></li>
   </ol>
 
+  <details class="instructor-signin" id="signin">
+    <summary class="small">Instructor sign-in</summary>
+    <form class="keycheck" id="signin-form" autocomplete="off">
+      <label class="small muted" for="admin-key" style="flex-basis:100%">For the instructor: run the Shopper Agent, edit its instructions, and clear the class’s plan.</label>
+      <input id="admin-key" type="password" placeholder="Admin key" spellcheck="false">
+      <button class="btn primary" type="submit">Sign in</button>
+    </form>
+    <p class="keycheck-result" id="signin-result" aria-live="polite"></p>
+  </details>
+  <p class="small instructor-on" id="signed-in" hidden>Signed in as the instructor. <button class="linklike" type="button" id="signout">Sign out</button></p>
+
+  <section class="step agent-part" id="instructions" data-open="false">
+  <h3 class="step-title"><span class="step-num">Part 1</span>The Shopper Agent’s instructions</h3>
+  <p>The prompt the Shopper Agent follows: how to compare the plans, how to build and check the Kroger cart, and what to do when the store no longer carries a product.</p>
+  <div class="prompt shopper">
+    <div class="prompt-head">
+      <p class="prompt-kind" id="prompt-kind">Prompt</p>
+      <span class="small" id="prompt-state"></span>
+    </div>
+    <textarea class="prompt-edit" id="prompt" rows="16" spellcheck="true" readonly aria-label="The Shopper Agent's prompt"></textarea>
+  </div>
+  <div class="row-actions prompt-actions" id="prompt-actions" hidden>
+    <button class="btn primary" type="button" id="save-prompt">Save</button>
+    <span class="small muted">Used from the next run. The Admin page keeps a safe copy to go back to.</span>
+    <span class="small" id="prompt-msg" aria-live="polite"></span>
+  </div>
+  </section>
+
+  <section class="step agent-part" id="plan" data-open="true">
+  <h3 class="step-title"><span class="step-num">Part 2</span>The class’s plan, and how the Shopper Agent chose it</h3>
   <div class="panel instructor-only" id="run-panel" hidden>
-    <p style="margin-top:0"><strong>For the instructor:</strong> run the Shopper Agent once the Meal Planner Agents have saved their plans. It uses the AI key the Pricer Agent uses, and takes a minute or two.</p>
+    <p style="margin-top:0">Run the Shopper Agent once the Meal Planner Agents have saved their plans. It uses the AI key the Pricer Agent uses, and takes a minute or two.</p>
     <p class="row-actions"><label class="people-field">People to shop for <input type="number" id="people" min="1" max="1000" value="50"></label>
     <button class="btn primary" type="button" id="run">Run the Shopper Agent</button>
     <button class="btn danger" type="button" id="clear" data-confirm="Click again to clear the class’s plan">Clear the class’s plan</button></p>
     <p class="small muted" style="margin:0">Clearing removes the chosen plan, the earlier choices and the Shopper Agent’s past runs (the meal plans stay), e.g. before class starts.</p>
     <p class="small" id="run-msg" aria-live="polite"></p>
   </div>
-
-  <h2 id="plan">The class’s plan</h2>
   <div class="carts-layout">
     <div>
       <p class="outcome" id="outcome" hidden></p>
@@ -63,6 +91,7 @@
       <ol class="feed" id="feed"></ol>
     </aside>
   </div>
+  </section>
 </main>
 
 <footer class="site-foot">

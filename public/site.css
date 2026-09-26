@@ -320,6 +320,7 @@ h2 .count, .step-title .count { font: 500 15px var(--mono); color: var(--muted);
 /* ---------------------------------------------------------------- Pricer page */
 .pricer-facts { margin: 12px 0 0; color: var(--muted); }
 .prompt.pricer .prompt-head { box-shadow: inset 4px 0 0 var(--pricer); }
+.prompt.shopper .prompt-head { box-shadow: inset 4px 0 0 var(--shopper); }
 .prompt-edit { display: block; width: 100%; box-sizing: border-box; min-height: 320px; margin: 0; padding: 14px 16px; border: 0; resize: vertical;
   font: 15px/1.6 var(--body); color: var(--ink); background: var(--surface); }
 .prompt-edit[readonly] { color: var(--ink); cursor: default; }
@@ -767,6 +768,10 @@ section.step.collapsed { padding-block: 10px; }
 .notes-form { display: grid; gap: 10px; }
 .notes-form textarea, .prompt-item textarea { width: 100%; font: 14px/1.5 var(--mono); padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink); box-sizing: border-box; }
 .admin-part { margin: 18px 0; }
+.agent-part { margin: 18px 0; }
+.agent-part .step-body > h2:first-child, .agent-part .step-body > p:first-child { margin-top: 8px; }
+body:has(.agent-tag.pricer) .agent-part .step-num { color: var(--pricer); }
+body:has(.agent-tag.shopper) .agent-part .step-num { color: var(--shopper); }
 .admin-part .step-title .step-num { color: var(--hub-edge); }
 .prompt-group h4 { margin: 18px 0 8px; font: 700 15px/1.3 var(--display); }
 .prompt-item { margin: 0 0 8px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }

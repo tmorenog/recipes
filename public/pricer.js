@@ -108,6 +108,7 @@
     // Students watch; the instructor's controls appear only once signed in.
     for (const n of document.querySelectorAll('.instructor-only')) n.hidden = !on;
     if (overview) renderQueue();
+    window.showInstructor?.(on);
   }
   function signOut(message) {
     key = '';

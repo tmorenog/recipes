@@ -1,5 +1,6 @@
-// Shopper page: the class's plan (the Shopper Agent's choice) with its Kroger
-// cart, and the agent's latest run. The instructor, signed in, can run it.
+// Shopper page: the Shopper Agent's instructions, the class's plan (its choice)
+// with its Kroger cart, and its latest run. The instructor, signed in, can edit
+// the instructions, run it and clear the class's plan.
 (() => {
   'use strict';
   const $ = (id) => document.getElementById(id);
@@ -65,36 +66,105 @@
     timer = setTimeout(load, running ? 2000 : 20000);
   }
 
-  // ---------------------------------------------------------------- the instructor
-  if (key) {
-    $('run-panel').hidden = false;
-    const clear = $('clear');
-    const label = clear.textContent;
-    clear.addEventListener('click', async () => {
-      if (!clear.dataset.armed) {
-        clear.dataset.armed = '1';
-        clear.textContent = clear.dataset.confirm;
-        setTimeout(() => { delete clear.dataset.armed; clear.textContent = label; }, 4000);
-        return;
-      }
-      delete clear.dataset.armed;
-      clear.textContent = label;
-      const res = await fetch('/api/admin/clear-choices', { method: 'POST', headers: { authorization: `Bearer ${key}` } });
-      const body = await res.json().catch(() => ({}));
-      $('run-msg').textContent = res.ok ? 'The class’s plan is cleared.' : (body.errors || [`HTTP ${res.status}`]).join(' ');
-      load();
-    });
-    $('run').addEventListener('click', async () => {
-      $('run').disabled = true;
-      $('run-msg').textContent = 'Starting…';
-      const res = await fetch('/api/admin/agent-runs', {
-        method: 'POST', headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' }, body: JSON.stringify({ agent: 'shopper', people: Number($('people').value) || 50 }),
-      });
-      const body = await res.json().catch(() => ({}));
-      $('run-msg').textContent = res.ok ? 'Running: follow it below.' : (body.errors || [`HTTP ${res.status}`]).join(' ');
-      if (!res.ok) $('run').disabled = false;
-      load();
-    });
+  // ---------------------------------------------------------------- the instructions
+  // Students read them; the instructor, signed in, edits and saves them.
+  let saved = '';
+  let dirty = false;
+  async function loadPrompt() {
+    try {
+      const body = await (await fetch('/api/prompts?agent=shopper', { cache: 'no-store' })).json();
+      const edited = body.steps?.[1];
+      saved = (edited ?? body.defaults?.[1] ?? '').trim();
+      $('prompt-state').textContent = edited ? 'Edited by the instructor' : 'The default instructions';
+      $('prompt-state').className = 'small muted';
+      if (!dirty && document.activeElement !== $('prompt')) $('prompt').value = saved;
+    } catch {
+      $('prompt-state').textContent = 'Couldn’t load the instructions.';
+    }
   }
+  $('prompt').addEventListener('input', () => {
+    dirty = $('prompt').value.trim() !== saved;
+    $('prompt-state').textContent = dirty ? 'Unsaved changes' : '';
+    $('prompt-state').className = `small ${dirty ? 'unsaved' : 'muted'}`;
+  });
+  $('save-prompt').addEventListener('click', async () => {
+    const res = await fetch('/api/prompts', {
+      method: 'POST', headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' }, body: JSON.stringify({ agent: 'shopper', step: 1, text: $('prompt').value }),
+    });
+    const body = await res.json().catch(() => ({}));
+    if (res.status === 401) return signOut('Your admin key was rejected. Sign in again.');
+    $('prompt-msg').textContent = res.ok ? 'Saved.' : (body.errors || [`HTTP ${res.status}`]).join(' ');
+    $('prompt-msg').className = `small ${res.ok ? 'good' : 'bad'}`;
+    if (res.ok) { dirty = false; await loadPrompt(); }
+  });
+
+  // ---------------------------------------------------------------- the instructor
+  function showSignedIn() {
+    const on = Boolean(key);
+    $('signin').hidden = on;
+    $('signed-in').hidden = !on;
+    $('prompt-actions').hidden = !on;
+    $('prompt').readOnly = !on;
+    $('prompt-kind').textContent = on ? 'Prompt · you can edit it' : 'Prompt';
+    for (const n of document.querySelectorAll('.instructor-only')) n.hidden = !on;
+    window.showInstructor?.(on);
+  }
+  function signOut(message) {
+    key = '';
+    try { sessionStorage.removeItem('rc-admin-key'); } catch { /* ignore */ }
+    showSignedIn();
+    if (message) { $('signin-result').textContent = message; $('signin-result').className = 'keycheck-result bad'; }
+  }
+  $('signin-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const candidate = $('admin-key').value.trim();
+    if (!candidate) return;
+    const res = await fetch('/api/admin/check', { headers: { authorization: `Bearer ${candidate}` }, cache: 'no-store' });
+    if (!res.ok) {
+      const out = await res.json().catch(() => ({}));
+      $('signin-result').textContent = out.errors?.[0] || 'That key didn’t work.';
+      $('signin-result').className = 'keycheck-result bad';
+      return;
+    }
+    key = candidate;
+    try { sessionStorage.setItem('rc-admin-key', key); } catch { /* ignore */ }
+    $('admin-key').value = '';
+    $('signin-result').textContent = '';
+    showSignedIn();
+  });
+  $('signout').addEventListener('click', () => signOut());
+
+  const clear = $('clear');
+  const clearLabel = clear.textContent;
+  clear.addEventListener('click', async () => {
+    if (!clear.dataset.armed) {
+      clear.dataset.armed = '1';
+      clear.textContent = clear.dataset.confirm;
+      setTimeout(() => { delete clear.dataset.armed; clear.textContent = clearLabel; }, 4000);
+      return;
+    }
+    delete clear.dataset.armed;
+    clear.textContent = clearLabel;
+    const res = await fetch('/api/admin/clear-choices', { method: 'POST', headers: { authorization: `Bearer ${key}` } });
+    const body = await res.json().catch(() => ({}));
+    if (res.status === 401) return signOut('Your admin key was rejected. Sign in again.');
+    $('run-msg').textContent = res.ok ? 'The class’s plan is cleared.' : (body.errors || [`HTTP ${res.status}`]).join(' ');
+    load();
+  });
+  $('run').addEventListener('click', async () => {
+    $('run').disabled = true;
+    $('run-msg').textContent = 'Starting…';
+    const res = await fetch('/api/admin/agent-runs', {
+      method: 'POST', headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' }, body: JSON.stringify({ agent: 'shopper', people: Number($('people').value) || 50 }),
+    });
+    const body = await res.json().catch(() => ({}));
+    if (res.status === 401) return signOut('Your admin key was rejected. Sign in again.');
+    $('run-msg').textContent = res.ok ? 'Running: follow it below.' : (body.errors || [`HTTP ${res.status}`]).join(' ');
+    if (!res.ok) $('run').disabled = false;
+    load();
+  });
+
+  showSignedIn();
+  loadPrompt();
   load();
 })();

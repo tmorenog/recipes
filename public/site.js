@@ -5,20 +5,21 @@
   const SITE = location.origin;
 
   // Signed in as the instructor (the admin key, kept for this tab only): say so in
-  // the header on every page, with a way to sign out.
-  try {
-    if (sessionStorage.getItem('rc-admin-key')) {
-      const nav = document.querySelector('.site-head .wrap');
-      const out = Object.assign(document.createElement('button'), { type: 'button', className: 'linklike', textContent: 'Sign out' });
-      out.addEventListener('click', () => {
-        try { sessionStorage.removeItem('rc-admin-key'); } catch { /* ignore */ }
-        location.reload();
-      });
-      const chip = Object.assign(document.createElement('span'), { className: 'instructor-chip' });
-      chip.append('Instructor · ', out);
-      nav?.append(chip);
-    }
-  } catch { /* storage unavailable */ }
+  // the header on every page, with a way to sign out. Pages with their own
+  // sign-in call window.showInstructor(on) when it changes.
+  window.showInstructor = (on) => {
+    document.querySelector('.instructor-chip')?.remove();
+    if (!on) return;
+    const out = Object.assign(document.createElement('button'), { type: 'button', className: 'linklike', textContent: 'Sign out' });
+    out.addEventListener('click', () => {
+      try { sessionStorage.removeItem('rc-admin-key'); } catch { /* ignore */ }
+      location.reload();
+    });
+    const chip = Object.assign(document.createElement('span'), { className: 'instructor-chip' });
+    chip.append('Instructor · ', out);
+    document.querySelector('.site-head .wrap')?.append(chip);
+  };
+  try { window.showInstructor(Boolean(sessionStorage.getItem('rc-admin-key'))); } catch { /* storage unavailable */ }
 
   // "Before you start": the numbered list at the top of the Welcome page
   // (<section data-ready="welcome">).
@@ -56,9 +57,10 @@
     );
   }
 
-  // Collapsible steps (Recipe Scout and Meal Planner pages): the step title
-  // opens and closes the step. The first step starts open; what a student
-  // opens is remembered in this browser, and a link to a step opens it.
+  // Collapsible steps (the agent pages and Admin): the step title opens and
+  // closes the step. The first step starts open unless a step says otherwise
+  // (data-open="true" or "false"); what a student opens is remembered in this
+  // browser, and a link to a step opens it.
   const stepSections = [...document.querySelectorAll('section.step')];
   if (stepSections.length) {
     const memoryKey = `rc-steps:${location.pathname}`;
@@ -88,13 +90,13 @@
         remembered[sec.id] = open;
         remember();
       });
-      setOpen(sec, remembered[sec.id] ?? i === 0);
+      setOpen(sec, remembered[sec.id] ?? (sec.dataset.open ? sec.dataset.open === 'true' : i === 0));
     });
     const all = (open) => { for (const sec of stepSections) { setOpen(sec, open); remembered[sec.id] = open; } remember(); };
     const bar = document.createElement('p');
     bar.className = 'steps-bar small';
     bar.append(
-      Object.assign(document.createElement('button'), { type: 'button', className: 'linklike', textContent: stepSections[0].classList.contains('admin-part') ? 'Open all' : 'Open all steps', onclick: () => all(true) }),
+      Object.assign(document.createElement('button'), { type: 'button', className: 'linklike', textContent: stepSections[0].matches('.admin-part, .agent-part') ? 'Open all' : 'Open all steps', onclick: () => all(true) }),
       ' · ',
       Object.assign(document.createElement('button'), { type: 'button', className: 'linklike', textContent: 'Close all', onclick: () => all(false) }),
     );

@@ -57,7 +57,8 @@
   <p class="small instructor-on" id="signed-in" hidden>Signed in as the instructor. <button class="linklike" type="button" id="signout">Sign out</button></p>
   <p class="toast" id="toast" role="status" aria-live="polite" hidden></p>
 
-  <h2 id="instructions"><span class="section-num">1</span>Check the instructions</h2>
+  <section class="step agent-part" id="instructions" data-open="false">
+  <h3 class="step-title"><span class="step-num">Part 1</span>The Pricer Agent’s instructions</h3>
   <p>The prompt the Pricer Agent follows: how many people the cart feeds, how to choose products, and when to skip an ingredient.</p>
   <p class="small muted instructor-only" hidden>A test in section 2 uses what’s in the box, saved or not, so you can try a change before saving it. Saved instructions apply to recipes priced from then on; <strong>Reprice all</strong> in section 3 applies them to the rest.</p>
   <div class="prompt pricer">
@@ -70,8 +71,10 @@
   <div class="row-actions prompt-actions" id="prompt-actions" hidden>
     <button class="btn primary" type="button" id="save-prompt">Save</button>
   </div>
+  </section>
 
-  <h2 id="try"><span class="section-num">2</span>See it work on a sample recipe</h2>
+  <section class="step agent-part" id="try" data-open="false">
+  <h3 class="step-title"><span class="step-num">Part 2</span>See it work on a sample recipe</h3>
   <p>See exactly what the Pricer Agent does, with the real AI and real Kroger prices, on a sample recipe. Nothing is saved to the recipes. Your instructor runs these tests; the latest one appears here.</p>
   <div class="carts-layout try-layout">
     <div class="try-left">
@@ -97,7 +100,10 @@
     </aside>
   </div>
 
-  <h2 id="carts"><span class="section-num">3</span>View how the Pricer Agent works</h2>
+  </section>
+
+  <section class="step agent-part" id="carts" data-open="true">
+  <h3 class="step-title"><span class="step-num">Part 3</span>View how the Pricer Agent works</h3>
   <p>Every recipe the Scout Agents saved, with its cart and price, and what the Pricer Agent is doing right now.</p>
   <div class="panel when-runs">
     <p><strong>When does the Pricer Agent run?</strong></p>
@@ -122,6 +128,7 @@
       <ol class="feed" id="feed"></ol>
     </aside>
   </div>
+  </section>
 </main>
 
 <footer class="site-foot">
