@@ -60,7 +60,7 @@ The Pricer’s result is stored on each recipe (`price_status`, `cost_per_servin
 
 Each TheMealDB recipe is stored once. When another group saves a recipe that’s already there, their pick (group, theme, why) is added to it instead of a copy (`recipe_picks`). Recipes carry `pick_count`, `picked_by` and `picks`; the Meal Planner can use popularity when choosing. A group picking the same recipe twice for the same theme gets a `409`. Duplicates saved by earlier versions are merged on the next deploy, and plans are pointed at the kept copy.
 
-Nutrition is a goal the students give their Meal Planner, not something the coordinator checks. A plan may include the agent’s own estimate per dinner; the coordinator stores and shows it but never checks it.
+Nutrition isn’t part of the exercise: the plans aim for variety and cost.
 
 A run starts in the background after each save. The Pricer and Coordinator pages restart it if recipes are waiting or a run stopped part-way, and a stopped run carries on where it left off.
 
@@ -161,7 +161,7 @@ curl -X POST https://<your-site>.vercel.app/api/recipes \
 ```
 
 ### Meal plans
-A plan is `{ budget_usd, summary, meals }`: the budget (the most a dinner may cost on average, in US dollars per person), and five dinners, each `{ day, recipe_id, why }`, optionally with `nutrition_per_serving` (the agent’s own estimate, shown but not checked). The coordinator fills in each dinner’s cost per serving from the Pricer and adds up the week, so no cost in a plan comes from the AI.
+A plan is `{ budget_usd, summary, meals }`: the budget (the most a dinner may cost on average, in US dollars per person), and five dinners, each `{ day, recipe_id, why }`. The coordinator fills in each dinner’s cost per serving from the Pricer and adds up the week, so no cost in a plan comes from the AI.
 
 Rejected (nothing saved): a day missing or repeated (Monday to Friday, each once), a recipe used twice, an unknown `recipe_id`, or a recipe that isn’t priced yet.
 

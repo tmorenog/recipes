@@ -320,9 +320,8 @@ for (const backend of BACKENDS) {
       assert.match((await tool('save_meal_plan', mealPlan(ids.slice(0, 4)))).content[0].text, /meals needs exactly 5 items/);
       assert.match((await tool('save_meal_plan', { ...mealPlan(ids), meals: mealPlan(ids).meals.map((m) => ({ ...m, day: 'Saturday' })) })).content[0].text, /day must be one of: Monday/);
 
-      // A draft: $2.55 a dinner on average ($12.75 for the week), over a budget of $2.50 a dinner. Nutrition is never checked.
-      const lowProtein = (plan) => { plan.meals[3].nutrition_per_serving.protein_g = 2; return plan; };
-      const checked = out(await tool('check_meal_plan', lowProtein(mealPlan(ids, { budget_usd: 2.5 }))));
+      // A draft: $2.55 a dinner on average ($12.75 for the week), over a budget of $2.50 a dinner.
+      const checked = out(await tool('check_meal_plan', mealPlan(ids, { budget_usd: 2.5 })));
       assert.equal(checked.week_cost_per_person_usd, 12.75);
       assert.equal(checked.all_rules_passed, false);
       const failed = checked.checks.filter((c) => !c.passed);
@@ -332,12 +331,14 @@ for (const backend of BACKENDS) {
       assert.ok(checked.checks.every((c) => !/calorie|protein|fibre|sodium/i.test(c.rule)), 'no nutrition rules');
       assert.equal((await db.plans()).length, 0, 'checking saves nothing');
 
-      // Nutrition is optional: a plan without it is accepted.
-      const bare = mealPlan(ids, { budget_usd: 3 });
-      for (const m of bare.meals) delete m.nutrition_per_serving;
-      assert.equal(out(await tool('check_meal_plan', bare)).all_rules_passed, true);
+      // Nutrition isn't part of the exercise: an estimate sent anyway is left out, with a note.
+      const withNutrition = mealPlan(ids, { budget_usd: 3 });
+      withNutrition.meals[0].nutrition_per_serving = { calories: 550 };
+      const lenient = out(await tool('check_meal_plan', withNutrition));
+      assert.equal(lenient.all_rules_passed, true);
+      assert.ok(lenient.format_notes.some((n) => /nutrition_per_serving isn’t used/.test(n)));
 
-      const saved = out(await tool('save_meal_plan', lowProtein(mealPlan(ids, { budget_usd: 3 }))));
+      const saved = out(await tool('save_meal_plan', mealPlan(ids, { budget_usd: 3 })));
       assert.equal(saved.saved, true);
       assert.deepEqual(saved.checks.filter((c) => !c.passed).map((c) => c.rule), []);
       const [row] = await db.plans();
@@ -345,7 +346,6 @@ for (const backend of BACKENDS) {
       assert.deepEqual(row.meals.map((m) => [m.day, m.cost_per_serving_usd]), [['Monday', 1.5], ['Tuesday', 2.25], ['Wednesday', 3], ['Thursday', 2], ['Friday', 4]]);
       assert.ok(row.meals.every((m) => m.pick_count >= 1 && m.picked_by.length === m.pick_count), 'each dinner records the groups that picked it');
       assert.deepEqual(saved.meals[0].picked_by, row.meals[0].picked_by);
-      assert.equal(row.meals[0].nutrition_per_serving.calories, 550);
 
       // REST: the same rules, a check without saving, and public reading.
       const post = (body, query = '') =>

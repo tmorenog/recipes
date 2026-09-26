@@ -82,7 +82,6 @@ export function mealPlan(ids, overrides = {}) {
       day: DAYS[i],
       recipe_id,
       why: 'Cheap and filling.',
-      nutrition_per_serving: { calories: 550, protein_g: 25, fiber_g: 8, sodium_mg: 700 },
     })),
     ...overrides,
   };
