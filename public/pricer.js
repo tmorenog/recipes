@@ -232,7 +232,7 @@
     const byLine = new Map((t.basket || []).map((e) => [e.line, e]));
     const running = t.status === 'running';
     const seconds = Math.round((new Date(t.updated_at) - new Date(t.created_at)) / 1000);
-    const title = el('h3', { className: 'test-title', textContent: t.name || 'Sample recipe' });
+    const title = el('h2', { className: 'test-title', textContent: t.name || 'Sample recipe' });
     const status = running
       ? el('p', { className: 'test-status running' }, pill('pricing'), ` Working… ${byLine.size} of ${t.ingredients.length} ingredients done`)
       : t.status === 'done'

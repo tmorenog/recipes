@@ -661,7 +661,7 @@
           el('input', { type: 'file', id: 'prompt-files', multiple: true, accept: '.txt,text/plain', onchange: (e) => { uploadSet([...e.target.files], $('prompt-files-set').value); e.target.value = ''; } }))),
       el('p', { className: 'small', id: 'prompt-files-result', 'aria-live': 'polite' }));
     $('prompt-editors').replaceChildren(all, files, ...PROMPTS.map((g) => el('div', { className: 'prompt-group' },
-      el('h4', { textContent: g.group }), ...g.items.map(promptEditor))));
+      el('h3', { textContent: g.group }), ...g.items.map(promptEditor))));
   }
 
   if (key) signIn(key);
