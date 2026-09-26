@@ -219,7 +219,7 @@
         el('td', { textContent: p.group }),
         el('td', { className: 'nowrap', textContent: when(p.created_at) }),
         el('td', { className: 'nowrap', textContent: money(p.total_cost_usd) }),
-        el('td', { className: 'small', textContent: p.summary.length > 140 ? `${p.summary.slice(0, 140)}…` : p.summary }),
+        el('td', { className: 'small' }, moreText(p.summary, 140)),
         el('td', {}, del));
     }));
     if (!data.plans.length) $('plans').append(el('tr', {}, el('td', { colSpan: 5, className: 'muted', textContent: 'No meal plans yet.' })));

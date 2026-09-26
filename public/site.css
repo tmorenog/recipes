@@ -356,7 +356,7 @@ h2 .count { font: 500 15px var(--mono); color: var(--muted); margin-left: 6px; }
 .step-time { font: 12px var(--mono); color: var(--muted); }
 .trace-step.call { border-left-color: var(--pricer); }
 .trace-step.result summary { cursor: pointer; }
-.trace-step.result pre { max-height: 260px; overflow: auto; margin: 8px 0 0; }
+.trace-step.result .more-block { margin: 8px 0 0; }
 .trace-step.error { border-left-color: var(--bad-ink); background: var(--bad-bg); color: var(--bad-ink); }
 .trace-step.final { border-left-color: var(--good-ink); background: var(--scout-soft); }
 .trace-step.thought { background: transparent; border-left-style: dashed; font-style: italic; }
@@ -572,6 +572,9 @@ details.trace > summary { cursor: pointer; padding: 8px 0; }
 .agent-pill.shopper { background: var(--shopper-soft); color: var(--shopper); }
 .xch-req, .xch-res { margin: 4px 0 0; max-width: none; overflow-wrap: anywhere; }
 .xch-res { color: var(--muted); }
+.more-btn { margin-left: 2px; font-size: 13px; text-align: left; font-style: normal; font-weight: 400; }
+.more-block .more-btn { display: inline-block; margin: 4px 0 0; }
+.more-block pre { margin: 0; }
 .xch.rejected .xch-res { color: var(--bad-ink); }
 .xch-arrow { display: inline-block; width: 1.4em; font-weight: 700; color: var(--muted); }
 .xch-mark { font-weight: 700; }
@@ -579,7 +582,7 @@ details.trace > summary { cursor: pointer; padding: 8px 0; }
 .xch-mark.bad { color: var(--bad-ink); }
 .xch-detail { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); margin-top: 10px; }
 .xch-detail h3 { margin: 0 0 4px; font: 600 12px/1.3 var(--body); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
-.xch-detail pre { margin: 0; max-height: 360px; overflow: auto; padding: 10px 12px; border-radius: 8px; font: 12.5px/1.5 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+.xch-detail pre { margin: 0; overflow: auto; padding: 10px 12px; border-radius: 8px; font: 12.5px/1.5 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; }
 .live-dot::before { content: ""; display: inline-block; width: 7px; height: 7px; margin-right: 4px; border-radius: 50%; background: var(--good-ink); vertical-align: 1px; }
 .hero-more { margin: 14px 0 0; font-size: 17px; line-height: 1.6; max-width: 64ch; }
 

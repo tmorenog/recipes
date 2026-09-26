@@ -497,4 +497,45 @@
       })
       .catch(() => { strip.textContent = ''; });
   }
+
+  // Long text in the agents' traces: the first part, with "Show more" for the rest.
+  // What someone opened stays open when a live feed redraws (remembered by its text).
+  const opened = new Set();
+  function more(text, { limit, cut, block }) {
+    const full = String(text ?? '');
+    const short = cut(full);
+    const box = document.createElement(block ? 'div' : 'span');
+    box.className = block ? 'more more-block' : 'more';
+    if (short == null) { box.append(block ? Object.assign(document.createElement('pre'), { className: 'code', textContent: full }) : full); return box; }
+    const body = block ? Object.assign(document.createElement('pre'), { className: 'code' }) : document.createElement('span');
+    const btn = Object.assign(document.createElement('button'), { type: 'button', className: 'linklike more-btn' });
+    const show = (all) => {
+      body.textContent = all ? full : `${short}…`;
+      btn.textContent = all ? 'Show less' : `Show more (${block ? `${full.split('\n').length - short.split('\n').length} more lines` : `${full.length - short.length} more characters`})`;
+      btn.setAttribute('aria-expanded', String(all));
+    };
+    btn.addEventListener('click', () => {
+      const all = !opened.has(full);
+      if (all) opened.add(full); else opened.delete(full);
+      show(all);
+    });
+    show(opened.has(full));
+    box.append(body, block ? '' : ' ', btn);
+    return box;
+  }
+  // Text: the first `limit` characters, cut at a word.
+  window.moreText = (text, limit = 240) => more(text, {
+    cut: (t) => {
+      if (t.length <= limit + 40) return null;
+      const head = t.slice(0, limit);
+      const space = head.lastIndexOf(' ');
+      return space > limit * 0.6 ? head.slice(0, space) : head;
+    },
+  });
+  // Code (JSON): the first `lines` lines.
+  window.moreBlock = (text, lines = 16) => more(text, {
+    block: true,
+    cut: (t) => { const all = t.split('\n'); return all.length <= lines + 4 ? null : all.slice(0, lines).join('\n'); },
+  });
+
 })();

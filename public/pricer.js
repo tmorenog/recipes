@@ -156,7 +156,7 @@
   const feedItem = (s, label) => el('li', { className: `feed-${s.kind}` },
     el('span', { className: 'feed-time', textContent: time(s.at) }),
     label,
-    el('span', { className: 'feed-what', textContent: feedWhat(s) }));
+    el('span', { className: 'feed-what' }, moreText(feedWhat(s))));
 
   // ---------------------------------------------------------------- 1. test runs
   async function runTest() {
@@ -384,14 +384,14 @@
 
   function stepCard(s) {
     const head = el('span', { className: 'step-time', textContent: time(s.at) });
-    if (s.kind === 'thought') return el('li', { className: 'trace-step thought' }, head, el('p', { textContent: s.text }));
-    if (s.kind === 'final') return el('li', { className: 'trace-step final' }, head, el('p', {}, el('strong', { textContent: 'Finished. ' }), s.text));
+    if (s.kind === 'thought') return el('li', { className: 'trace-step thought' }, head, el('p', {}, moreText(s.text, 400)));
+    if (s.kind === 'final') return el('li', { className: 'trace-step final' }, head, el('p', {}, el('strong', { textContent: 'Finished. ' }), moreText(s.text, 400)));
     if (s.kind === 'error') {
-      return el('li', { className: 'trace-step error' }, head, el('p', {}, s.tool ? el('code', { textContent: s.tool }) : null, s.tool ? ' was rejected: ' : '', s.text));
+      return el('li', { className: 'trace-step error' }, head, el('p', {}, s.tool ? el('code', { textContent: s.tool }) : null, s.tool ? ' was rejected: ' : '', moreText(s.text, 400)));
     }
     if (s.kind === 'tool_call') {
       const args = Object.entries(s.input || {}).filter(([, v]) => v != null).map(([k, v]) => `${k}: ${typeof v === 'string' ? `“${v}”` : v}`).join(', ');
-      return el('li', { className: 'trace-step call' }, head, el('p', {}, '→ ', el('code', { textContent: s.tool }), ` ${args}`));
+      return el('li', { className: 'trace-step call' }, head, el('p', {}, '→ ', el('code', { textContent: s.tool }), ' ', moreText(args)));
     }
     const o = s.output || {};
     let summary = 'Done';
@@ -400,7 +400,7 @@
     if (s.tool === 'skip_ingredient') summary = `Line ${o.skipped} skipped`;
     if (s.tool === 'estimate_ingredient') summary = `Line ${o.estimated}: ESTIMATED, buy ${o.packages_to_buy} for ${money(o.cost_to_buy_usd)}`;
     return el('li', { className: 'trace-step result' }, head,
-      el('details', {}, el('summary', { textContent: `← ${summary}` }), el('pre', { className: 'code', textContent: JSON.stringify(o, null, 2) })));
+      el('details', {}, el('summary', { textContent: `← ${summary}` }), moreBlock(JSON.stringify(o, null, 2))));
   }
 
   function statusSentence(d, lines) {

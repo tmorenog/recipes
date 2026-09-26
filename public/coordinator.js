@@ -264,13 +264,13 @@
         x.ms != null ? el('span', { className: 'xch-ms muted small', textContent: `${x.ms} ms` }) : null,
         toggle),
       el('p', { className: 'xch-req' }, el('span', { className: 'xch-arrow', 'aria-label': 'request', textContent: '→' }),
-        x.method === 'pricer' ? el('strong', { textContent: 'Priced' }) : el('code', { textContent: what }), ask ? el('span', { textContent: ` ${ask}` }) : null),
+        x.method === 'pricer' ? el('strong', { textContent: 'Priced' }) : el('code', { textContent: what }), ask ? el('span', {}, ' ', moreText(ask)) : null),
       el('p', { className: 'xch-res' }, el('span', { className: 'xch-arrow', 'aria-label': 'answer', textContent: '←' }),
-        el('span', { className: `xch-mark ${x.ok ? 'ok' : 'bad'}`, textContent: x.ok ? '✓' : '✗' }), ` ${x.summary || ''}`));
+        el('span', { className: `xch-mark ${x.ok ? 'ok' : 'bad'}`, textContent: x.ok ? '✓' : '✗' }), ' ', moreText(x.summary || '')));
     if (open) {
       li.append(el('div', { className: 'xch-detail' },
-        el('div', {}, el('h3', { textContent: x.method === 'pricer' ? 'Recipe' : 'Sent' }), el('pre', { className: 'code', textContent: pretty(x.request) })),
-        el('div', {}, el('h3', { textContent: 'Answer' }), el('pre', { className: 'code', textContent: pretty(x.response) }))));
+        el('div', {}, el('h3', { textContent: x.method === 'pricer' ? 'Recipe' : 'Sent' }), moreBlock(pretty(x.request), 30)),
+        el('div', {}, el('h3', { textContent: 'Answer' }), moreBlock(pretty(x.response), 30))));
     }
     return li;
   }

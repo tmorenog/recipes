@@ -71,7 +71,7 @@
   // ---------------------------------------------------------------- one run
   let timer = null;
   function describe(s) {
-    if (s.kind === 'tool_call') return `→ ${s.tool} ${JSON.stringify(s.input ?? {}).slice(0, 160)}`;
+    if (s.kind === 'tool_call') return `→ ${s.tool} ${JSON.stringify(s.input ?? {})}`;
     if (s.kind === 'tool_result') return `← ${s.tool}: ${s.text}`;
     if (s.kind === 'error') return `${s.tool ? `✗ ${s.tool}: ` : ''}${s.text}`;
     return s.text;
@@ -83,12 +83,12 @@
       running ? `Working for ${run.group_name}: ${run.actions} action${run.actions === 1 ? '' : 's'} so far.` : `Finished: ${run.actions} action${run.actions === 1 ? '' : 's'}.`);
     $('feed').replaceChildren(...[...run.steps].reverse().map((s) => el('li', { className: `feed-${s.kind === 'tool_call' || s.kind === 'tool_result' ? 'tool' : s.kind}` },
       el('span', { className: 'feed-time', textContent: time(s.at) }),
-      el('span', { className: 'feed-what', textContent: describe(s) }))));
+      el('span', { className: 'feed-what' }, moreText(describe(s))))));
     const input = run.agent === 'scout' ? `theme “${run.input.theme}”` : run.agent === 'planner' ? `budget $${run.input.budget_usd} a dinner` : 'choosing the class’s plan';
     $('outcome').replaceChildren(...[
       el('strong', { textContent: running ? `${NAMES[run.agent]} running…` : run.outcome || run.status }),
       el('span', { className: 'small muted', textContent: ` · ${run.group_name} · ${input}` }),
-      run.summary ? el('span', { className: 'outcome-summary', textContent: run.summary }) : null,
+      run.summary ? el('span', { className: 'outcome-summary' }, moreText(run.summary, 400)) : null,
       !running ? el('a', { href: run.agent === 'shopper' ? '/coordinator?view=shopping' : `/coordinator?group=${encodeURIComponent(run.group_name)}`, className: 'small', textContent: 'See it on the Coordinator page' }) : null,
     ].filter(Boolean));
     $('outcome').className = `outcome ${running ? '' : run.status === 'done' ? 'good' : 'bad'}`;
