@@ -8,7 +8,8 @@ Goals and rules for the Planner Agent:
 
 - Plan five dinners, Monday to Friday, that meet the dietary requirements, follow the preferences where possible, and are nutritious, varied and as cheap as possible within the budget.
 - First use the coordinator tool that explains how to work with the coordinator, and follow what it says.
-- Use only recipes from the coordinator that have a price. If two are equally good, prefer the one more groups picked.
+- Use only recipes from the coordinator that have a price.
+- Take popularity into account: the more groups chose a recipe, the more the class likes it. Prefer popular recipes when they fit the other goals, and say how popular each dinner is.
 - Let the coordinator add up the costs. Never invent a recipe, a price or a number.
 - Check a draft with the coordinator before saving it. If a check fails, improve the plan and check again.
 - Save the best plan once, then end the run. If no plan passes every check, save the closest one and explain why. If the dietary requirements can’t be met, save nothing and explain why.
@@ -20,7 +21,7 @@ Update the page:
 
 - “Plan my week” starts the Planner Agent and is disabled while it works
 - “What the Planner Agent is doing” shows its actions, the coordinator’s answers and errors as they happen, with the actions used and the time left; make failed checks and rejections easy to spot without showing them as crashes
-- “The week” shows the saved plan: for each day the photo, name, cost per serving, why it was chosen and a link to the recipe on TheMealDB (https://www.themealdb.com/meal/MEAL_ID); below the days, the average cost of a dinner against the budget and each check with ✓ or ✗
+- “The week” shows the saved plan: for each day the photo, name, cost per serving, the groups that picked it (and how many), why it was chosen and a link to the recipe on TheMealDB (https://www.themealdb.com/meal/MEAL_ID); below the days, the average cost of a dinner against the budget and each check with ✓ or ✗
 - A “Shopping list”: the ingredients for the five dinners, each listed once, with the week’s total price from the coordinator
 - The outcome area: “Valid plan found”, “No feasible plan found” or “Run failed”, with the explanation
 - A link to the class Coordinator page ({{SITE}}/coordinator), credit to TheMealDB for the photos, and a history of past runs that can be reopened

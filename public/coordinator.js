@@ -180,12 +180,15 @@
         const src = safeUrl(m.image_url || r?.image_url);
         const n = m.nutrition_per_serving || {};
         const facts = [`${money(m.cost_per_serving_usd)}/serving`, n.calories != null && `${Math.round(n.calories)} kcal`, n.protein_g != null && `${Math.round(n.protein_g)} g protein`].filter(Boolean);
+        // Who found it: saved with the plan, or (older plans) the recipe's picks now.
+        const by = m.picked_by || r?.picked_by || [];
         return el('li', { className: 'meal' },
           src ? el('img', { src, alt: '', loading: 'lazy' }) : el('span', { className: 'ph' }),
           el('div', {},
             el('div', { className: 'day', textContent: typeof m.day === 'number' ? `Day ${m.day}` : m.day }),
             el('div', { className: 'mname', textContent: m.name || r?.name || `Recipe ${m.recipe_id.slice(0, 8)}…` }),
             el('div', { className: 'mfacts', textContent: facts.join(' · ') }),
+            by.length ? el('div', { className: 'mby', textContent: `Picked by ${by.length} group${by.length === 1 ? '' : 's'}: ${by.join(', ')}` }) : null,
             m.why ? el('div', { className: 'mwhy', textContent: m.why }) : null));
       }));
 

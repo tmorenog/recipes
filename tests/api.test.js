@@ -343,6 +343,8 @@ for (const backend of BACKENDS) {
       const [row] = await db.plans();
       assert.equal(Number(row.total_cost_usd), 12.75);
       assert.deepEqual(row.meals.map((m) => [m.day, m.cost_per_serving_usd]), [['Monday', 1.5], ['Tuesday', 2.25], ['Wednesday', 3], ['Thursday', 2], ['Friday', 4]]);
+      assert.ok(row.meals.every((m) => m.pick_count >= 1 && m.picked_by.length === m.pick_count), 'each dinner records the groups that picked it');
+      assert.deepEqual(saved.meals[0].picked_by, row.meals[0].picked_by);
       assert.equal(row.meals[0].nutrition_per_serving.calories, 550);
 
       // REST: the same rules, a check without saving, and public reading.
