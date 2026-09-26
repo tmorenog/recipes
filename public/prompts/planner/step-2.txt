@@ -8,6 +8,7 @@ Create a protected Lovable secret called CLASS_KEY and ask me to enter its value
 
 Once you have established the connection:
 
+- Show the connection status, including the group name the coordinator confirms.
 - Explain the tools that are available and the information each one requires.
 - Use the coordinator tool that explains how to work with the coordinator, and show its answer in a collapsible “How the coordinator works” section.
 - Get all the recipes the class has saved that already have a price, and show them in an “Available recipes” table below the week: photo, name, cuisine, cost per serving and how many groups picked it.

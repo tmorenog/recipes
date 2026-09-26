@@ -6,4 +6,4 @@ The coordinator requires two things on every request: our class key and our grou
 
 Create a protected Lovable secret called CLASS_KEY and ask me to enter its value. Never place the class key in the page, browser code, logs or AI instructions. Our group name is {{GROUP}}.
 
-Once you have established the connection, confirm the connection and explain the tools that are available. Show the connection status and the tools, with their descriptions, in a “Coordinator connection” section on the page.
+Once you have established the connection, confirm the connection and explain the tools that are available. Show the connection status, including the group name the coordinator confirms, and the tools, with their descriptions, in a “Coordinator connection” section on the page.

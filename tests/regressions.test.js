@@ -254,3 +254,17 @@ test('the Meal Planner is told the defaults it gets: every recipe, up to 500', a
   const plain = await list('');
   assert.deepEqual([plain.status.default, plain.limit.default], ['new', 50]);
 });
+
+test('the coordinator says back which group it knows the app as, when it connects', async () => {
+  const { handle } = await import('../api/mcp.js');
+  const { as } = await import('./helpers.js');
+  const rpc = async (method, params) => (await (await handle(new Request('http://x/api/mcp?agent=scout', {
+    method: 'POST',
+    headers: { ...as('Team Green'), 'content-type': 'application/json', accept: 'application/json, text/event-stream' },
+    body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
+  }))).json()).result;
+  const hello = await rpc('initialize', { protocolVersion: '2025-03-26', capabilities: {}, clientInfo: { name: 'app', version: '1' } });
+  assert.match(hello.instructions, /^You're connected as group "team-green"\./);
+  const contract = JSON.parse((await rpc('tools/call', { name: 'get_contract', arguments: {} })).content[0].text);
+  assert.equal(contract.your_group, 'team-green');
+});
