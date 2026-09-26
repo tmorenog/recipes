@@ -86,6 +86,7 @@
     $('signin').hidden = true;
     $('admin').hidden = false;
     describeSample();
+    loadSettings();
     await load();
   }
 
@@ -223,6 +224,7 @@
   function render() {
     renderRecipes();
     renderPlans();
+    renderUsage();
     $('n-activity').textContent = `${data.activity.length}${data.activity.length === 500 ? '+' : ''} entries`;
   }
 
@@ -306,6 +308,68 @@
     if (res.ok) toast('Everything was deleted. The database is empty.'); else toast(res.errors.join('; '), true);
     await load();
   });
+
+  // ---------------------------------------------------------------- coordinator limits and checks
+  let settings = null;
+  const form = $('settings-form');
+  const field = (name) => form.elements.namedItem(name);
+  function fillSettings(s) {
+    settings = s;
+    for (const [k, v] of Object.entries(s)) {
+      if (k === 'checks') for (const [ck, cv] of Object.entries(v)) setField(`checks.${ck}`, cv);
+      else setField(k, v);
+    }
+    renderUsage();
+  }
+  function setField(name, value) {
+    const el = field(name);
+    if (!el) return;
+    if (el.type === 'checkbox') el.checked = Boolean(value); else el.value = String(value);
+  }
+  function readSettings() {
+    const out = { checks: {} };
+    for (const el of form.querySelectorAll('input[name]')) {
+      const value = el.type === 'checkbox' ? el.checked : Number(el.value);
+      if (el.name.startsWith('checks.')) out.checks[el.name.slice(7)] = value; else out[el.name] = value;
+    }
+    return out;
+  }
+  async function loadSettings() {
+    const r = await api('GET', 'settings');
+    if (r.ok) fillSettings(r.body.settings);
+  }
+  function settingsResult(text, bad = false) {
+    $('settings-result').textContent = text;
+    $('settings-result').className = `small ${bad ? 'bad' : 'good'}`;
+  }
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const r = await api('POST', 'settings', { body: readSettings() });
+    if (!r.ok) return settingsResult(r.errors.join(' '), true);
+    fillSettings(r.body.settings);
+    settingsResult('Saved. Agents get the new limits and checks from their next call.');
+  });
+  confirmClick($('settings-reset'), async () => {
+    const r = await api('POST', 'settings', { body: { reset: true } });
+    if (!r.ok) return settingsResult(r.errors.join(' '), true);
+    fillSettings(r.body.settings);
+    settingsResult('Back to the defaults.');
+  });
+
+  // How much each group has saved, against the limits.
+  function renderUsage() {
+    const tbody = $('usage');
+    if (!tbody) return;
+    const usage = new Map();
+    const row = (g) => usage.get(g) ?? usage.set(g, { recipes: 0, plans: 0 }).get(g);
+    for (const r of data.recipes) for (const p of r.picks?.length ? r.picks : [{ group: r.group }]) row(p.group).recipes += 1;
+    for (const p of data.plans) row(p.group).plans += 1;
+    const cell = (n, max) => el('td', { className: max > 0 && n >= max ? 'at-limit' : '', textContent: max > 0 ? `${n} of ${max}` : String(n) });
+    const groups = [...usage.keys()].sort();
+    tbody.replaceChildren(...groups.map((g) => el('tr', {}, el('td', { textContent: g }),
+      cell(usage.get(g).recipes, settings?.max_recipes_per_group ?? 0), cell(usage.get(g).plans, settings?.max_plans_per_group ?? 0))));
+    if (!groups.length) tbody.append(el('tr', {}, el('td', { colSpan: 3, className: 'muted', textContent: 'No group has saved anything yet.' })));
+  }
 
   // ---------------------------------------------------------------- sample database
   $('sample-word').addEventListener('input', () => { $('load-sample').disabled = $('sample-word').value.trim() !== 'SAMPLE'; });

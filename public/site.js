@@ -285,6 +285,22 @@
     });
   }
 
+  // The coordinator's current checks and limits, where a page lists them.
+  const checksList = document.getElementById('plan-checks');
+  if (checksList) {
+    fetch('/api/settings', { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((body) => {
+        if (!body) return;
+        checksList.replaceChildren(...body.plan_checks.map((t) => Object.assign(document.createElement('li'), { textContent: t })));
+        const s = body.settings;
+        const limits = [s.max_plans_per_group > 0 && `at most ${s.max_plans_per_group} saved plans per group`, s.max_saves_per_minute > 0 && `at most ${s.max_saves_per_minute} save attempts a minute`].filter(Boolean);
+        const note = document.getElementById('plan-limits');
+        if (note) note.textContent = limits.length ? `Limits set by the instructor: ${limits.join('; ')}. Checking a draft is never limited.` : '';
+      })
+      .catch(() => {});
+  }
+
   // Setup status line in the footer, mostly for the instructor.
   const strip = document.getElementById('status-strip');
   if (strip) {

@@ -44,6 +44,57 @@
     <p class="small muted" style="margin-top:12px">Signed in. <button class="linklike" type="button" id="signout">Sign out</button></p>
     <p class="toast" id="toast" role="status" aria-live="polite" hidden></p>
 
+    <h2 id="coordinator">Coordinator</h2>
+    <p class="small" style="margin-top:0">The limits and checks the coordinator enforces. Agents read them from the coordinator (<code>get_expectations</code>), so a change applies at once, without rebuilding any agent. <strong>0</strong> means no limit.</p>
+    <form class="panel settings-form" id="settings-form" autocomplete="off">
+      <fieldset>
+        <legend>Recipe Scouts</legend>
+        <label>Recipes per group <input type="number" min="0" max="1000" step="1" name="max_recipes_per_group"></label>
+        <p class="small muted">Every pick counts, including a recipe another group had already saved.</p>
+      </fieldset>
+      <fieldset>
+        <legend>Meal Planners</legend>
+        <label>Meal plans per group <input type="number" min="0" max="1000" step="1" name="max_plans_per_group"></label>
+        <p class="small muted">Checking a draft (<code>check_meal_plan</code>) is never limited.</p>
+      </fieldset>
+      <fieldset>
+        <legend>Every group</legend>
+        <label>Save attempts per minute <input type="number" min="0" max="1000" step="1" name="max_saves_per_minute"></label>
+        <p class="small muted">Recipes and plans, accepted or not. Stops a runaway agent.</p>
+      </fieldset>
+      <fieldset>
+        <legend>Recipe Pricer</legend>
+        <label class="check"><input type="checkbox" name="auto_pricing"> Price new recipes automatically</label>
+        <p class="small muted">Unticked, new recipes wait as “not priced” until you use <em>Price unpriced recipes</em> on the <a href="/pricer">Recipe Pricer page</a>.</p>
+        <label>Recipes priced per hour <input type="number" min="0" max="1000" step="1" name="max_priced_per_hour"></label>
+      </fieldset>
+      <fieldset class="checks-set">
+        <legend>Meal plan checks</legend>
+        <p class="small muted" style="margin-top:0">What <code>check_meal_plan</code> and <code>save_meal_plan</code> report for every plan, per dinner (one serving) and per week.</p>
+        <div class="settings-grid">
+          <label>Calories, at least <input type="number" min="0" max="5000" name="checks.calories_min"></label>
+          <label>Calories, at most <input type="number" min="0" max="5000" name="checks.calories_max"></label>
+          <label>Protein, at least (g) <input type="number" min="0" max="500" name="checks.protein_min_g"></label>
+          <label>Fibre, at least (g) <input type="number" min="0" max="200" name="checks.fiber_min_g"></label>
+          <label>Sodium, less than (mg) <input type="number" min="0" max="20000" name="checks.sodium_max_mg"></label>
+          <label>Different cuisines, at least <input type="number" min="0" max="5" name="checks.min_cuisines"></label>
+          <label>Same category, at most <input type="number" min="0" max="5" name="checks.max_same_category"></label>
+        </div>
+        <label class="check"><input type="checkbox" name="checks.require_vegetarian"> At least one vegetarian or vegan dinner</label>
+      </fieldset>
+      <div class="row-actions">
+        <button class="btn primary" type="submit">Save limits and checks</button>
+        <button class="btn" type="button" id="settings-reset" data-confirm="Click again to go back to the defaults">Back to the defaults</button>
+        <span class="small" id="settings-result" aria-live="polite"></span>
+      </div>
+    </form>
+    <div class="table-wrap admin-table usage-table">
+      <table>
+        <thead><tr><th>Group</th><th>Recipes saved</th><th>Meal plans saved</th></tr></thead>
+        <tbody id="usage"></tbody>
+      </table>
+    </div>
+
     <h2>Prompts</h2>
     <div class="panel">
       <p class="small" style="margin-top:0">While you’re signed in here, every step on the <a href="/scout">Recipe Scout</a> and <a href="/planner">Meal Planner</a> pages has an <strong>Edit</strong> button: change a sample prompt, save it, and every student sees the new version. <strong>Back to the default</strong> returns a step to its original text. The Pricer agent’s own instructions are on the <a href="/pricer">Pricer page</a>.</p>

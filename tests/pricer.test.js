@@ -78,6 +78,22 @@ for (const backend of BACKENDS) {
       calls.kroger = 0;
     });
 
+    test('the instructor can pause automatic pricing and cap how many recipes are priced an hour', async () => {
+      const log = [];
+      setPricerForTests({ model: scriptedModel(log), fetch: fakeFetch, auto: false });
+      const { saveSettings } = await import('../lib/settings.js');
+      await saveSettings({ auto_pricing: false });
+      await save('team-1', recipe({ meal_id: '52870' }));
+      assert.equal((await pricer()).body.counts.unpriced, 1, 'paused: the new recipe waits, unpriced');
+
+      await saveSettings({ auto_pricing: true, max_priced_per_hour: 1 });
+      await save('team-1', recipe({ meal_id: '52871' }));
+      await save('team-1', recipe({ meal_id: '52872' }));
+      assert.equal((await pricer()).body.counts.pending, 2);
+      assert.equal(await runQueue(), 1, 'one an hour: the second waits');
+      assert.equal((await pricer()).body.counts.pending, 1);
+    });
+
     test('a saved recipe is queued, priced into a cart for 50 people, and shown with every step', async () => {
       const log = [];
       setPricerForTests({ model: scriptedModel(log), fetch: fakeFetch, auto: false });

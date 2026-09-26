@@ -2,14 +2,14 @@ Now let Recipe Scout use the coordinator tools discovered in the previous step.
 
 At the beginning of every run, ask the MCP server which tools are currently available. Give those tools to the Scout exactly as the coordinator describes them. Preserve their names, descriptions and input requirements.
 
-Do not write the coordinator’s tool names, assignment, recipe format or validation rules into the app.
+Do not write the coordinator’s tool names, recipe format, validation rules or limits into the app.
 
 Replace the Scout’s local recipe-selection action from Step 2 with the appropriate coordinator tool. Keep the actions that search TheMealDB and the action that ends the run.
 
 These are the goals and rules for the Scout:
 
-- Begin each run by using the coordinator tool that explains the Scout’s assignment.
-- Follow the assignment and rules returned by the coordinator.
+- Begin each run by using the coordinator tool that explains how to work with the coordinator.
+- Follow the formats, rules and limits returned by the coordinator.
 - Use TheMealDB to find and examine real recipes.
 - Save selected recipes through the coordinator so the next agent can use them.
 - If the coordinator rejects a recipe, read all its feedback, correct the recipe and try again.

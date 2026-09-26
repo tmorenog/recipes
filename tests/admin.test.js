@@ -148,6 +148,51 @@ for (const backend of BACKENDS) {
       assert.equal((await listAll()).length, 2, 'nothing was replaced');
     });
 
+    test('the instructor sets the coordinator’s limits and checks; agents are held to them and told about them', async () => {
+      assert.equal((await admin('GET', 'settings', { key: null })).status, 401);
+      assert.equal((await admin('GET', 'settings')).body.settings.max_recipes_per_group, 10);
+      assert.equal((await admin('POST', 'settings', { body: { max_recipes_per_group: -1 } })).status, 400);
+      assert.match((await admin('POST', 'settings', { body: { checks: { calories_min: 900 } } })).body.errors[0], /calories_min/);
+
+      const set = await admin('POST', 'settings', { body: { max_recipes_per_group: 2, max_plans_per_group: 1, max_saves_per_minute: 0, auto_pricing: false, checks: { require_vegetarian: false } } });
+      assert.equal(set.status, 200, JSON.stringify(set.body));
+
+      // Recipes per group, counting every pick.
+      const ids = await saveRecipes('team-1', 2);
+      const third = await rest.POST(new Request('http://x/api/recipes', { method: 'POST', headers: { ...as('team-1'), 'content-type': 'application/json' }, body: JSON.stringify(recipe()) }));
+      assert.equal(third.status, 403);
+      assert.match((await third.json()).errors[0], /already saved 2 recipes, the most this class allows \(2\)/);
+      assert.equal((await saveRecipes('team-2', 1)).length, 1, 'other groups are unaffected');
+      assert.ok((await listAll()).every((r) => r.pricing.status === 'unpriced'), 'automatic pricing is paused');
+
+      // Plans per group; the checks follow the settings (no vegetarian check).
+      const more = [...ids, ...(await saveRecipes('team-3', 2)), ...(await saveRecipes('team-2', 1))];
+      await markPriced(db.pool, more);
+      const post = (body) => plansApi.POST(new Request('http://x/api/meal-plans', { method: 'POST', headers: { ...as('team-4'), 'content-type': 'application/json' }, body: JSON.stringify(body) }));
+      const first = await post(mealPlan(more));
+      assert.equal(first.status, 201, JSON.stringify(await first.clone().json()));
+      assert.equal((await first.json()).checks.length, 7, 'eight checks minus the vegetarian one');
+      const second = await post(mealPlan(more));
+      assert.equal(second.status, 403);
+
+      // The brief states the limits.
+      const { expectations } = await import('../lib/expectations.js');
+      assert.match((await expectations('scout')).limits.join(' '), /at most 2 recipes/);
+      assert.match((await expectations('scout')).storage_and_handoff.join(' '), /waits until the instructor/);
+
+      // Save attempts per minute.
+      await admin('POST', 'settings', { body: { max_recipes_per_group: 0, max_saves_per_minute: 3 } });
+      const statuses = [];
+      for (let i = 0; i < 3; i++) {
+        statuses.push((await rest.POST(new Request('http://x/api/recipes', { method: 'POST', headers: { ...as('team-5'), 'content-type': 'application/json' }, body: JSON.stringify(recipe()) }))).status);
+      }
+      const fourth = await rest.POST(new Request('http://x/api/recipes', { method: 'POST', headers: { ...as('team-5'), 'content-type': 'application/json' }, body: JSON.stringify(recipe()) }));
+      assert.deepEqual([...statuses, fourth.status], [201, 201, 201, 429]);
+
+      const reset = await admin('POST', 'settings', { body: { reset: true } });
+      assert.equal(reset.body.settings.max_recipes_per_group, 10);
+    });
+
     test('loads the fixed sample database, with or without ready-made prices', async () => {
       await saveRecipes('team-9', 1);
       assert.equal((await admin('POST', 'load-sample', { body: {} })).status, 400, 'needs the confirm word');

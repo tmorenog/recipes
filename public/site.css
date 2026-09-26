@@ -771,3 +771,15 @@ details.trace > summary { cursor: pointer; padding: 8px 0; }
 .handoff-node.hub { background: var(--hub); color: var(--hub-ink); border-color: var(--hub); border-top-color: var(--hub-edge); }
 .handoff-node.pricer { border-top-color: var(--pricer); }
 .handoff-arrow { font: 700 20px/1 var(--body); color: var(--muted); }
+
+/* Admin: the coordinator's limits and checks */
+.settings-form { display: grid; gap: 14px; }
+.settings-form fieldset { margin: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; }
+.settings-form legend { padding: 0 6px; font: 700 15px/1.2 var(--display); }
+.settings-form label { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 6px 0; max-width: 34em; }
+.settings-form label.check { justify-content: flex-start; }
+.settings-form input[type="number"] { width: 7em; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); font: inherit; }
+.settings-form p { margin: 2px 0 6px; }
+.settings-grid { display: grid; gap: 0 24px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); }
+.settings-grid label { max-width: none; }
+.usage-table td.at-limit { color: var(--bad-ink); font-weight: 600; }

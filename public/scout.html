@@ -108,7 +108,7 @@
         <li class="mcp-req"><span class="mcp-label"><code>tools/list</code></span><span class="mcp-detail">What tools do you offer?</span></li>
         <li class="mcp-res"><span class="mcp-label"><code>get_expectations</code>, <code>save_recipe</code></span><span class="mcp-detail">each with a description and its inputs</span></li>
         <li class="mcp-req"><span class="mcp-label"><code>tools/call get_expectations</code></span><span class="mcp-detail">What must I do?</span></li>
-        <li class="mcp-res"><span class="mcp-label">the goal, the rules and the recipe format</span></li>
+        <li class="mcp-res"><span class="mcp-label">its role, the recipe format, the checks and the limits</span></li>
         <li class="mcp-req"><span class="mcp-label"><code>tools/call save_recipe</code> with a recipe</span></li>
         <li class="mcp-res ok"><span class="mcp-label">✓ saved, with the recipe’s id</span></li>
         <li class="mcp-res bad"><span class="mcp-label">✗ <code>"isError": true</code>: “est_servings must be at least 1”</span><span class="mcp-detail">the agent reads the reason, fixes the recipe and calls again</span></li>
@@ -136,7 +136,7 @@
   </section>
   <section class="step" id="step-3b">
     <h3 class="step-title"><span class="step-num">Step 3b</span>Let the Scout use the coordinator</h3>
-    <div class="step-goal"><p class="step-label">Goal</p><p>Give the discovered coordinator tools to Recipe Scout. The Scout will learn its assignment, submit recipes, respond to rejections and complete the handoff to the Recipe Pricer.</p></div>
+    <div class="step-goal"><p class="step-label">Goal</p><p>Give the discovered coordinator tools to Recipe Scout. The Scout will learn how to work with the coordinator, submit recipes, respond to rejections and complete the handoff to the Recipe Pricer.</p></div>
     <div class="prompt scout">
       <div class="prompt-head">
         <p class="prompt-kind">Sample prompt</p>
@@ -145,8 +145,8 @@
       <div class="prompt-body" id="p3b" data-prompt="/prompts/scout/step-3b.txt" data-step="14"></div>
     </div>
     <div class="step-after">
-      <div><p class="step-label">What you should see</p><ul><li>The Scout discovers the coordinator tools at the beginning of the run.</li><li>It uses the appropriate tool to request its assignment.</li><li>It follows the rules returned by the coordinator.</li><li>It searches and examines real recipes through TheMealDB.</li><li>It submits recipes to the coordinator.</li><li>Accepted and rejected submissions are clearly identified.</li><li>The Scout tries to correct rejected recipes.</li><li>Five accepted recipes appear on the <a href="/coordinator">Coordinator page</a>.</li><li>The <a href="/pricer">Recipe Pricer</a> queues or begins processing the accepted recipes.</li></ul></div>
-      <div><p class="step-label">Things to try</p><ul><li>Run the same theme twice and observe duplicate handling.</li><li>Try a contradictory theme.</li><li>Reduce the maximum number of actions.</li><li>Open a rejected exchange on the Coordinator page.</li><li>Compare an accepted submission with a rejected one.</li><li>Change one Scout instruction and compare its behavior.</li></ul></div>
+      <div><p class="step-label">What you should see</p><ul><li>The Scout discovers the coordinator tools at the beginning of the run.</li><li>It uses the appropriate tool to learn how to work with the coordinator.</li><li>It follows the formats, rules and limits returned by the coordinator.</li><li>It searches and examines real recipes through TheMealDB.</li><li>It submits recipes to the coordinator.</li><li>Accepted and rejected submissions are clearly identified.</li><li>The Scout tries to correct rejected recipes.</li><li>Five accepted recipes appear on the <a href="/coordinator">Coordinator page</a>.</li><li>The <a href="/pricer">Recipe Pricer</a> queues or begins processing the accepted recipes.</li></ul></div>
+      <div><p class="step-label">Things to try</p><ul><li>Run the same theme twice and observe duplicate handling.</li><li>Try a contradictory theme.</li><li>Reduce the maximum number of actions.</li><li>Open a rejected exchange on the Coordinator page.</li><li>Compare an accepted submission with a rejected one.</li><li>Change one Scout instruction and compare its behavior.</li><li>Ask for more recipes than the class limit allows, and see how the coordinator answers.</li></ul></div>
     </div>
 
   </section>
@@ -169,7 +169,7 @@
     <p class="small">MCP (Model Context Protocol) lets an agent discover tools and their rules from a server instead of having them written into its code. <code>{{SITE}}/api/mcp?agent=scout</code> offers the Scout two tools:</p>
     <div class="table-wrap"><table>
       <tr><th>Tool</th><th>Does</th></tr>
-      <tr><td><code>get_expectations</code></td><td>The goal, the rules, every field <code>save_recipe</code> accepts (and where its value comes from in TheMealDB), and an example</td></tr>
+      <tr><td><code>get_expectations</code></td><td>How to work with the coordinator: the Scout’s role in the system, every field <code>save_recipe</code> accepts and where its value comes from, what is checked, the limits, what happens to a saved recipe, and an example</td></tr>
       <tr><td><code>save_recipe</code></td><td>Saves one recipe under your group, or rejects it with every reason at once</td></tr>
     </table></div>
     <p class="small">Every request carries <code>Authorization: Bearer &lt;class key&gt;</code> and <code>X-Group: {{GROUP}}</code>. Under the hood it’s one POST per call:</p>
@@ -220,7 +220,7 @@
       <tr><th>You see</th><th>Try</th></tr>
       <tr><td><code>401</code> “Missing or wrong class key”</td><td>Re-enter the CLASS_KEY secret. Then ask Lovable: “Check that every request to the coordinator sends Authorization: Bearer followed by the CLASS_KEY secret.”</td></tr>
       <tr><td><code>400</code> about <code>X-Group</code></td><td>“Send the header X-Group: {{GROUP}} on every request to the coordinator.”</td></tr>
-      <tr><td>The agent never asks the coordinator for its assignment, or the tool is missing</td><td>“At the start of every run, load the coordinator’s tools from {{SITE}}/api/mcp?agent=scout and give all of them to the Scout, exactly as described.”</td></tr>
+      <tr><td>The agent never asks the coordinator how to work with it, or the tool is missing</td><td>“At the start of every run, load the coordinator’s tools from {{SITE}}/api/mcp?agent=scout and give all of them to the Scout, exactly as described.”</td></tr>
       <tr><td>A rejection with reasons</td><td>That’s the coordinator doing its job. If the agent keeps making the same mistake, paste the reason into Lovable: “The coordinator rejects our recipes with: … Make sure the agent passes the rejection text back to the model.”</td></tr>
       <tr><td>“unknown field: …”</td><td>The agent added a field. Ask Lovable to send exactly what <code>get_expectations</code> lists.</td></tr>
       <tr><td>A CORS error in the browser console</td><td>The page is calling the coordinator directly. “Move every call to the coordinator into a backend function.”</td></tr>

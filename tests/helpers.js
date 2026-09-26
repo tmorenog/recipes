@@ -7,6 +7,7 @@ import pg from 'pg';
 import { poolConfig } from '../lib/db.js';
 import { setStore } from '../lib/store/index.js';
 import { postgresStore } from '../lib/store/postgres.js';
+import { forgetSettings } from '../lib/settings.js';
 
 export const TEST_DB = process.env.TEST_DATABASE_URL;
 
@@ -25,9 +26,10 @@ export const BACKENDS = [
     skip: TEST_DB ? false : 'set TEST_DATABASE_URL to run the Postgres tests',
     async fresh() {
       pool ??= new pg.Pool({ ...poolConfig(TEST_DB), max: 3 });
-      await pool.query('drop table if exists exchanges, recipe_picks, pricer_tests, prompt_overrides, pricer_config, pricer_steps, pricer_cache, pricings, recipes, activity, plans cascade');
+      await pool.query('drop table if exists coordinator_settings, exchanges, recipe_picks, pricer_tests, prompt_overrides, pricer_config, pricer_steps, pricer_cache, pricings, recipes, activity, plans cascade');
       await pool.query(await schema());
       setStore(postgresStore(pool));
+      forgetSettings(); // the limits are cached for a few seconds
       return {
         pool,
         recipes: async () => (await pool.query('select * from recipes order by created_at')).rows,

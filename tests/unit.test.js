@@ -120,8 +120,14 @@ test('MCP works with plain fetch: ?agent=scout shows only the Scout’s tools, a
   const { planSchema, mealSchema } = await import('../lib/plans.js');
   assert.deepEqual(Object.keys(plannerBrief.plan_format), Object.keys(planSchema.shape));
   assert.deepEqual(Object.keys(plannerBrief.meal_format), Object.keys(mealSchema.shape));
-  assert.equal(plannerBrief.balance_rules.rules.length, 8);
-  assert.match(plannerBrief.goal, /Monday to Friday/);
+  assert.equal(plannerBrief.checks.reported_for_every_plan.rules.length, 8);
+  // The brief describes structure and protocol, not the agent's goals or strategy.
+  for (const b of [brief, plannerBrief]) {
+    assert.deepEqual(Object.keys(b).filter((k) => ['goal', 'steps'].includes(k)), []);
+    for (const k of ['role', 'tools', 'data_sources', 'checks', 'limits', 'storage_and_handoff', 'answers']) assert.ok(k in b, `${b.agent}: ${k}`);
+  }
+  assert.match(brief.limits.join(' '), /at most 10 recipes/);
+  assert.match(plannerBrief.limits.join(' '), /at most 10 meal plans/);
 
   assert.equal((await rpc('?agent=chef', 'tools/list')).status, 400);
 });

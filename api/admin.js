@@ -7,6 +7,8 @@
 //   POST /api/admin/restore                 body: a backup file; replaces everything
 //   POST /api/admin/reset                   body: {"confirm": "RESET"}; deletes everything
 //   GET  /api/admin/sample                  what the sample database holds
+//   GET  /api/admin/settings                the coordinator's limits and checks, with the defaults
+//   POST /api/admin/settings                body: fields to change, or {"reset": true}
 //   POST /api/admin/load-sample             body: {"confirm": "SAMPLE", "prices": true}; replaces everything with it
 //   POST /api/admin/recipe?id=…             body: fields to change
 //   POST /api/admin/delete-recipe?id=…
@@ -18,6 +20,7 @@
 import * as admin from '../lib/admin.js';
 import { json, guarded } from '../lib/http.js';
 import { checkKroger } from '../lib/kroger.js';
+import { getSettings, saveSettings, DEFAULTS } from '../lib/settings.js';
 
 function route(request) {
   const url = new URL(request.url);
@@ -38,6 +41,7 @@ export const GET = guarded(async (request) => {
   if (action === 'check') return json(200, { ok: true });
   if (action === 'kroger-check') return json(200, await checkKroger());
   if (action === 'sample') return json(200, admin.sampleSummary());
+  if (action === 'settings') return json(200, { settings: await getSettings(), defaults: DEFAULTS });
   if (action === 'backup') {
     const data = await admin.backup();
     const stamp = data.exported_at.slice(0, 16).replace(/[:T]/g, '-');
@@ -65,6 +69,11 @@ export const POST = guarded(async (request) => {
     }
     case 'reset': return reply(await admin.reset(await body()));
     case 'load-sample': return reply(await admin.loadSample(await body()));
+    case 'settings': {
+      const res = await saveSettings(await body());
+      if (res.ok) await admin.logAdmin('admin_settings', JSON.stringify(res.settings));
+      return reply(res);
+    }
     case 'recipe': return reply(await admin.updateRecipe(id, await body()));
     case 'delete-recipe': return reply(await admin.deleteRecipe(id));
     case 'delete-plan': return reply(await admin.deletePlan(id));

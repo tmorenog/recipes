@@ -292,3 +292,10 @@ update pricer_config set
   value = replace(value, 'You are the Pricer, an agent that runs on the class''s recipe coordinator.', 'You are the Recipe Pricer, one of the agents in the class''s Meal Squad system.'),
   updated_at = now()
 where key = 'prompt' and value like '%an agent that runs on the class''s recipe coordinator.%';
+
+-- The coordinator's limits and checks, set on the Admin page (lib/settings.js).
+create table if not exists coordinator_settings (
+  key         text primary key,
+  value       jsonb not null,
+  updated_at  timestamptz not null default now()
+);
