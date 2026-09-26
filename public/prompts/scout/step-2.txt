@@ -34,4 +34,4 @@ Update the page:
 - Show how many actions the Scout Agent has used
 - Disable the button while the Scout Agent is working
 
-Save observable events such as actions, results, status messages and errors. Do not request or save the AI model’s private reasoning.
+Save what happens (actions, results, status messages and errors): what the agent does, not its private thinking.

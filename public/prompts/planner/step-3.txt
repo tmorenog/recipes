@@ -1,6 +1,6 @@
 Now turn the app into an AI Meal Planner using Lovable’s built-in AI.
 
-At the start of every run, get the coordinator’s tools from the MCP server and give them to the Meal Planner Agent exactly as the coordinator describes them. Don’t write the coordinator’s formats, checks or limits into the app; you may use its tool names only for the app checks below. Also give the Meal Planner Agent a way to end the run with a summary.
+At the start of every run, ask the coordinator which tools it offers, and give them to the Meal Planner Agent exactly as the coordinator describes them. Let the coordinator describe its own formats, checks and limits: don’t copy them into the app. The app’s own checks below are the only exception. Also give the Meal Planner Agent a way to end the run with a summary.
 
 Pass the page’s inputs to the Meal Planner Agent (“none” for an empty box).
 
@@ -28,4 +28,4 @@ Update the page:
 - A link to the class Coordinator page ({{SITE}}/coordinator), credit to TheMealDB for the photos, and a history of past runs that can be reopened
 - Keep “How the coordinator works” and “Available recipes” as collapsible sections
 
-Save what happens (actions, results, errors), but not the AI model’s private reasoning.
+Save what happens (actions, results, errors): what the agent does, not its private thinking.

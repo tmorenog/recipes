@@ -1,10 +1,10 @@
 Now let the Scout Agent use the coordinator tools discovered in the previous step.
 
-At the beginning of every run, ask the MCP server which tools are currently available. Give those tools to the Scout Agent exactly as the coordinator describes them. Preserve their names, descriptions and input requirements.
+At the start of every run, ask the coordinator which tools it offers, and give them to the Scout Agent exactly as the coordinator describes them.
 
-Do not write the coordinator’s recipe format, validation rules or limits into the app. You may use its tool names and a recipe’s meal_id only for the app checks below.
+Let the coordinator describe its own formats, rules and limits: don’t copy them into the app. The app’s own checks below are the only exception.
 
-Replace the Scout Agent’s local recipe-selection action from Step 2 with the appropriate coordinator tool. Keep the actions that search TheMealDB and the action that ends the run.
+Instead of adding recipes to its own list, the Scout Agent now saves them to the coordinator. Keep the actions that search TheMealDB and the action that ends the run.
 
 Keep the checks from Step 2: before sending a recipe to the coordinator, the app confirms its complete details were retrieved during this run, and stops the Scout Agent once four recipes have been accepted. Raise the limit to 35 actions.
 
@@ -21,9 +21,7 @@ These are the goals and rules for the Scout Agent:
 - Finish after four recipes have been accepted.
 - If four recipes cannot be accepted, explain why.
 
-Run every tool requested by the Scout Agent and return the complete result to it.
-
-If the coordinator returns a tool result marked as an error, pass the complete result back to the Scout Agent so it can correct its work. Do not treat a rejected recipe as a crashed run.
+Run every tool requested by the Scout Agent and return the complete result to it, including rejections, so it can correct its work.
 
 Update the page:
 

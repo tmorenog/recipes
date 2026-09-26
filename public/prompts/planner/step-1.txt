@@ -10,7 +10,7 @@ The goal of Meal Planner is to plan five dinners, Monday through Friday, using r
 For this first step, build only the interface. Do not add AI, a backend, a database or connections to other services yet.
 
 Include the following items:
-- A number input for the maximum average budget per person per dinner, in US dollars (default: 15, minimum: 1)
+- A number input for the maximum average budget per person per dinner, in US dollars (default: 4, minimum: 1)
 - A text box with “Dietary requirements” (Examples: “vegetarian only”, “no pork”, “no peanuts”). Explain that these are hard constraints.
 - A text box with “Preferences” (Examples: “we like spicy food”, “prefer quick dinners”). Explain that these are preferences, not hard requirements.
 - A “Plan my week” button.

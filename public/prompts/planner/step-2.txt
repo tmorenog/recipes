@@ -12,6 +12,6 @@ Once you have established the connection:
 - Use the coordinator tool that explains how to work with the coordinator, and show its answer in a collapsible “How the coordinator works” section.
 - Get all the recipes the class has saved that already have a price, and show them in an “Available recipes” table below the week: photo, name, cuisine, cost per serving and how many groups picked it.
 
-Each coordinator tool returns its answer as text that contains JSON. Parse it once, in the backend, and send the page ready-to-use data; the page should not parse it again. If a section can’t be shown, display a short message in that section instead of breaking the page.
+The coordinator’s answers are text with data inside: turn them into ready-to-show information in the backend, once. If a section can’t be shown, display a short message in that section instead of breaking the page.
 
 If there are no priced recipes yet, say so plainly instead of showing an error.
