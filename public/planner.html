@@ -41,7 +41,7 @@
       <li>It uses only recipes the class saved, with the prices the <a href="/pricer">Pricer</a> worked out.</li>
       <li>It estimates each dinner’s nutrition from the ingredients, and says these are estimates.</li>
       <li>It considers popularity: recipes picked by more groups are ones the class likes.</li>
-      <li>It learns how to work with the coordinator (<code>get_expectations</code>: formats, checks, limits) instead of having them written into its code. Its goals come from your instructions.</li>
+      <li>It learns how to work with the coordinator (<code>get_contract</code>: formats, checks, limits) instead of having them written into its code. Its goals come from your instructions.</li>
       <li>It checks its plan with the coordinator, and improves it until the rules pass or it can explain why they can’t.</li>
       <li>Costs are added up by the coordinator, never guessed by the AI.</li>
       <li>You can see its progress, tool calls and results.</li>
@@ -70,8 +70,8 @@
     <div class="mcp-lanes"><span>Your app’s backend<small>in Lovable</small></span><span>Coordinator<small>this site, an MCP server</small></span></div>
     <ol class="mcp-msgs">
       <li class="mcp-req"><span class="mcp-label"><code>tools/list</code></span><span class="mcp-detail">What tools do you offer?</span></li>
-      <li class="mcp-res"><span class="mcp-label"><code>get_expectations</code>, <code>list_recipes</code>, <code>check_meal_plan</code>, <code>save_meal_plan</code></span><span class="mcp-detail">each with a description and its inputs</span></li>
-      <li class="mcp-req"><span class="mcp-label"><code>tools/call get_expectations</code></span><span class="mcp-detail">What must I do?</span></li>
+      <li class="mcp-res"><span class="mcp-label"><code>get_contract</code>, <code>list_recipes</code>, <code>check_meal_plan</code>, <code>save_meal_plan</code></span><span class="mcp-detail">each with a description and its inputs</span></li>
+      <li class="mcp-req"><span class="mcp-label"><code>tools/call get_contract</code></span><span class="mcp-detail">What must I do?</span></li>
       <li class="mcp-res"><span class="mcp-label">its role, the plan format, the checks and the limits</span></li>
       <li class="mcp-req"><span class="mcp-label"><code>tools/call list_recipes</code> with <code>{"priced": true}</code></span></li>
       <li class="mcp-res"><span class="mcp-label">the priced recipes, each with its cost per serving</span></li>
@@ -92,7 +92,7 @@
       </div>
       <div class="prompt-body" id="q2" data-prompt="/prompts/planner/step-2.txt"></div>
     </div>
-    <p class="step-check"><strong>You should see:</strong> four coordinator tools, the brief from <code>get_expectations</code> (the Meal Planner’s role, the plan format, the checks and the limits), and a table of priced recipes. If the table is empty, the class hasn’t saved recipes yet, or the <a href="/pricer">Pricer</a> is still working on them.</p>
+    <p class="step-check"><strong>You should see:</strong> four coordinator tools, the contract from <code>get_contract</code> (the Meal Planner’s role, the plan format, the checks and the limits), and a table of priced recipes. If the table is empty, the class hasn’t saved recipes yet, or the <a href="/pricer">Pricer</a> is still working on them.</p>
   </section>
   <section class="step" id="step-3">
     <h3 class="step-title"><span class="step-num">Step 3 of 5</span>Add the agent and show the week</h3>
@@ -136,7 +136,7 @@
     <div class="panel">
       <h3 style="margin-top:0">It works when…</h3>
       <ul class="checklist">
-        <li>The trace starts with <code>get_expectations</code></li>
+        <li>The trace starts with <code>get_contract</code></li>
         <li>It calls <code>check_meal_plan</code> before saving, and fixes failed rules</li>
         <li>A run with a $15 budget saves a plan, Monday to Friday</li>
         <li>The plan appears on the <a href="/coordinator">Coordinator page</a> with its rule checks</li>
@@ -160,7 +160,7 @@
     <p class="small"><code>{{SITE}}/api/mcp?agent=planner</code> offers the Planner four tools. Every request carries <code>Authorization: Bearer &lt;class key&gt;</code> and <code>X-Group: {{GROUP}}</code>.</p>
     <div class="table-wrap"><table>
       <tr><th>Tool</th><th>Does</th></tr>
-      <tr><td><code>get_expectations</code></td><td>How to work with the coordinator: the Meal Planner’s role, the tools, the plan format, the checks, the limits and what happens to a saved plan</td></tr>
+      <tr><td><code>get_contract</code></td><td>How to work with the coordinator: the Meal Planner’s role, the tools, the plan format, the checks, the limits and what happens to a saved plan</td></tr>
       <tr><td><code>list_recipes</code></td><td>The class’s recipes, each stored once, with their ingredients, <code>pick_count</code> and <code>picked_by</code> (how many groups chose it: its popularity). With <code>{"priced": true}</code>, only priced ones, each with <code>pricing.cost_per_serving_usd</code> and <code>pricing.estimated</code></td></tr>
       <tr><td><code>check_meal_plan</code></td><td>Checks a draft without saving: the week’s cost per person, and every rule with ✓ or ✗</td></tr>
       <tr><td><code>save_meal_plan</code></td><td>Saves the plan with its numbers and rule checks</td></tr>
@@ -168,7 +168,7 @@
   </details>
 
   <details class="panel" id="rules">
-    <summary><strong>The checks</strong> the coordinator reports for every plan (your agent reads them from <code>get_expectations</code>)</summary>
+    <summary><strong>The checks</strong> the coordinator reports for every plan (your agent reads them from <code>get_contract</code>)</summary>
     <ul id="plan-checks">
       <li>The week costs no more than the budget, per person</li>
       <li>Every dinner has 400 to 800 calories, at least 20 g protein, at least 5 g fibre and less than 1,500 mg sodium per serving</li>

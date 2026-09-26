@@ -6,7 +6,7 @@
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 import { createMcpServer } from '../lib/mcp.js';
 import { checkCaller } from '../lib/auth.js';
-import { AGENTS } from '../lib/expectations.js';
+import { AGENTS } from '../lib/contract.js';
 import { logMcp } from '../lib/exchanges.js';
 
 const fail = (status, message) =>
@@ -41,6 +41,8 @@ async function tidy(request) {
     if (m?.method === 'tools/call' && typeof m.params?.arguments === 'string') {
       try { m.params.arguments = JSON.parse(m.params.arguments); } catch { /* left as sent: rejected with a reason */ }
     }
+    // The tool's earlier name, for agents built before it was renamed.
+    if (m?.method === 'tools/call' && m.params?.name === 'get_expectations') m.params.name = 'get_contract';
   }
   const headers = new Headers(request.headers);
   headers.set('content-type', 'application/json');

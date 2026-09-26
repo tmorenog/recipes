@@ -93,7 +93,7 @@ test('health explains a missing database and keys, without showing values', asyn
   }
 });
 
-test('MCP works with plain fetch: ?agent=scout shows only the Scout’s tools, and get_expectations explains the format', async () => {
+test('MCP works with plain fetch: ?agent=scout shows only the Scout’s tools, and get_contract explains the format', async () => {
   const { CLASS_KEY } = await import('./helpers.js');
   const rpc = (query, method, params) =>
     handle(new Request(`http://x/api/mcp${query}`, {
@@ -104,9 +104,9 @@ test('MCP works with plain fetch: ?agent=scout shows only the Scout’s tools, a
 
   const list = await rpc('?agent=scout', 'tools/list');
   assert.equal(list.status, 200);
-  assert.deepEqual((await list.json()).result.tools.map((t) => t.name), ['get_expectations', 'save_recipe']);
+  assert.deepEqual((await list.json()).result.tools.map((t) => t.name), ['get_contract', 'save_recipe']);
 
-  const brief = JSON.parse((await (await rpc('?agent=scout', 'tools/call', { name: 'get_expectations', arguments: {} })).json()).result.content[0].text);
+  const brief = JSON.parse((await (await rpc('?agent=scout', 'tools/call', { name: 'get_contract', arguments: {} })).json()).result.content[0].text);
   assert.equal(brief.agent, 'Recipe Scout');
   assert.deepEqual(Object.keys(brief.recipe_format), Object.keys(recipeSchema.shape));
   assert.match(brief.recipe_format.why_chosen, /^required/);
@@ -114,8 +114,8 @@ test('MCP works with plain fetch: ?agent=scout shows only the Scout’s tools, a
   assert.ok(recipeSchema.safeParse(brief.example).success, 'the example must pass the checks');
 
   const planner = await (await rpc('?agent=planner', 'tools/list')).json();
-  assert.deepEqual(planner.result.tools.map((t) => t.name).sort(), ['check_meal_plan', 'get_expectations', 'list_recipes', 'save_meal_plan']);
-  const plannerBrief = JSON.parse((await (await rpc('', 'tools/call', { name: 'get_expectations', arguments: { agent: 'planner' } })).json()).result.content[0].text);
+  assert.deepEqual(planner.result.tools.map((t) => t.name).sort(), ['check_meal_plan', 'get_contract', 'list_recipes', 'save_meal_plan']);
+  const plannerBrief = JSON.parse((await (await rpc('', 'tools/call', { name: 'get_contract', arguments: { agent: 'planner' } })).json()).result.content[0].text);
   assert.equal(plannerBrief.agent, 'Meal Planner');
   const { planSchema, mealSchema } = await import('../lib/plans.js');
   assert.deepEqual(Object.keys(plannerBrief.plan_format), Object.keys(planSchema.shape));

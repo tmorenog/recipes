@@ -175,10 +175,10 @@ for (const backend of BACKENDS) {
       const second = await post(mealPlan(more));
       assert.equal(second.status, 403);
 
-      // The brief states the limits.
-      const { expectations } = await import('../lib/expectations.js');
-      assert.match((await expectations('scout')).limits.join(' '), /at most 2 recipes/);
-      assert.match((await expectations('scout')).storage_and_handoff.join(' '), /waits until the instructor/);
+      // The contract states the limits.
+      const { contract } = await import('../lib/contract.js');
+      assert.match((await contract('scout')).limits.join(' '), /at most 2 recipes/);
+      assert.match((await contract('scout')).storage_and_handoff.join(' '), /waits until the instructor/);
 
       // Save attempts per minute.
       await admin('POST', 'settings', { body: { max_recipes_per_group: 0, max_saves_per_minute: 3 } });

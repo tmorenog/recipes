@@ -4,4 +4,4 @@ Add a secret named CLASS_KEY and ask me to enter its value. It is our class key.
 
 The coordinator is an MCP server (Streamable HTTP) at {{SITE}}/api/mcp?agent=planner. Send the headers "Authorization: Bearer " + CLASS_KEY and "X-Group: {{GROUP}}" on every request. Load its tools with tools/list and give them to the agent exactly as the server describes them: don't write the plan format or the rules into our code. A result with "isError": true is a rejection to pass back to the agent, not a crash.
 
-Test it: list the coordinator's tools, call get_expectations, and call list_recipes with {"priced": true}. Show the priced recipes in a table under the panels: photo, name, cuisine and cost per serving.
+Test it: list the coordinator's tools, call get_contract, and call list_recipes with {"priced": true}. Show the priced recipes in a table under the panels: photo, name, cuisine and cost per serving.

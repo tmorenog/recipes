@@ -47,7 +47,7 @@ for (const backend of BACKENDS) {
       const client = await mcp();
       const { tools } = await client.listTools();
       assert.deepEqual(tools.map((t) => t.name).sort(), [
-        'check_meal_plan', 'find_kroger_stores', 'get_expectations', 'list_recipes', 'mark_processed', 'save_meal_plan', 'save_recipe', 'search_kroger_products',
+        'check_meal_plan', 'find_kroger_stores', 'get_contract', 'list_recipes', 'mark_processed', 'save_meal_plan', 'save_recipe', 'search_kroger_products',
       ]);
       const save = tools.find((t) => t.name === 'save_recipe');
       assert.equal(save.inputSchema.additionalProperties, false);
@@ -57,7 +57,7 @@ for (const backend of BACKENDS) {
     test('every MCP request and answer is logged for the Coordinator page, without the class key', async () => {
       const client = await mcp('team-4');
       await client.listTools();
-      await client.callTool({ name: 'get_expectations', arguments: { agent: 'scout' } });
+      await client.callTool({ name: 'get_contract', arguments: { agent: 'scout' } });
       await client.callTool({ name: 'save_recipe', arguments: recipe({ meal_id: '52772' }) });
       await client.callTool({ name: 'save_recipe', arguments: { ...recipe({ meal_id: '52773' }), est_servings: 0 } });
 
@@ -67,7 +67,7 @@ for (const backend of BACKENDS) {
       assert.deepEqual(rows, [
         ['tools/call', 'save_recipe', false, 'scout'],
         ['tools/call', 'save_recipe', true, 'scout'],
-        ['tools/call', 'get_expectations', true, null],
+        ['tools/call', 'get_contract', true, null],
         ['tools/list', null, true, null],
       ]);
       assert.match(exchanges[0].summary, /est_servings must be at least 1/);
@@ -79,6 +79,12 @@ for (const backend of BACKENDS) {
       assert.deepEqual(newer.exchanges.map((x) => x.id), [exchanges[0].id]);
     });
 
+    test('the contract tool also answers to its earlier name, get_expectations', async () => {
+      const res = await handle(new Request('http://x/api/mcp?agent=scout', { method: 'POST', headers: { ...as('team-6'), 'content-type': 'application/json' },
+        body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'get_expectations', arguments: {} } }) }));
+      assert.equal(JSON.parse((await res.json()).result.content[0].text).agent, 'Recipe Scout');
+    });
+
     test('hand-written requests: GET is refused at once; text/plain JSON and string arguments are accepted', async () => {
       const raw = (init, query = '?agent=Scout') => handle(new Request(`http://x/api/mcp${query}`, { ...init, headers: { ...as('team-6'), ...init.headers } }));
       const get = await raw({ method: 'GET', headers: { accept: 'text/event-stream' } });
@@ -88,10 +94,10 @@ for (const backend of BACKENDS) {
       // fetch() with a JSON string body and no content type sends text/plain.
       const plain = await raw({ method: 'POST', body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list' }) });
       assert.equal(plain.status, 200);
-      assert.deepEqual((await plain.json()).result.tools.map((t) => t.name).sort(), ['get_expectations', 'save_recipe']);
+      assert.deepEqual((await plain.json()).result.tools.map((t) => t.name).sort(), ['get_contract', 'save_recipe']);
 
       const stringArgs = await raw({ method: 'POST', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'tools/call', params: { name: 'get_expectations', arguments: '{"agent": "planner"}' } }) });
+        body: JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'tools/call', params: { name: 'get_contract', arguments: '{"agent": "planner"}' } }) });
       assert.equal(JSON.parse((await stringArgs.json()).result.content[0].text).agent, 'Meal Planner');
     });
 

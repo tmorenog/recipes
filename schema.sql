@@ -299,3 +299,7 @@ create table if not exists coordinator_settings (
   value       jsonb not null,
   updated_at  timestamptz not null default now()
 );
+
+-- get_expectations was renamed get_contract: bring step prompts edited on the site in line.
+update prompt_overrides set text = replace(text, 'get_expectations', 'get_contract'), updated_at = now()
+where text like '%get\_expectations%';

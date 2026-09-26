@@ -4,13 +4,13 @@ The site for Meal Squad, a class exercise in agent systems. Groups build AI agen
 
 **Pages**
 - **Welcome** (`/`): what the exercise is, how the pieces fit, and a check that the class key works.
-- **Recipe Scout** (`/scout`) and **Meal Planner** (`/planner`): goals, copy-ready Lovable prompts with this site's address filled in, test checklists and troubleshooting. Each agent connects to `/api/mcp?agent=…` and reads its rules from `get_expectations`.
+- **Recipe Scout** (`/scout`) and **Meal Planner** (`/planner`): goals, copy-ready Lovable prompts with this site's address filled in, test checklists and troubleshooting. Each agent connects to `/api/mcp?agent=…` and reads its rules from `get_contract`.
   The sample prompts are plain text files in [`public/prompts/`](public/prompts/README.md) (`scout/step-1.txt` … `planner/step-5.txt`). Signed in on the Admin page, you can also edit any step on the page itself (**Edit**); edits are stored in the database (`/api/prompts`) and shown to everyone at once.
 - **Coordinator** (`/coordinator`, formerly `/database`): a live log of every MCP request agents send and the coordinator's answer (with rejections and why), plus every recipe and meal plan, filterable by group. The log keeps the newest 2,000 exchanges; headers, and so the class key, are never stored.
 
 **API** (used by the students' agents)
 - **REST** under `/api/…` for Lovable backends. Same data, same rules, same error messages as MCP.
-- **MCP** at `/api/mcp` with eight tools: `get_expectations`, `save_recipe`, `list_recipes`, `mark_processed`, `check_meal_plan`, `save_meal_plan`, `find_kroger_stores`, `search_kroger_products`. With `?agent=planner` the Planner sees `get_expectations`, `list_recipes`, `check_meal_plan` and `save_meal_plan`.
+- **MCP** at `/api/mcp` with eight tools: `get_contract`, `save_recipe`, `list_recipes`, `mark_processed`, `check_meal_plan`, `save_meal_plan`, `find_kroger_stores`, `search_kroger_products`. With `?agent=planner` the Planner sees `get_contract`, `list_recipes`, `check_meal_plan` and `save_meal_plan`.
 
 Everyone shares one class key. Each group also sends its chosen group name (header `X-Group`), so each recipe and plan records who made it. Kroger lookups use the instructor's Kroger credentials, so students need none.
 
@@ -103,7 +103,7 @@ Add `?agent=scout` or `?agent=planner` to show only that agent's tools. Every an
 
 | Tool | What it does |
 | --- | --- |
-| `get_expectations` | The agent's goal, steps and rules, and every field `save_recipe` or `save_meal_plan` accepts, with where its value comes from. Built from the same schemas that check each save, so agents don't need the format written into their code. Takes `agent` (`scout` or `planner`); defaults to the `?agent=` value. |
+| `get_contract` | The agent's goal, steps and rules, and every field `save_recipe` or `save_meal_plan` accepts, with where its value comes from. Built from the same schemas that check each save, so agents don't need the format written into their code. Takes `agent` (`scout` or `planner`); defaults to the `?agent=` value. |
 | `save_recipe` | Saves one recipe under your group. |
 | `list_recipes` | Recipes from every group, newest first. Options: `status` (`new`, the default; `processed`; or `all`), `theme`, `group`, `limit` (default 50, max 500). |
 | `mark_processed` | Takes one `recipe_id`. Marks that recipe as used by your group, so it drops out of the `new` list. Marking it again changes nothing. |
@@ -207,7 +207,7 @@ TEST_DATABASE_URL=postgres://postgres@localhost:5432/recipes_test npm test
 | `lib/plans.js` | Meal plan rules, and the activity list |
 | `lib/kroger.js` | Kroger sign-in, store and product lookups, caching |
 | `lib/mcp.js` | The MCP tools |
-| `lib/expectations.js` | What `get_expectations` returns for each agent |
+| `lib/contract.js` | What `get_contract` returns for each agent: the terms for working with the coordinator |
 | `lib/pricer.js` | The Pricer agent: its prompt, tools, loop and queue |
 | `lib/units.js` | Package sizes and unit conversion for the Pricer |
 | `api/pricer.js`, `public/pricer.html`, `public/pricer.js` | The Pricer page and its API |
