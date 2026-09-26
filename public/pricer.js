@@ -170,6 +170,7 @@
       $('run-test').disabled = false;
       return toast(r.errors.join(' '), true);
     }
+    $('try').open = true;
     $('try').scrollIntoView({ behavior: 'smooth', block: 'start' });
     await loadTest(r.body.id);
     schedule();

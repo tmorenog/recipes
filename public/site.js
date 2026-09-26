@@ -57,10 +57,9 @@
     );
   }
 
-  // Collapsible steps (the agent pages and Admin): the step title opens and
-  // closes the step. The first step starts open unless a step says otherwise
-  // (data-open="true" or "false"); what a student opens is remembered in this
-  // browser, and a link to a step opens it.
+  // Collapsible steps (Recipe Scout, Meal Planner and Admin): the step title
+  // opens and closes the step. The first step starts open; what a student
+  // opens is remembered in this browser, and a link to a step opens it.
   const stepSections = [...document.querySelectorAll('section.step')];
   if (stepSections.length) {
     const memoryKey = `rc-steps:${location.pathname}`;
@@ -90,13 +89,13 @@
         remembered[sec.id] = open;
         remember();
       });
-      setOpen(sec, remembered[sec.id] ?? (sec.dataset.open ? sec.dataset.open === 'true' : i === 0));
+      setOpen(sec, remembered[sec.id] ?? i === 0);
     });
     const all = (open) => { for (const sec of stepSections) { setOpen(sec, open); remembered[sec.id] = open; } remember(); };
     const bar = document.createElement('p');
     bar.className = 'steps-bar small';
     bar.append(
-      Object.assign(document.createElement('button'), { type: 'button', className: 'linklike', textContent: stepSections[0].matches('.admin-part, .agent-part') ? 'Open all' : 'Open all steps', onclick: () => all(true) }),
+      Object.assign(document.createElement('button'), { type: 'button', className: 'linklike', textContent: stepSections[0].classList.contains('admin-part') ? 'Open all' : 'Open all steps', onclick: () => all(true) }),
       ' · ',
       Object.assign(document.createElement('button'), { type: 'button', className: 'linklike', textContent: 'Close all', onclick: () => all(false) }),
     );

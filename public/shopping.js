@@ -29,14 +29,17 @@
     return box;
   }
 
-  // What's special about a line: estimated or substituted when priced; how it
-  // stood at Kroger when the Shopper checked; what it replaces.
+  // What's special about a line: estimated or substituted when priced; what the
+  // Shopper Agent bought instead of the Pricer's products, or for several dinners.
   function labels(l) {
+    const combined = l.instead_of?.length && new Set((l.used_for || []).map((u) => u.split(':')[0])).size > 1;
     const pill = (cls, text, title) => el('span', { className: `pill ${cls}`, textContent: text, title: title || '' });
     const note = (text) => el('span', { className: 'small muted line-note', textContent: text });
     return [
       l.estimated ? pill('estimated', 'Estimated', 'Not from Kroger: the Pricer Agent estimated this price') : null,
       l.availability === 'unavailable' ? pill('unavailable', 'Not carried', `At Kroger today: ${l.unavailable_reason || 'not carried'}`) : null,
+      l.instead_of?.length ? pill('replaced', combined ? 'Combined' : 'Replacement', combined ? 'One product for several dinners' : 'Not the Pricer’s product') : null,
+      l.instead_of?.length ? note(`Instead of ${l.instead_of.join(', ')}.${l.note ? ` ${l.note[0].toUpperCase()}${l.note.slice(1)}` : ''}`) : null,
       l.replaces ? pill('replaced', 'Replacement') : null,
       l.replaces ? note(`Instead of ${l.replaces.description}${l.replaces.size ? ` (${l.replaces.size})` : ''}: ${l.replaces.why}.${l.replacement_reason ? ` ${l.replacement_reason[0].toUpperCase()}${l.replacement_reason.slice(1)}` : ''}`) : null,
       l.substitutes?.length ? pill('substitute', 'Substitute') : null,

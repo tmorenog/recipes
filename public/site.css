@@ -384,6 +384,9 @@ h2 .count, .step-title .count { font: 500 15px var(--mono); color: var(--muted);
 .how-strip li { counter-increment: how; position: relative; padding: 14px 16px 14px 52px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); }
 .how-strip li::before { content: counter(how); position: absolute; left: 14px; top: 14px; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center;
   font: 700 14px/1 var(--display); background: var(--pricer-soft); color: var(--pricer); }
+body:has(.agent-tag.scout) .how-strip li::before { background: var(--scout-soft); color: var(--accent); }
+body:has(.agent-tag.planner) .how-strip li::before { background: var(--planner-soft); color: var(--planner); }
+body:has(.agent-tag.shopper) .how-strip li::before { background: var(--shopper-soft); color: var(--shopper); }
 .how-strip strong { display: block; }
 .how-strip span { font-size: 14px; color: var(--muted); }
 
@@ -768,10 +771,13 @@ section.step.collapsed { padding-block: 10px; }
 .notes-form { display: grid; gap: 10px; }
 .notes-form textarea, .prompt-item textarea { width: 100%; font: 14px/1.5 var(--mono); padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink); box-sizing: border-box; }
 .admin-part { margin: 18px 0; }
-.agent-part { margin: 18px 0; }
-.agent-part .step-body > h2:first-child, .agent-part .step-body > p:first-child { margin-top: 8px; }
-body:has(.agent-tag.pricer) .agent-part .step-num { color: var(--pricer); }
-body:has(.agent-tag.shopper) .agent-part .step-num { color: var(--shopper); }
+/* "Learn more": optional details above an agent page's main part, folded and quiet. */
+.learn-more { margin: 18px 0 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 18px; }
+.learn-more-label { margin: 0; font: 600 12px/1.4 var(--mono); letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+.more-info > summary { cursor: pointer; color: var(--muted); font-size: 15px; width: max-content; }
+.more-info > summary:hover { color: var(--accent); }
+.more-info[open] { flex-basis: 100%; order: 1; margin-top: 6px; padding: 12px 18px 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+.more-info[open] > summary { color: var(--ink); font-weight: 600; margin-bottom: 6px; }
 .admin-part .step-title .step-num { color: var(--hub-edge); }
 .prompt-group h4 { margin: 18px 0 8px; font: 700 15px/1.3 var(--display); }
 .prompt-item { margin: 0 0 8px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }

@@ -32,13 +32,13 @@
   <div class="page-head">
     <span class="agent-tag shopper">Agent 4 · already built</span>
     <h1>The Shopper Agent</h1>
-    <p class="lede">Compares the meal plans the Meal Planner Agents saved, chooses the one the class will cook, and has the coordinator build its Kroger shopping cart for the week.</p>
+    <p class="lede">Compares the meal plans the Meal Planner Agents saved, chooses the one the class will cook, and does the class’s shopping: the week’s Kroger cart for it.</p>
   </div>
 
   <ol class="how-strip" aria-label="How the Shopper Agent works">
     <li><strong>The Meal Planner Agents save plans</strong><span>All plans go to the coordinator.</span></li>
     <li><strong>The Shopper Agent compares them</strong><span>Checks passed, cost, variety and popularity.</span></li>
-    <li><strong>The coordinator builds the cart</strong><span>The plan is priced per person; the cart scales it to the number of people shopping, in whole packages.</span></li>
+    <li><strong>The Shopper Agent builds the cart</strong><span>The plan is priced per person; the cart scales it to the number of people shopping, in whole packages. It checks Kroger today, and buys an ingredient several dinners share once.</span></li>
     <li><strong>The class’s plan appears here</strong><span>With the reason it was chosen.</span></li>
   </ol>
 
@@ -53,9 +53,11 @@
   </details>
   <p class="small instructor-on" id="signed-in" hidden>Signed in as the instructor. <button class="linklike" type="button" id="signout">Sign out</button></p>
 
-  <section class="step agent-part" id="instructions" data-open="false">
-  <h3 class="step-title"><span class="step-num">Part 1</span>The Shopper Agent’s instructions</h3>
-  <p>The prompt the Shopper Agent follows: how to compare the plans, how to build and check the Kroger cart, and what to do when the store no longer carries a product.</p>
+  <div class="learn-more">
+  <p class="learn-more-label">Learn more</p>
+  <details class="more-info" id="instructions">
+  <summary>The Shopper Agent’s instructions</summary>
+  <p>The prompt the Shopper Agent follows: how to compare the plans, how to build the Kroger cart, when to buy one product for several dinners, and what to do when the store no longer carries a product.</p>
   <div class="prompt shopper">
     <div class="prompt-head">
       <p class="prompt-kind" id="prompt-kind">Prompt</p>
@@ -68,10 +70,10 @@
     <span class="small muted">Used from the next run. The Admin page keeps a safe copy to go back to.</span>
     <span class="small" id="prompt-msg" aria-live="polite"></span>
   </div>
-  </section>
+  </details>
+  </div>
 
-  <section class="step agent-part" id="plan" data-open="true">
-  <h3 class="step-title"><span class="step-num">Part 2</span>The class’s plan, and how the Shopper Agent chose it</h3>
+  <h2 id="plan">The class’s plan, and how the Shopper Agent chose it</h2>
   <div class="panel instructor-only" id="run-panel" hidden>
     <p style="margin-top:0">Run the Shopper Agent once the Meal Planner Agents have saved their plans. It uses the AI key the Pricer Agent uses, and takes a minute or two.</p>
     <p class="row-actions"><label class="people-field">People to shop for <input type="number" id="people" min="1" max="1000" value="50"></label>
@@ -91,7 +93,6 @@
       <ol class="feed" id="feed"></ol>
     </aside>
   </div>
-  </section>
 </main>
 
 <footer class="site-foot">
