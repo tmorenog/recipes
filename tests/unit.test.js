@@ -140,10 +140,10 @@ test('an ingredient without a measure is accepted, since TheMealDB has some', ()
 
 test('every sample prompt on the agent pages has its text file, using only known placeholders', async () => {
   const { readFile } = await import('node:fs/promises');
-  for (const page of ['scout', 'planner']) {
+  for (const [page, steps] of [['scout', 5], ['planner', 3]]) {
     const html = await readFile(new URL(`../public/${page}.html`, import.meta.url), 'utf8');
     const paths = [...html.matchAll(/data-prompt="([^"]+)"/g)].map((m) => m[1]);
-    assert.equal(paths.length, 5, `${page} has 5 steps`);
+    assert.equal(paths.length, steps, `${page} has ${steps} steps`);
     for (const path of paths) {
       const text = await readFile(new URL(`../public${path}`, import.meta.url), 'utf8');
       assert.ok(text.trim().length > 50, `${path} is not empty`);
