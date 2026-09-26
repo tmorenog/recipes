@@ -1,10 +1,10 @@
-Enable Lovable Cloud. Connect Meal Planner’s backend to the class coordinator using MCP. The MCP server is at this address: {{SITE}}/api/mcp?agent=planner
+Enable Lovable Cloud. Connect Meal Planner’s backend to the coordinator using MCP. The MCP server is at this address: {{SITE}}/api/mcp?agent=planner
 
 For this step, only establish the connection, discover the tools offered by the coordinator and use them to show the class’s recipes. Do not add an AI agent yet.
 
-The coordinator requires two things on every request: our class key, sent as the header “Authorization: Bearer ” followed by the value of the CLASS_KEY secret, and our group name, {{GROUP}}, sent as the header “X-Group”. If the group name is YOUR-GROUP-NAME, ask me for our group name first.
+The coordinator requires two things on every request: our class key and our group name. All requests to the coordinator must be made from the backend.
 
-Create a protected Lovable secret called CLASS_KEY and ask me to enter its value. Never place the class key in the page, browser code, logs or AI instructions. All requests to the coordinator must be made from the backend.
+Create a protected Lovable secret called CLASS_KEY and ask me to enter its value. Never place the class key in the page, browser code, logs or AI instructions. Also ask me our group name if you don’t know it.
 
 Once you have established the connection:
 
