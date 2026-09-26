@@ -568,8 +568,42 @@
     if (r.ok) for (const refresh of editors) refresh(true);
   }
 
+  // The whole set at once: the safe copies go live (e.g. after a bad edit, or
+  // before class), or the live prompts become the safe copies (a snapshot).
+  async function restoreAllSafe() {
+    const out = $('prompt-all-result');
+    let n = 0;
+    for (const [agent, step, , file] of ALL_PROMPTS) {
+      const st = await promptState(agent, step, file, true);
+      if (!st.edited) continue;
+      const r = await sendPrompt({ agent, step, reset: true });
+      if (!r.ok) { out.textContent = r.errors.join(' '); out.className = 'small bad'; return; }
+      n += 1;
+    }
+    out.textContent = n ? `Done: ${n} prompt${n === 1 ? ' is' : 's are'} back to the safe copy. Everyone sees them now.` : 'Every live prompt already is its safe copy.';
+    out.className = 'small good';
+    for (const refresh of editors) refresh(true);
+  }
+  async function saveAllAsSafe() {
+    const out = $('prompt-all-result');
+    const prompts = [];
+    for (const [agent, step, , file] of ALL_PROMPTS) prompts.push({ agent, step, text: (await promptState(agent, step, file, true)).current });
+    const r = await sendPrompt({ set: 'default', prompts });
+    out.textContent = r.ok ? `Done: the ${prompts.length} live prompts are now the safe copies.` : r.errors.join(' ');
+    out.className = `small ${r.ok ? 'good' : 'bad'}`;
+    if (r.ok) for (const refresh of editors) refresh(true);
+  }
+
   function loadPrompts() {
     editors.length = 0;
+    const restoreAll = el('button', { type: 'button', className: 'btn', textContent: 'Restore all safe copies', dataset: { confirm: 'Click again: every safe copy goes live' } });
+    const snapshot = el('button', { type: 'button', className: 'btn', textContent: 'Save all live prompts as the safe copies', dataset: { confirm: 'Click again: the live prompts replace the safe copies' } });
+    confirmClick(restoreAll, restoreAllSafe);
+    confirmClick(snapshot, saveAllAsSafe);
+    const all = el('div', { className: 'panel prompt-files' },
+      el('p', { className: 'small', style: 'margin-top:0' }, el('strong', { textContent: 'All prompts at once. ' }), 'Students always see the live prompts. The safe copies are a known-good set to go back to: restore them all after a bad edit or before class, or save the live set as the new safe copies once you’re happy with it.'),
+      el('div', { className: 'row-actions' }, restoreAll, snapshot),
+      el('p', { className: 'small', id: 'prompt-all-result', 'aria-live': 'polite' }));
     const files = el('div', { className: 'panel prompt-files' },
       el('p', { className: 'small', style: 'margin-top:0' }, el('strong', { textContent: 'As text files. ' }), 'Download either set as a zip of .txt files (one per prompt, e.g. scout-step-2.txt), edit or swap them, then upload the files you want back into either set.'),
       el('div', { className: 'row-actions' },
@@ -580,7 +614,7 @@
           el('select', { id: 'prompt-files-set' }, new Option('the live prompts', 'current'), new Option('the safe copies', 'default')), ' ',
           el('input', { type: 'file', id: 'prompt-files', multiple: true, accept: '.txt,text/plain', onchange: (e) => { uploadSet([...e.target.files], $('prompt-files-set').value); e.target.value = ''; } }))),
       el('p', { className: 'small', id: 'prompt-files-result', 'aria-live': 'polite' }));
-    $('prompt-editors').replaceChildren(files, ...PROMPTS.map((g) => el('div', { className: 'prompt-group' },
+    $('prompt-editors').replaceChildren(all, files, ...PROMPTS.map((g) => el('div', { className: 'prompt-group' },
       el('h4', { textContent: g.group }), ...g.items.map(promptEditor))));
   }
 

@@ -155,7 +155,8 @@
 
   // Fill in this site's address ({{SITE}}) and the group's name ({{GROUP}})
   // wherever a page uses them. The group name is typed into a .group-input box
-  // and remembered in this browser.
+  // and remembered in this browser. Text marked data-literal is left as it is
+  // (e.g. where the Admin page explains the placeholders).
   const GROUP_KEY = 'rc-group-name';
   const PLACEHOLDER = 'YOUR-GROUP-NAME';
   const normalize = (raw) => {
@@ -168,7 +169,7 @@
   const slots = [];
   const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
   for (let n = walker.nextNode(); n; n = walker.nextNode()) {
-    if (/\{\{(SITE|GROUP)\}\}/.test(n.nodeValue)) slots.push({ node: n, template: n.nodeValue });
+    if (/\{\{(SITE|GROUP)\}\}/.test(n.nodeValue) && !n.parentElement?.closest('[data-literal]')) slots.push({ node: n, template: n.nodeValue });
   }
   const fill = () => {
     for (const { node, template } of slots) {
@@ -266,7 +267,9 @@
     const make = (tag, props) => Object.assign(document.createElement(tag), props);
     // Relabel the text only: the label holds the button that opens and closes the prompt.
     const label = head.querySelector('.prompt-kind .prompt-toggle') ?? head.querySelector('.prompt-kind');
-    const showLabel = () => { if (label) label.textContent = p.edited ? 'Sample prompt · edited by the instructor' : 'Sample prompt'; };
+    // Everyone sees the live prompt as the sample prompt; its state (and the
+    // safe copy to go back to) is the instructor's business, in the editor.
+    const showLabel = () => { if (label) label.textContent = 'Sample prompt'; };
     showLabel();
     const editBtn = make('button', { type: 'button', className: 'btn', textContent: 'Edit' });
     head.querySelector('[data-copy]')?.before(editBtn);
