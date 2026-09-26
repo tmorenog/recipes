@@ -176,6 +176,7 @@ for (const backend of BACKENDS) {
       assert.equal(view.choice.cart.total_usd, 9 + 5 * 4);
       assert.equal(view.choice.cart.estimated_lines, 1);
       assert.equal(view.choice.cart.people, 50);
+      assert.ok(view.choice.cart.lines.every((l) => 'image_url' in l), 'each product can show its photo');
       assert.equal(view.run.outcome, 'Plan chosen');
       assert.equal(view.run.input.people, 50, 'the Shopper shops for 50 by default');
 

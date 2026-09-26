@@ -71,6 +71,7 @@
   function signOut(message = '') {
     key = '';
     try { sessionStorage.removeItem(STORE); } catch { /* ignore */ }
+    document.querySelector('.instructor-chip')?.remove();
     $('admin').hidden = true;
     $('signin').hidden = false;
     $('signin-result').textContent = message;

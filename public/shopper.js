@@ -21,8 +21,8 @@
       $('choice').replaceChildren(el('p', { className: 'empty small', textContent: 'No plan chosen yet. The instructor runs the Shopper Agent once the Planner Agents have saved their plans.' }));
       return;
     }
-    $('choice').replaceChildren(window.shoppingPlan(choice),
-      history?.length ? el('p', { className: 'small' }, `${history.length} earlier choice${history.length === 1 ? '' : 's'}: `, el('a', { href: '/coordinator?view=shopping', textContent: 'see them on the Coordinator page' }), '.') : null);
+    $('choice').replaceChildren(...[window.shoppingPlan(choice),
+      history?.length ? el('p', { className: 'small' }, `${history.length} earlier choice${history.length === 1 ? '' : 's'}: `, el('a', { href: '/coordinator?view=shopping', textContent: 'see them on the Coordinator page' }), '.') : null].filter(Boolean));
   }
 
   // ---------------------------------------------------------------- the latest run
@@ -43,7 +43,7 @@
     $('now').replaceChildren(el('span', { className: `dot${running ? ' on' : ''}` }), running ? `Working: ${run.actions} action${run.actions === 1 ? '' : 's'} so far.` : `Last run ${when(run.created_at)}: ${run.actions} actions.`);
     $('feed').replaceChildren(...[...run.steps].reverse().map((s) => el('li', { className: `feed-${s.kind === 'tool_call' || s.kind === 'tool_result' ? 'tool' : s.kind}` },
       el('span', { className: 'feed-time', textContent: time(s.at) }), el('span', { className: 'feed-what' }, moreText(describe(s))))));
-    $('outcome').replaceChildren(el('strong', { textContent: running ? 'Running…' : run.outcome || run.status }), run.summary ? el('span', { className: 'outcome-summary' }, moreText(run.summary, 400)) : null);
+    $('outcome').replaceChildren(...[el('strong', { textContent: running ? 'Running…' : run.outcome || run.status }), run.summary ? el('span', { className: 'outcome-summary' }, moreText(run.summary, 400)) : null].filter(Boolean));
     $('outcome').className = `outcome ${running ? '' : run.status === 'done' ? 'good' : 'bad'}`;
     return running;
   }

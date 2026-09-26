@@ -12,6 +12,23 @@
   const money = (n) => (n == null ? '–' : `$${Number(n).toFixed(2)}`);
   const when = (iso) => new Date(iso).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
 
+  // A small picture of each product: Kroger's photo, else TheMealDB's picture of
+  // the ingredient (for estimated prices and carts saved before photos were kept),
+  // else nothing.
+  const INGREDIENT_IMG = (name) => `https://www.themealdb.com/images/ingredients/${encodeURIComponent(name.trim().replace(/\b\w/g, (c) => c.toUpperCase()))}-Small.png`;
+  function thumb(l) {
+    const ingredient = (l.used_for?.[0] || '').split(': ').slice(1).join(': ');
+    const last = ingredient.split(',')[0].split(/\s+/).filter(Boolean).pop() || '';
+    const sources = [...new Set([/^https:\/\//.test(l.image_url || '') ? l.image_url : null,
+      ingredient ? INGREDIENT_IMG(ingredient.split(',')[0]) : null, last ? INGREDIENT_IMG(last) : null].filter(Boolean))];
+    const box = el('span', { className: 'cart-thumb', 'aria-hidden': 'true' });
+    if (!sources.length) return box;
+    const img = el('img', { src: sources.shift(), alt: '', loading: 'lazy' });
+    img.addEventListener('error', () => { if (sources.length) img.src = sources.shift(); else img.remove(); });
+    box.append(img);
+    return box;
+  }
+
   window.shoppingPlan = (choice) => {
     const { plan, cart } = choice;
     const perDinner = plan.meals.length ? plan.total_cost_usd / plan.meals.length : null;
@@ -23,7 +40,7 @@
         el('div', { className: 'mfacts', textContent: [`${money(m.cost_per_serving_usd)}/serving`, m.cuisine].filter(Boolean).join(' · ') }),
         m.picked_by?.length ? el('div', { className: 'mby', textContent: `Picked by ${m.picked_by.length} group${m.picked_by.length === 1 ? '' : 's'}: ${m.picked_by.join(', ')}` }) : null))));
     const rows = cart.lines.map((l) => el('tr', {},
-      el('td', {}, l.description, l.estimated ? el('span', { className: 'pill estimated', textContent: 'Estimated', title: 'Not from Kroger: the Pricer Agent estimated this price' }) : null),
+      el('td', { className: 'cart-product' }, thumb(l), el('span', {}, l.description, l.estimated ? el('span', { className: 'pill estimated', textContent: 'Estimated', title: 'Not from Kroger: the Pricer Agent estimated this price' }) : null)),
       el('td', { textContent: l.size || '' }),
       el('td', { className: 'num', textContent: String(l.packages) }),
       el('td', { className: 'num', textContent: money(l.price_usd) }),

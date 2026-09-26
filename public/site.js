@@ -4,6 +4,22 @@
   'use strict';
   const SITE = location.origin;
 
+  // Signed in as the instructor (the admin key, kept for this tab only): say so in
+  // the header on every page, with a way to sign out.
+  try {
+    if (sessionStorage.getItem('rc-admin-key')) {
+      const nav = document.querySelector('.site-head .wrap');
+      const out = Object.assign(document.createElement('button'), { type: 'button', className: 'linklike', textContent: 'Sign out' });
+      out.addEventListener('click', () => {
+        try { sessionStorage.removeItem('rc-admin-key'); } catch { /* ignore */ }
+        location.reload();
+      });
+      const chip = Object.assign(document.createElement('span'), { className: 'instructor-chip' });
+      chip.append('Instructor · ', out);
+      nav?.append(chip);
+    }
+  } catch { /* storage unavailable */ }
+
   // "Before you start": the numbered list at the top of the Welcome page
   // (<section data-ready="welcome">).
   // Rendered first so the group box and key check below are wired up like any other.
