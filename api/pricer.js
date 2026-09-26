@@ -15,7 +15,7 @@
 // New recipes are priced automatically after each save; nobody needs to press anything for that.
 import { getStore } from '../lib/store/index.js';
 import { checkAdmin } from '../lib/admin.js';
-import { json, guarded } from '../lib/http.js';
+import { json, guarded, readJson } from '../lib/http.js';
 import { createHash } from 'node:crypto';
 import { pricerInfo, currentPrompt, defaultPrompt, DEFAULT_PROMPT, SAMPLE_RECIPE, SAMPLE_INGREDIENTS, kickPricer, resumePricer, runQueue, startTest } from '../lib/pricer.js';
 
@@ -49,12 +49,9 @@ export const GET = guarded(async (request) => {
 export const POST = guarded(async (request) => {
   const url = new URL(request.url);
   const action = url.searchParams.get('action') || '';
-  let body = {};
-  try {
-    body = request.headers.get('content-length') === '0' ? {} : await request.json();
-  } catch {
-    body = {};
-  }
+  const read = await readJson(request);
+  if (read.response) return read.response;
+  const body = read.body ?? {};
   const auth = checkAdmin(request);
   if (!auth.ok) return json(auth.status, { errors: [auth.error] });
   const store = getStore();

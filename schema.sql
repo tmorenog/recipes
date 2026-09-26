@@ -278,6 +278,16 @@ create table if not exists coordinator_settings (
   updated_at  timestamptz not null default now()
 );
 
+-- Recent requests counted by the per-minute limits (lib/settings.js): save
+-- attempts and Kroger look-ups, per group. Older rows are removed as it goes.
+create table if not exists rate_hits (
+  id          bigint generated always as identity primary key,
+  kind        text not null,
+  group_name  text not null,
+  at          timestamptz not null default now()
+);
+create index if not exists rate_hits_kind_at_idx on rate_hits (kind, at);
+
 -- Recipes saved before the Pricer existed get priced too (or wait, unpriced,
 -- when the instructor paused automatic pricing).
 insert into pricings (meal_id, status)

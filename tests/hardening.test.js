@@ -109,7 +109,104 @@ for (const backend of BACKENDS) {
       setPricerForTests({ model, fetch: fakeKroger, auto: false });
       assert.equal(await runQueue(), 0, 'paused: automatic runs price nothing');
       assert.equal(await runQueue({ requested: true }), 1, 'the instructor’s request still prices');
+      assert.equal((await db.pool.query("select count(*)::int as n from rate_hits where kind = 'kroger'")).rows[0].n, 0, 'the Pricer’s own Kroger searches are not limited');
     });
 
+    test('the per-minute save limits hold for saves sent at the same moment, per group and for the class', async () => {
+      await saveSettings({ max_saves_per_minute: 3, max_recipes_per_group: 0 });
+      const burst = await Promise.all(Array.from({ length: 8 }, () => saveRest('team-1', recipe())));
+      assert.deepEqual(burst.map((r) => r.status).sort(), [201, 201, 201, 429, 429, 429, 429, 429]);
+
+      await db.pool.query('delete from rate_hits'); // a minute later
+      await saveSettings({ max_saves_per_minute: 0, max_class_saves_per_minute: 4 });
+      const classwide = await Promise.all(Array.from({ length: 6 }, (_, i) => saveRest(`team-${i + 2}`, recipe())));
+      const statuses = classwide.map((r) => r.status).sort();
+      assert.deepEqual(statuses, [201, 201, 201, 201, 429, 429]);
+      const refused = await classwide.find((r) => r.status === 429).json();
+      assert.match(refused.errors[0], /too many save attempts: the whole class can make at most 4 a minute/);
+    });
+
+    test('Kroger look-ups with the class key are limited per group and for the class, over REST and MCP', async () => {
+      process.env.KROGER_CLIENT_ID = 'test-id';
+      process.env.KROGER_CLIENT_SECRET = 'test-secret';
+      resetKroger();
+      const realFetch = globalThis.fetch;
+      globalThis.fetch = fakeKroger;
+      try {
+        await saveSettings({ max_kroger_per_minute: 2, max_class_kroger_per_minute: 3 });
+        const stores = (group) => krogerApi.GET(new Request('http://x/api/kroger?what=stores&zip=45202', { headers: as(group) }));
+        assert.equal((await stores('team-1')).status, 200);
+        assert.equal((await stores('team-1')).status, 200);
+        const third = await getJson(await stores('team-1'));
+        assert.equal(third.status, 429);
+        assert.match(third.body.errors[0], /too many Kroger look-ups: each group can make at most 2 a minute/);
+
+        const search = await (await mcpRaw('team-2', toolCall('search_kroger_products', { term: 'beans', store_id: '01400943' }))).json();
+        assert.equal(search.result.isError, undefined, JSON.stringify(search));
+        const over = await (await mcpRaw('team-3', toolCall('find_kroger_stores', { zip: '45202' }))).json();
+        assert.equal(over.result.isError, true);
+        assert.match(over.result.content[0].text, /whole class can make at most 3 a minute together/);
+      } finally {
+        globalThis.fetch = realFetch;
+        resetKroger();
+      }
+    });
+
+    test('the activity log keeps a shortened copy of large requests, and only the newest entries', async () => {
+      const big = recipe({ instructions: 'Stir. '.repeat(3000) });
+      assert.equal((await saveRest('team-1', big)).status, 201);
+      const [row] = (await db.pool.query("select input from activity where action = 'save_recipe'")).rows;
+      assert.ok(typeof row.input.truncated === 'string', 'kept as valid JSON, marked truncated');
+      assert.ok(JSON.stringify(row.input).length < 4500);
+
+      await db.pool.query("insert into activity (group_name, channel, action, ok) select 'x', 'rest', 'filler', true from generate_series(1, 5010)");
+      await getStore().logActivity({ group_name: 'team-1', channel: 'rest', action: 'save_recipe', ok: false, detail: 'last', input: null });
+      assert.equal((await db.pool.query('select count(*)::int as n from activity')).rows[0].n, 5000);
+      assert.equal((await db.pool.query('select detail from activity order by id desc limit 1')).rows[0].detail, 'last');
+    });
+
+    test('request bodies over the size limit are refused before they are read', async () => {
+      const huge = JSON.stringify({ ...recipe(), why_chosen: 'x'.repeat(300 * 1024) });
+      const r = await getJson(await saveRest('team-1', huge));
+      assert.equal(r.status, 413);
+      assert.match(r.body.errors[0], /too large: at most 256 KB/);
+      const plan = await plansApi.POST(new Request('http://x/api/meal-plans', { method: 'POST', headers: { ...as('team-1'), 'content-length': String(10 * 1024 * 1024) }, body: '{}' }));
+      assert.equal(plan.status, 413, 'a declared size is enough');
+      // A backup may be large.
+      const restore = await admin('POST', 'restore', JSON.stringify({ format: 'something else', padding: 'x'.repeat(1024 * 1024) }));
+      assert.equal(restore.status, 400);
+      assert.match(restore.body.errors[0], /isn’t a Meal Squad backup/);
+      assert.equal((await db.pool.query('select count(*)::int as n from activity')).rows[0].n, 0, 'nothing was logged');
+    });
+
+    test('MCP: tool arguments sent as a string or null, big batches, big bodies and broken JSON get readable answers', async () => {
+      const asText = await (await mcpRaw('team-1', toolCall('get_contract', JSON.stringify({})), 'scout')).json();
+      assert.equal(asText.result.isError, undefined, 'arguments sent as a JSON string are read');
+      const asNull = await (await mcpRaw('team-1', toolCall('get_contract', null), 'scout')).json();
+      assert.equal(asNull.result.isError, undefined, 'null is the same as no arguments');
+      const bad = await (await mcpRaw('team-1', toolCall('save_recipe', '{not json'), 'scout')).json();
+      assert.deepEqual([bad.result.isError, bad.result.content[0].text], [true, 'Rejected:\n- arguments must be a JSON object, e.g. {"theme": "…"}']);
+      const number = await (await mcpRaw('team-1', toolCall('save_recipe', 5), 'scout')).json();
+      assert.equal(number.result.isError, true);
+
+      // A batch: answers made here and the SDK's come back together.
+      const both = await (await mcpRaw('team-1', [toolCall('save_recipe', '[]'), { jsonrpc: '2.0', id: ++rpcId, method: 'tools/list' }], 'scout')).json();
+      assert.equal(both.length, 2);
+      assert.ok(both.some((m) => m.result?.isError) && both.some((m) => m.result?.tools));
+
+      const many = await mcpRaw('team-1', Array.from({ length: 11 }, () => ({ jsonrpc: '2.0', id: ++rpcId, method: 'tools/list' })));
+      assert.equal(many.status, 400);
+      assert.match((await many.json()).error.message, /at most 10 requests/);
+
+      const large = await mcpRaw('team-1', toolCall('save_recipe', { ...recipe(), why_chosen: 'x'.repeat(300 * 1024) }), 'scout');
+      assert.equal(large.status, 413);
+      assert.match((await large.json()).error.message, /too large: at most 256 KB/);
+
+      const deep = await mcpRaw('team-1', `${'['.repeat(100_000)}${']'.repeat(100_000)}`);
+      assert.ok([200, 400].includes(deep.status), `answered ${deep.status}`);
+      const answer = await deep.json();
+      assert.ok(answer.error?.message, 'a readable JSON-RPC error');
+      assert.doesNotMatch(answer.error.message, /invalid_type|expected/);
+    });
   });
 }

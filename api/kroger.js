@@ -6,13 +6,16 @@
 // vercel.json rewrites /api/kroger/{what} to this function with ?what=.
 import { findStores, searchProducts } from '../lib/kroger.js';
 import { json, guarded, requireGroup } from '../lib/http.js';
+import { krogerLimitFor } from '../lib/settings.js';
 
 export const GET = guarded(async (request) => {
-  const { response } = await requireGroup(request);
+  const { group, response } = await requireGroup(request);
   if (response) return response;
   const url = new URL(request.url);
   const what = url.searchParams.get('what') || url.pathname.match(/\/api\/kroger\/([a-z]+)/)?.[1];
   const params = Object.fromEntries([...url.searchParams].filter(([k]) => k !== 'what'));
+  const limited = what === 'stores' || what === 'products' ? await krogerLimitFor(group) : null;
+  if (limited) return json(limited.status, { errors: limited.errors });
   const res = what === 'stores' ? await findStores(params) : what === 'products' ? await searchProducts(params) : null;
   if (!res) return json(404, { errors: ['Use /api/kroger/stores?zip=… or /api/kroger/products?term=…&store_id=…'] });
   const { ok, status, errors, ...body } = res;
