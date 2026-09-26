@@ -22,8 +22,11 @@
       $('choice').replaceChildren(el('p', { className: 'empty small', textContent: 'No plan chosen yet. The instructor runs the Shopper Agent once the Meal Planner Agents have saved their plans.' }));
       return;
     }
+    // The page refreshes every few seconds: folds a student opened stay open.
+    const open = new Set([...$('choice').querySelectorAll('details[open]')].map((d) => d.dataset.fold));
     $('choice').replaceChildren(...[window.shoppingPlan(choice),
       history?.length ? el('p', { className: 'small' }, `${history.length} earlier choice${history.length === 1 ? '' : 's'}: `, el('a', { href: '/coordinator?view=shopping', textContent: 'see them on the Coordinator page' }), '.') : null].filter(Boolean));
+    for (const d of $('choice').querySelectorAll('details')) if (open.has(d.dataset.fold)) d.open = true;
   }
 
   // ---------------------------------------------------------------- the latest run
@@ -46,6 +49,9 @@
       el('span', { className: 'feed-time', textContent: time(s.at) }), el('span', { className: 'feed-what' }, moreText(describe(s))))));
     $('outcome').replaceChildren(...[el('strong', { textContent: running ? 'Running…' : run.outcome || run.status }), run.summary ? el('span', { className: 'outcome-summary' }, moreText(run.summary, 400)) : null].filter(Boolean));
     $('outcome').className = `outcome ${running ? '' : run.status === 'done' ? 'good' : 'bad'}`;
+    // Once a plan is chosen, the plan says it all; the box is for a run in
+    // progress, or one that chose nothing.
+    $('outcome').hidden = !running && run.outcome === 'Plan chosen';
     return running;
   }
 
