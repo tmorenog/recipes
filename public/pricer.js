@@ -168,7 +168,7 @@
     } catch (e) {
       if (e.status === 404) {
         $('test-now').replaceChildren(el('span', { className: 'dot' }), 'Idle: no test yet.');
-        $('test-feed').replaceChildren(el('li', { className: 'muted small', textContent: 'The agent’s steps appear here while a test runs.' }));
+        $('test-feed').replaceChildren(el('li', { className: 'muted small', textContent: 'The Pricer Agent’s steps appear here while a test runs.' }));
       }
       if (e.status !== 404) $('test-result').replaceChildren(el('p', { className: 'errors', textContent: e.message }));
       return;
@@ -186,7 +186,7 @@
 
   function trace(steps, { open = false, toolCalls } = {}) {
     return el('details', { className: 'trace', open },
-      el('summary', {}, el('strong', { textContent: 'What the agent did' }), el('span', { className: 'small muted', textContent: ` · ${steps.length} steps${toolCalls != null ? `, ${toolCalls} tool calls` : ''}` })),
+      el('summary', {}, el('strong', { textContent: 'What the Pricer Agent did' }), el('span', { className: 'small muted', textContent: ` · ${steps.length} steps${toolCalls != null ? `, ${toolCalls} tool calls` : ''}` })),
       steps.length ? el('ol', { className: 'trace-list' }, steps.map(stepCard)) : el('p', { className: 'muted', textContent: 'No steps yet.' }),
     );
   }
@@ -207,7 +207,7 @@
       title,
       status,
       t.status === 'done' ? tiles(t.totals?.cart_usd, t.totals?.cost_used_usd, t.people, t.totals?.estimated_lines) : null,
-      t.summary ? el('p', { className: 'cart-summary' }, el('strong', { textContent: 'The agent’s summary: ' }), t.summary) : null,
+      t.summary ? el('p', { className: 'cart-summary' }, el('strong', { textContent: 'The Pricer Agent’s summary: ' }), t.summary) : null,
       cartTable(t.ingredients.map((line) => ({ name: line })), byLine, {
         running, priced: t.status === 'done', people: t.people, toBuy: t.totals?.cart_usd, used: t.totals?.cost_used_usd,
       }),
@@ -284,7 +284,7 @@
     );
     const problem = $('problem');
     problem.hidden = !o.problem;
-    if (o.problem) problem.replaceChildren(el('h2', { textContent: 'The Pricer isn’t running yet' }), el('p', { textContent: o.problem }));
+    if (o.problem) problem.replaceChildren(el('h2', { textContent: 'The Pricer Agent isn’t running yet' }), el('p', { textContent: o.problem }));
     if (!promptDirty && document.activeElement !== $('prompt')) $('prompt').value = o.prompt;
     showPromptState();
     if (!$('test-lines').value) $('test-lines').value = (o.sample_ingredients || []).join('\n');
@@ -304,7 +304,7 @@
     const o = overview;
     if (!o) return;
     if (!o.pricings.length) {
-      $('queue').replaceChildren(el('p', { className: 'empty small', textContent: 'No recipes yet. They appear here as soon as a Recipe Scout saves one.' }));
+      $('queue').replaceChildren(el('p', { className: 'empty small', textContent: 'No recipes yet. They appear here as soon as a Scout Agent saves one.' }));
       return;
     }
     $('queue').replaceChildren(...o.pricings.map((p) => {
@@ -442,7 +442,7 @@
       el('p', { className: 'detail-status' }, pill(d.status), ' ', statusSentence(d, lines.length),
         /^\d+$/.test(d.meal_id) ? el('a', { className: 'small', href: `https://www.themealdb.com/meal/${d.meal_id}`, target: '_blank', rel: 'noopener', textContent: ' Recipe on TheMealDB' }) : null),
       d.status === 'priced' ? tiles(d.to_buy_usd, d.total_cost_usd, d.people, (d.basket || []).filter((x) => x.status === 'estimated').length) : null,
-      d.summary ? el('p', { className: 'cart-summary' }, el('strong', { textContent: 'The agent’s summary: ' }), d.summary) : null,
+      d.summary ? el('p', { className: 'cart-summary' }, el('strong', { textContent: 'The Pricer Agent’s summary: ' }), d.summary) : null,
       cartTable(lines, byLine, { running: d.status === 'pricing', priced: d.status === 'priced', people: d.people, toBuy: d.to_buy_usd, used: d.total_cost_usd }),
       trace(d.steps, { open: d.status === 'pricing', toolCalls: d.tool_calls }),
     ].filter(Boolean);
@@ -460,7 +460,7 @@
       renderOverview();
       await Promise.all([selected ? loadDetail() : null, loadTest(test?.status === 'running' ? test.id : 'latest')]);
     } catch (e) {
-      $('queue').replaceChildren(el('p', { className: 'errors', textContent: `Couldn’t load the Pricer: ${e.message}` }));
+      $('queue').replaceChildren(el('p', { className: 'errors', textContent: `Couldn’t load the Pricer Agent: ${e.message}` }));
     }
     schedule();
   }

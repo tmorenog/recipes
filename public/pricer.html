@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Recipe Pricer · Meal Squad</title>
-<meta name="description" content="The Recipe Pricer agent turns each saved recipe into a Kroger shopping cart with prices. Try it, edit its instructions, and watch it price the class’s recipes.">
+<meta name="description" content="The Pricer Agent turns each saved recipe into a Kroger shopping cart with prices. Try it, edit its instructions, and watch it price the class’s recipes.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=JetBrains+Mono:wght@400;500&family=Source+Sans+3:wght@400;600&display=swap">
@@ -30,14 +30,14 @@
 <main class="wrap">
   <div class="page-head">
     <span class="agent-tag pricer">Agent 2 · already built</span>
-    <h1>The Recipe Pricer agent</h1>
-    <p class="lede">Turns every recipe the Scouts save into a Kroger shopping cart with prices, so the Meal Planners can compare recipes by cost. Nobody has to start it: it prices each new recipe by itself.</p>
+    <h1>The Pricer Agent</h1>
+    <p class="lede">Turns every recipe the Scout Agents save into a Kroger shopping cart with prices, so the Planner Agents can compare recipes by cost. Nobody has to start it: it prices each new recipe by itself.</p>
   </div>
 
-  <ol class="how-strip" aria-label="How the Pricer works">
-    <li><strong>A Scout saves a recipe</strong><span>The coordinator hands it to the Recipe Pricer straight away.</span></li>
+  <ol class="how-strip" aria-label="How the Pricer Agent works">
+    <li><strong>A Scout Agent saves a recipe</strong><span>The coordinator hands it to the Pricer Agent straight away.</span></li>
     <li><strong>The AI chooses</strong><span>For each ingredient it searches Kroger, picks a product, and decides how much the recipe needs.</span></li>
-    <li><strong>Code does the maths</strong><span>Packages to buy, the cart total and the cost per serving. The Pricer saves the price to the coordinator, where the Meal Planners read it.</span></li>
+    <li><strong>Code does the maths</strong><span>Packages to buy, the cart total and the cost per serving. The Pricer Agent saves the price to the coordinator, where the Planner Agents read it.</span></li>
   </ol>
   <p class="pricer-facts small" id="facts"></p>
   <section class="notice" id="problem" hidden></section>
@@ -55,21 +55,21 @@
   <p class="toast" id="toast" role="status" aria-live="polite" hidden></p>
 
   <h2 id="instructions"><span class="section-num">1</span>Its instructions</h2>
-  <p>The prompt the agent follows: how many people the cart feeds, how to choose products, and when to skip an ingredient.</p>
+  <p>The prompt the Pricer Agent follows: how many people the cart feeds, how to choose products, and when to skip an ingredient.</p>
   <p class="small muted instructor-only" hidden>A test in section 2 uses what’s in the box, saved or not, so you can try a change before saving it. Saved instructions apply to recipes priced from then on; <strong>Reprice all</strong> in section 3 applies them to the rest.</p>
   <div class="prompt pricer">
     <div class="prompt-head">
       <p class="prompt-kind" id="prompt-kind">Prompt</p>
       <span class="small" id="prompt-state"></span>
     </div>
-    <textarea class="prompt-edit" id="prompt" rows="16" spellcheck="true" readonly aria-label="The Pricer agent's prompt"></textarea>
+    <textarea class="prompt-edit" id="prompt" rows="16" spellcheck="true" readonly aria-label="The Pricer Agent's prompt"></textarea>
   </div>
   <div class="row-actions prompt-actions" id="prompt-actions" hidden>
     <button class="btn primary" type="button" id="save-prompt">Save</button>
   </div>
 
   <h2 id="try"><span class="section-num">2</span>Try it on a sample list</h2>
-  <p>See exactly what the Pricer does, with the real AI and real Kroger prices, on a short list. Nothing is saved to the recipes. Your instructor runs these tests; the latest one appears here.</p>
+  <p>See exactly what the Pricer Agent does, with the real AI and real Kroger prices, on a short list. Nothing is saved to the recipes. Your instructor runs these tests; the latest one appears here.</p>
   <div class="carts-layout try-layout">
     <div class="try-left">
       <div class="panel try-input instructor-only" hidden>
@@ -84,21 +84,21 @@
         <p class="small muted" id="test-hint">Uses the real AI and Kroger prices; a test takes a minute or two. One test at a time.</p>
       </div>
       <div class="try-result" id="test-result" aria-live="polite">
-        <p class="empty small">No test yet. When your instructor runs one, you’ll see the agent search Kroger and fill a cart here.</p>
+        <p class="empty small">No test yet. When your instructor runs one, you’ll see the Pricer Agent search Kroger and fill a cart here.</p>
       </div>
     </div>
     <aside class="agent-feed" aria-live="polite">
-      <h3>What the agent is doing</h3>
+      <h3>What the Pricer Agent is doing</h3>
       <p class="agent-now" id="test-now"></p>
       <ol class="feed" id="test-feed"></ol>
     </aside>
   </div>
 
-  <h2 id="carts"><span class="section-num">3</span>Price recipes selected by the Recipe Scout</h2>
+  <h2 id="carts"><span class="section-num">3</span>Price recipes selected by the Scout Agents</h2>
   <div class="panel when-runs">
-    <p><strong>When does the agent run?</strong></p>
+    <p><strong>When does the Pricer Agent run?</strong></p>
     <ul>
-      <li><strong>By itself</strong>, as soon as a Scout saves a recipe. The recipe joins the queue and is priced within a few minutes; the agent works on one or two recipes at a time, a minute or two each.</li>
+      <li><strong>By itself</strong>, as soon as a Scout Agent saves a recipe. The recipe joins the queue and is priced within a few minutes; it works on one or two recipes at a time, a minute or two each.</li>
       <li><strong>When the instructor asks</strong>, for example to price a recipe again with new instructions.</li>
     </ul>
   </div>
@@ -113,7 +113,7 @@
   <div class="carts-layout">
     <section class="recipe-list" id="queue" aria-label="Recipes"></section>
     <aside class="agent-feed" aria-live="polite">
-      <h3>What the agent is doing</h3>
+      <h3>What the Pricer Agent is doing</h3>
       <p class="agent-now" id="agent-now"></p>
       <ol class="feed" id="feed"></ol>
     </aside>
