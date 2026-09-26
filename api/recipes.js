@@ -4,7 +4,7 @@
 //   POST /api/recipes                    save a recipe         (class key + X-Group required)
 //   POST /api/recipes/{id}/processed     mark it processed     (class key + X-Group required)
 import { saveRecipe, listRecipes, markProcessed } from '../lib/recipes.js';
-import { json, guarded, requireGroup } from '../lib/http.js';
+import { json, guarded, requireGroup, readJson } from '../lib/http.js';
 import { resumePricer } from '../lib/pricer.js';
 
 // vercel.json rewrites /api/recipes/{id}/processed to this function with ?id=
@@ -37,12 +37,9 @@ export const POST = guarded(async (request) => {
     return json(200, { processed: true, already: res.already, recipe: res.recipe });
   }
 
-  let input;
-  try {
-    input = await request.json();
-  } catch {
-    return json(400, { errors: ['The request body must be JSON, with the header Content-Type: application/json.'] });
-  }
+  const { body: input, response: tooLarge } = await readJson(request);
+  if (tooLarge) return tooLarge;
+  if (input === undefined) return json(400, { errors: ['The request body must be JSON, with the header Content-Type: application/json.'] });
   const res = await saveRecipe({ group, channel: 'rest', input });
   return res.ok ? json(201, { saved: true, recipe: res.recipe, ...(res.notes?.length && { format_notes: res.notes }) }) : fail(res);
 });

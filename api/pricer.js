@@ -2,7 +2,7 @@
 //
 //   GET  /api/pricer                    every recipe and its price, and the agent's latest steps   (anyone)
 //   GET  /api/pricer?meal_id=…          one recipe: its shopping cart and every step               (anyone)
-//   GET  /api/pricer?test=latest|<id>   the latest (or one) test run                              (anyone)
+//   GET  /api/pricer?test=latest|<id>   the latest (or one) test run; {"test": null} before the first (anyone)
 //   POST /api/pricer?action=…           the instructor's controls, with Authorization: Bearer <ADMIN_KEY>
 //        price           body {"meal_id": "…"} prices that recipe (again) from scratch
 //        price-unpriced  prices every recipe without a price (cleared, or couldn't be priced)
@@ -15,7 +15,7 @@
 // New recipes are priced automatically after each save; nobody needs to press anything for that.
 import { getStore } from '../lib/store/index.js';
 import { checkAdmin } from '../lib/admin.js';
-import { json, guarded } from '../lib/http.js';
+import { json, guarded, readJson } from '../lib/http.js';
 import { createHash } from 'node:crypto';
 import { pricerInfo, currentPrompt, defaultPrompt, DEFAULT_PROMPT, SAMPLE_RECIPE, SAMPLE_INGREDIENTS, kickPricer, resumePricer, runQueue, startTest } from '../lib/pricer.js';
 
@@ -29,6 +29,7 @@ export const GET = guarded(async (request) => {
   if (test) {
     const valid = test === 'latest' || /^[0-9a-f-]{36}$/i.test(test);
     const t = valid ? await store.getPricerTest(test === 'latest' ? null : test) : null;
+    if (!t && test === 'latest') return json(200, { test: null }); // none yet: not an error
     return t ? json(200, t) : json(404, { errors: ['No test runs yet.'] });
   }
   const mealId = url.searchParams.get('meal_id');
@@ -49,12 +50,9 @@ export const GET = guarded(async (request) => {
 export const POST = guarded(async (request) => {
   const url = new URL(request.url);
   const action = url.searchParams.get('action') || '';
-  let body = {};
-  try {
-    body = request.headers.get('content-length') === '0' ? {} : await request.json();
-  } catch {
-    body = {};
-  }
+  const read = await readJson(request);
+  if (read.response) return read.response;
+  const body = read.body ?? {};
   const auth = checkAdmin(request);
   if (!auth.ok) return json(auth.status, { errors: [auth.error] });
   const store = getStore();
@@ -77,12 +75,12 @@ export const POST = guarded(async (request) => {
     case 'price': {
       const mealId = String(body.meal_id ?? '');
       if (!(await store.resetPricing(mealId))) return json(404, { errors: [`no recipe has meal_id ${mealId}`] });
-      kickPricer();
+      kickPricer({ requested: true });
       return json(200, { queued: mealId });
     }
     case 'price-unpriced': {
       const n = await store.queueUnpriced();
-      kickPricer();
+      kickPricer({ requested: true });
       return json(200, { queued: n });
     }
     case 'clear-all': {
@@ -92,16 +90,16 @@ export const POST = guarded(async (request) => {
     case 'reprice-all': {
       if (body.confirm !== 'REPRICE') return json(400, { errors: ['Send {"confirm": "REPRICE"} to price every recipe again.'] });
       const n = await store.resetPricings({ onlyFailed: false });
-      kickPricer();
+      kickPricer({ requested: true });
       return json(200, { queued: n });
     }
     // Older names, kept for scripts.
     case 'run':
-      kickPricer();
+      kickPricer({ requested: true });
       return json(200, { started: true });
     case 'retry-failed': {
       const n = await store.resetPricings({ onlyFailed: true });
-      kickPricer();
+      kickPricer({ requested: true });
       return json(200, { queued: n });
     }
     default:

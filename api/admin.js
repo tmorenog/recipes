@@ -24,7 +24,7 @@
 // vercel.json rewrites /api/admin/{action} to this function with ?action=.
 import * as admin from '../lib/admin.js';
 import { getStore } from '../lib/store/index.js';
-import { json, guarded } from '../lib/http.js';
+import { json, guarded, readJson } from '../lib/http.js';
 import { checkKroger } from '../lib/kroger.js';
 import { getSettings, saveSettings, DEFAULTS } from '../lib/settings.js';
 import { startBackupRun, getBackupRun, listBackupRuns, backupProblem, backupModel, LIMITS as AGENT_LIMITS } from '../lib/backup-agents.js';
@@ -67,13 +67,10 @@ export const POST = guarded(async (request) => {
   const no = denied(request);
   if (no) return no;
   const { action, id } = route(request);
-  const body = async () => {
-    try {
-      return await request.json();
-    } catch {
-      return undefined;
-    }
-  };
+  // A backup can be large; everything else is small.
+  const read = await readJson(request, action === 'restore' ? 20 * 1024 * 1024 : undefined);
+  if (read.response) return read.response;
+  const body = async () => read.body;
   switch (action) {
     case 'restore': {
       const input = await body();

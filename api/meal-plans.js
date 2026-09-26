@@ -6,7 +6,7 @@
 //   POST /api/meal-plans                 save a plan (class key + X-Group required)
 //   POST /api/meal-plans?check=true      check a draft without saving it
 import { savePlan, checkPlan, listPlans } from '../lib/plans.js';
-import { json, guarded, requireGroup } from '../lib/http.js';
+import { json, guarded, requireGroup, readJson } from '../lib/http.js';
 import { shopperOverview } from '../lib/shopper.js';
 
 export const GET = guarded(async (request) => {
@@ -19,12 +19,9 @@ export const GET = guarded(async (request) => {
 export const POST = guarded(async (request) => {
   const { group, response } = await requireGroup(request);
   if (response) return response;
-  let input;
-  try {
-    input = await request.json();
-  } catch {
-    return json(400, { errors: ['The request body must be JSON, with the header Content-Type: application/json.'] });
-  }
+  const { body: input, response: tooLarge } = await readJson(request);
+  if (tooLarge) return tooLarge;
+  if (input === undefined) return json(400, { errors: ['The request body must be JSON, with the header Content-Type: application/json.'] });
   if (new URL(request.url).searchParams.get('check') === 'true') {
     const res = await checkPlan(input);
     if (!res.ok) return json(res.status, { errors: res.errors });
