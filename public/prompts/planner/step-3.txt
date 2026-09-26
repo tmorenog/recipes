@@ -1,51 +1,29 @@
 Now turn the app into an AI Meal Planner using Lovable’s built-in AI.
 
-At the beginning of every run, ask the MCP server which tools are currently available. Give those tools to the Planner Agent exactly as the coordinator describes them. Preserve their names, descriptions and input requirements.
+At the start of every run, get the coordinator’s tools from the MCP server and give them to the Planner Agent exactly as the coordinator describes them. Don’t write the coordinator’s tool names, formats, checks or limits into the app. Also give the Planner Agent a way to end the run with a summary.
 
-Do not write the coordinator’s tool names, plan format, checks or limits into the app.
+Pass the page’s inputs to the Planner Agent (“none” for an empty box). The budget on the page is per person per dinner; the coordinator expects the budget for all five dinners, so multiply it by 5.
 
-Also give the Planner Agent a way to end the run and summarize what happened.
+Goals and rules for the Planner Agent:
 
-Pass the budget, the dietary requirements and the preferences from the page to the Planner Agent. Write “none” for an empty box. The page’s budget is per person per dinner; the coordinator expects the budget per person for all five dinners, so pass the page’s value multiplied by 5 as the week’s budget and say so.
+- Plan five dinners, Monday to Friday, that meet the dietary requirements, follow the preferences where possible, and are nutritious, varied and as cheap as possible within the budget.
+- First use the coordinator tool that explains how to work with the coordinator, and follow what it says.
+- Use only recipes from the coordinator that have a price. If two are equally good, prefer the one more groups picked.
+- Let the coordinator add up the costs. Never invent a recipe, a price or a number.
+- Check a draft with the coordinator before saving it. If a check fails, improve the plan and check again.
+- Save the best plan once, then end the run. If no plan passes every check, save the closest one and explain why. If the dietary requirements can’t be met, save nothing and explain why.
+- If the coordinator rejects something, fix it and try again. If it says to wait or that a limit has been reached, stop and explain.
 
-These are the goals and rules for the Planner Agent:
-
-- Plan five dinners, Monday to Friday, within the week’s budget per person (five times the budget per dinner).
-- Every dinner must meet the dietary requirements. Follow the preferences where possible.
-- Choose dinners that are nutritious and balanced, varied (different cuisines and main ingredients), and as cheap as possible within the budget.
-- Begin each run by using the coordinator tool that explains how to work with the coordinator.
-- Follow the formats, checks and limits returned by the coordinator.
-- Use only recipes from the coordinator that already have a price.
-- When two choices are otherwise equally good, prefer the one more groups picked, then the cheaper one.
-- Let the coordinator add up the costs. Never calculate or guess them.
-- Ask the coordinator to check a draft before saving it. If a check fails, change the plan and check again.
-- When the plan is as good as it can be, save it once through the coordinator, then end the run.
-- If no plan can pass every check, save the closest one and explain which checks can’t be met and why. If no plan can meet the dietary requirements, save nothing and explain why.
-- If the coordinator says to wait or that a limit has been reached, stop and explain instead of retrying.
-- Treat a failed check or a rejection as useful feedback, not as an application failure.
-- Never invent a recipe, a price or a number.
-
-Run every tool requested by the Planner Agent and return the complete result to it. If the coordinator returns a tool result marked as an error, pass the complete result back so the Planner Agent can correct its work. Do not treat it as a crashed run.
-
-Continue until the Planner Agent ends the run, uses 30 actions or reaches three minutes. Record why it stopped.
-
-The app must enforce these rules:
-
-- A plan cannot be saved unless the coordinator checked the same plan during this run.
-- No more than one plan can be saved per run.
+Run every tool the Planner Agent asks for and return the complete result to it, including rejections: a rejection is feedback, not a crash. Stop when the Planner Agent ends the run, after 30 actions or after three minutes, and record why. The app must not save a plan the coordinator hasn’t checked during this run, or more than one plan per run.
 
 Update the page:
 
-- The “Plan my week” button starts the Planner Agent and is disabled while it works
-- “What the Planner Agent is doing” shows its actions, the coordinator’s requests and responses, and errors as they happen
-- Make failed checks and rejections easy to spot, without presenting them as technical failures
-- Show how many actions the Planner Agent has used and the time left
-- “The week” shows the saved plan: for each day the photo, name, cost per serving and why it was chosen; below the days, the week’s cost per person against the budget and each check with ✓ or ✗
-- Below the days, add a “Shopping list”: the ingredients to buy for the five dinners, combined from the recipes (the same ingredient listed once), with the week’s total price from the coordinator
-- Link each dinner to its recipe on TheMealDB (https://www.themealdb.com/meal/MEAL_ID) and credit TheMealDB for the photos
-- Fill the outcome area: “Valid plan found” when the saved plan passes every check; “No feasible plan found” with the Planner Agent’s explanation; “Run failed” with the reason when the run stopped on an error or a limit
-- Add a link to the class Coordinator page: {{SITE}}/coordinator
-- Keep a history of completed runs that can be reopened
-- Keep the “Available recipes” table and the “How the coordinator works” section from Step 2 as collapsible sections
+- “Plan my week” starts the Planner Agent and is disabled while it works
+- “What the Planner Agent is doing” shows its actions, the coordinator’s answers and errors as they happen, with the actions used and the time left; make failed checks and rejections easy to spot without showing them as crashes
+- “The week” shows the saved plan: for each day the photo, name, cost per serving, why it was chosen and a link to the recipe on TheMealDB (https://www.themealdb.com/meal/MEAL_ID); below the days, the week’s cost against the budget and each check with ✓ or ✗
+- A “Shopping list”: the ingredients for the five dinners, each listed once, with the week’s total price from the coordinator
+- The outcome area: “Valid plan found”, “No feasible plan found” or “Run failed”, with the explanation
+- A link to the class Coordinator page ({{SITE}}/coordinator), credit to TheMealDB for the photos, and a history of past runs that can be reopened
+- Keep the Step 2 sections as collapsible sections
 
-Save observable events such as actions, results, status messages and errors. Do not request or save the AI model’s private reasoning.
+Save what happens (actions, results, errors), but not the AI model’s private reasoning.
