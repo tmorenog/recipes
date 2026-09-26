@@ -50,9 +50,11 @@ test('rejection reasons are readable', () => {
   ]);
 });
 
-test('hosted databases get TLS without certificate checks; local ones get none', () => {
+test('hosted databases get TLS with certificate checks (or a CA, or an opt-out); local ones get none', () => {
   const hosted = poolConfig('postgres://u:p@aws-0-us-east-1.pooler.supabase.com:6543/postgres?sslmode=require&supa=base-pooler.x');
-  assert.deepEqual(hosted.ssl, { rejectUnauthorized: false });
+  assert.deepEqual(poolConfig('postgres://u:p@ep-x.neon.tech/db?sslmode=require', {}).ssl, { rejectUnauthorized: true }, 'certificates are checked by default');
+  assert.deepEqual(poolConfig('postgres://u:p@ep-x.neon.tech/db', { DATABASE_CA_CERT: 'PEM\\nTEXT' }).ssl, { rejectUnauthorized: true, ca: 'PEM\nTEXT' });
+  assert.deepEqual(poolConfig('postgres://u:p@ep-x.neon.tech/db', { DATABASE_SSL_NO_VERIFY: '1' }).ssl, { rejectUnauthorized: false });
   assert.doesNotMatch(hosted.connectionString, /sslmode|supa=/);
   assert.equal(poolConfig('postgres://postgres@localhost:5432/db').ssl, false);
 });

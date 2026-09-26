@@ -126,6 +126,8 @@ insert into pricings (meal_id) select distinct meal_id from recipes on conflict 
 -- instructions it followed, so a change of prompt is visible per recipe.
 alter table pricings add column if not exists people int;
 alter table pricings add column if not exists prompt text;
+-- Which run holds a recipe being priced: only that run's results are saved.
+alter table pricings add column if not exists claim_token uuid;
 
 -- Settings the instructor changes on the Pricer page, e.g. the agent's prompt.
 create table if not exists pricer_config (

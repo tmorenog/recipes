@@ -33,6 +33,8 @@ You need a Vercel account and this repository on GitHub. Everything else happens
    | `ANTHROPIC_API_KEY` | From [console.anthropic.com](https://console.anthropic.com). Runs the Pricer agent. |
    | `PRICER_ZIP` (optional) | The ZIP code of the class’s Kroger store. Default `45202`. |
    | `PRICER_MODEL` (optional) | The Claude model the Pricer uses. Default `claude-haiku-4-5` (the cheapest); set e.g. `claude-sonnet-5` for more careful product choices at a higher cost. |
+   | `DATABASE_CA_CERT` (optional) | Only for a database whose certificate isn't signed by a public authority (Neon's is): that authority's certificate, as PEM text. |
+   | `DATABASE_SSL_NO_VERIFY` (optional) | `1` to connect without checking the database's certificate. A last resort if the database won't connect otherwise; the connection is still encrypted. |
 
    `DATABASE_URL` / `POSTGRES_URL` are added by step 2; don't add them yourself.
 
@@ -190,6 +192,8 @@ The end-to-end tests need a Postgres they can wipe, named by `TEST_DATABASE_URL`
 ```sh
 TEST_DATABASE_URL=postgres://postgres@localhost:5432/recipes_test npm test
 ```
+
+GitHub Actions runs all of them, with a throwaway Postgres, on every push and pull request (`.github/workflows/test.yml`).
 
 `@modelcontextprotocol/sdk` is pinned to an exact version because `lib/mcp.js` replaces one internal SDK method (so MCP and REST share the same validation). Run the tests after upgrading it.
 
