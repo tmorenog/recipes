@@ -52,6 +52,8 @@ async function tidy(request, text, group) {
     return { request: new Request(request.url, { method: 'POST', headers, body: text }), body: null, answered: [] };
   }
   if (Array.isArray(body) && body.length > MAX_BATCH) return { tooMany: true };
+  // A JSON-RPC message is an object, or a non-empty list of them.
+  if (!(isObject(body) || (Array.isArray(body) && body.length && body.every(isObject)))) return { invalid: true };
   const answered = [];
   const rest = [];
   for (const m of Array.isArray(body) ? body : [body]) {
@@ -91,8 +93,11 @@ async function answer(request) {
   const text = await request.text();
   if (text.length > MAX_BODY) return fail(413, tooLarge);
   const started = Date.now();
-  const { request: tidied, body, answered, tooMany } = await tidy(request, text, group);
+  const { request: tidied, body, answered, tooMany, invalid } = await tidy(request, text, group);
   if (tooMany) return fail(400, `A batch can hold at most ${MAX_BATCH} requests: send the rest separately.`);
+  if (invalid) {
+    return new Response(JSON.stringify({ jsonrpc: '2.0', error: { code: -32600, message: 'Invalid request: send a JSON-RPC message (an object with "jsonrpc", "method" and usually "id"), or a list of them.' }, id: null }), { status: 400, headers: { 'content-type': 'application/json' } });
+  }
   const server = createMcpServer(group, { agent, site });
   const transport = new WebStandardStreamableHTTPServerTransport({
     sessionIdGenerator: undefined, // stateless: each request stands alone, which suits serverless

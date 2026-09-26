@@ -158,12 +158,17 @@
       save.disabled = false;
       if (!res.ok) { errors.replaceChildren(...res.errors.map((t) => el('li', { textContent: t }))); return; }
       editing = null;
-      toast(`Saved “${res.body.recipe.name}”.`);
+      toast(`Saved “${res.body.recipe.name}”.${res.body.repriced ? ' Its price was dropped and it is priced again.' : ''}${res.body.repriced && inPlans ? ` Check the ${inPlans} plan${inPlans === 1 ? '' : 's'} using it.` : ''}`);
       await load();
     });
+    // Saved plans keep the costs and checks they were saved with, but the Shopper uses the recipe's current cart.
+    const inPlans = data.plans.filter((p) => (p.meals || []).some((m) => m.recipe_id === r.id)).length;
+    const warning = inPlans
+      ? el('p', { className: 'small bad', textContent: `This recipe is in ${inPlans} saved meal plan${inPlans === 1 ? '' : 's'}. Changing meal_id, ingredients or est_servings gives it a new price: those plans keep the cost they were saved with, but the Shopper Agent will shop from the new cart.` })
+      : null;
     return el('tr', { className: 'edit-row' }, el('td', { colSpan: 6 },
       el('p', { className: 'small muted', textContent: 'Edit the fields below, then save. The same rules as saving a recipe apply. Setting status to "new" makes it available to Meal Planners again.' }),
-      area, errors, el('div', { className: 'row-actions' }, save, cancel)));
+      warning, area, errors, el('div', { className: 'row-actions' }, save, cancel)));
   }
 
   function recipeRow(r) {

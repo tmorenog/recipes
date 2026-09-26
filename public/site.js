@@ -198,6 +198,7 @@
   });
   const setPrompt = (p, template) => {
     p.template = template;
+    delete p.box.dataset.notReady;
     const node = document.createTextNode(template);
     p.box.replaceChildren(node);
     if (p.slot) p.slot.node = node;
@@ -215,6 +216,7 @@
   const setsFor = Object.fromEntries(agents.map((a) => [a, promptSets(a)]));
   const loadPrompt = async (p) => {
     p.box.textContent = 'Loading the prompt…';
+    p.box.dataset.notReady = 'loading'; // Copy waits for the real prompt
     const sets = p.agent && p.step ? await setsFor[p.agent] : { steps: {}, defaults: {} };
     const edit = sets.steps[p.step];
     if (edit) { p.edited = true; return setPrompt(p, edit.trim()); }
@@ -225,6 +227,7 @@
       if (!res.ok) throw new Error(res.status);
       setPrompt(p, (await res.text()).trim());
     } catch {
+      p.box.dataset.notReady = 'failed';
       p.box.replaceChildren('This prompt didn’t load. Reload the page, or open ', Object.assign(document.createElement('a'), { href: p.file, textContent: p.file }), '.');
     }
   };
@@ -477,8 +480,14 @@
   for (const btn of document.querySelectorAll('[data-copy]')) {
     btn.addEventListener('click', async () => {
       const source = document.getElementById(btn.dataset.copy);
-      const text = source.textContent.trim(); // the whole text, even when collapsed
       const label = btn.textContent;
+      // Never copy "Loading…" or a load error as if it were the prompt.
+      if (source.dataset.notReady) {
+        btn.textContent = source.dataset.notReady === 'failed' ? 'Didn’t load: reload the page' : 'Still loading…';
+        setTimeout(() => { btn.textContent = label; }, 2200);
+        return;
+      }
+      const text = source.textContent.trim(); // the whole text, even when collapsed
       try {
         await navigator.clipboard.writeText(text);
         btn.textContent = 'Copied';

@@ -206,3 +206,28 @@ test('a long agent run is kept within a small model’s context window', async (
   assert.match(messages[2].content[0].content, /earlier result shortened/);
   assert.equal(messages[2].content[0].tool_use_id, 't0', 'tool results stay paired with their calls');
 });
+
+test('multipack sizes are read by their contents: "2 ct / 8 oz" is two 8 oz items', async () => {
+  const { parseSize, priceShare } = await import('../lib/units.js');
+  const near = (a, b) => Math.abs(a - b) < 0.01;
+  const cases = [
+    ['2 ct / 8 oz', 'mass', 2 * 8 * 28.3495, 2],
+    ['12 pk / 12 fl oz', 'volume', 12 * 12 * 29.5735, 12],
+    ['6 ct / 5.3 oz', 'mass', 6 * 5.3 * 28.3495, 6],
+    ['15.5 oz', 'mass', 15.5 * 28.3495, undefined],
+    ['1/2 gal', 'volume', 3785.41 / 2, undefined],
+    ['12 ct', 'count', 12, undefined],
+    ['each', 'count', 1, undefined],
+  ];
+  for (const [size, family, base, items] of cases) {
+    const p = parseSize(size);
+    assert.equal(p.family, family, size);
+    assert.ok(near(p.base, base), `${size}: ${p.base}`);
+    assert.equal(p.items, items, size);
+  }
+  // 8 oz from a pack of two 8 oz items is half the pack; 1 can is a twelfth of a 12-pack.
+  assert.equal(priceShare({ amount: 8, unitName: 'oz', size: '2 ct / 8 oz', price: 4 }).fraction, 0.5);
+  assert.equal(priceShare({ amount: 1, unitName: 'each', size: '12 pk / 12 fl oz', price: 6 }).cost_used_usd, 0.5);
+  assert.equal(priceShare({ amount: 30, unitName: 'fl oz', size: '12 pk / 12 fl oz', price: 6 }).packages, 1);
+  assert.equal(priceShare({ amount: 3, unitName: 'each', size: '2 ct / 8 oz', price: 4 }).packages, 2, 'three items need two packs');
+});
