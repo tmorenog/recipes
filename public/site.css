@@ -719,6 +719,11 @@ details.trace > summary { cursor: pointer; padding: 8px 0; }
 .steps-bar { margin: 10px 0 0; color: var(--muted); }
 section.step { margin: 14px 0; padding: 14px 18px; border: 1px solid var(--line); border-radius: 12px; background: color-mix(in srgb, var(--surface) 55%, transparent); }
 section.step.collapsed { padding-block: 10px; }
+/* Parts of a step (Step 3a, 3b): indented under it, joined by a line on the left. */
+section.step.substep { position: relative; margin-left: 40px; }
+section.step.substep::before { content: ""; position: absolute; left: -22px; top: -16px; bottom: -16px; border-left: 2px solid var(--line); }
+section.step.substep:not(:has(+ section.step.substep))::before { bottom: 50%; }
+@media (max-width: 560px) { section.step.substep { margin-left: 18px; } section.step.substep::before { left: -11px; } }
 .step-title { margin: 0; }
 .step-toggle {
   all: unset; box-sizing: border-box; display: grid; grid-template-columns: auto 1fr; column-gap: 12px; align-items: center;

@@ -127,7 +127,7 @@
     <p>The Scout Agent talks to the coordinator through MCP, a standard way for an app to ask another system what actions it offers and then use them.</p>
   </section>
 
-  <section class="step" id="step-3a">
+  <section class="step substep" id="step-3a">
     <h3 class="step-title"><span class="step-num">Step 3a</span>Connect to the coordinator</h3>
     <div class="step-goal"><p class="step-label">Goal</p><p>Connect the app to the coordinator’s MCP server and look at the actions (tools) it offers.</p></div>
     <div class="callout warn"><p><strong>The class key never goes in a prompt.</strong> This step asks Lovable to create a secret. Lovable then shows a secure box where you paste the key. The prompt uses your group name from <a href="/#before-you-start">Before you start</a> on the Welcome page: <code>{{GROUP}}</code>.</p></div>
@@ -144,7 +144,7 @@
     </div>
     <p class="step-note"><strong>MCP allows an application to discover what another system can do.</strong> The coordinator describes its tools, so Recipe Scout does not need to have their names and input formats written into its code.</p>
   </section>
-  <section class="step" id="step-3b">
+  <section class="step substep" id="step-3b">
     <h3 class="step-title"><span class="step-num">Step 3b</span>Let the Scout Agent use the coordinator</h3>
     <div class="step-goal"><p class="step-label">Goal</p><p>Give the discovered coordinator tools to the Scout Agent. The Scout Agent will learn how to work with the coordinator, submit recipes, respond to rejections and complete the handoff so that other agents can use the recipes.</p></div>
     <div class="prompt scout">
