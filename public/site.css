@@ -831,3 +831,16 @@ section.step.collapsed { padding-block: 10px; }
 .faq-answer p { margin: 0 0 8px; }
 .faq-answer ul { margin: 0 0 8px; padding-left: 20px; }
 @media (prefers-reduced-motion: reduce) { .faq-item summary::before { transition: none; } }
+
+/* Backup agents page */
+.backup-forms form { display: grid; gap: 10px; align-content: start; }
+.backup-forms h2 { font-size: 20px; display: flex; align-items: center; gap: 8px; }
+.backup-forms label { display: grid; gap: 4px; font-size: 14px; font-weight: 600; }
+.backup-forms input { font: inherit; font-weight: 400; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); }
+.backup-forms button { justify-self: start; }
+.outcome { margin: 0 0 16px; padding: 12px 14px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); }
+.outcome.good { border-color: var(--good-ink); }
+.outcome.bad { border-color: var(--bad-ink); }
+.outcome .outcome-summary { display: block; margin-top: 6px; }
+.backup-runs { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 14px; }
+.backup-runs .bad { color: var(--bad-ink); }

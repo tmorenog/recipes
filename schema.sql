@@ -315,3 +315,20 @@ update prompt_overrides set
 where agent = 'planner' and step = 11
   and text like '%If there are no priced recipes yet, say so plainly instead of showing an error.%'
   and text not like '%Parse it once, in the backend%';
+
+-- Runs of the instructor's backup agents (a Scout or Planner Agent run from
+-- the site): the input, every step as it happens, and how it ended.
+create table if not exists backup_runs (
+  id          uuid primary key default gen_random_uuid(),
+  agent       text not null check (agent in ('scout', 'planner')),
+  group_name  text not null,
+  input       jsonb not null,
+  status      text not null default 'running' check (status in ('running', 'done', 'failed')),
+  outcome     text,
+  summary     text,
+  steps       jsonb not null default '[]'::jsonb,
+  actions     int not null default 0,
+  created_at  timestamptz not null default now(),
+  finished_at timestamptz
+);
+create index if not exists backup_runs_created_idx on backup_runs (created_at desc);

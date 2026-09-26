@@ -24,5 +24,10 @@
       "destination": "/coordinator",
       "permanent": false
     }
-  ]
+  ],
+  "functions": {
+    "api/backup.js": {
+      "maxDuration": 300
+    }
+  }
 }
