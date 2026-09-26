@@ -373,3 +373,17 @@ create table if not exists class_choices (
 create index if not exists class_choices_created_idx on class_choices (created_at desc);
 alter table backup_runs drop constraint if exists backup_runs_agent_check;
 alter table backup_runs add constraint backup_runs_agent_check check (agent in ('scout', 'planner', 'shopper'));
+
+-- The Scout Agent now finds four recipes (five was easy to confuse with the
+-- Meal Planner's five dinners): bring step prompts edited on the site in line.
+update prompt_overrides set
+  text = replace(replace(replace(replace(replace(replace(replace(text,
+    'find five real recipes', 'find four real recipes'),
+    'If five suitable recipes cannot be found', 'If four suitable recipes cannot be found'),
+    'No more than five recipes can be selected', 'No more than four recipes can be selected'),
+    'Find five recipes that fit the theme', 'Find four recipes that fit the theme'),
+    'once five recipes have been accepted', 'once four recipes have been accepted'),
+    'Finish after five recipes have been accepted', 'Finish after four recipes have been accepted'),
+    'If five recipes cannot be accepted', 'If four recipes cannot be accepted'),
+  updated_at = now()
+where agent = 'scout' and text ~ '(find five real recipes|five suitable recipes|than five recipes|Find five recipes|five recipes have been accepted|If five recipes)';

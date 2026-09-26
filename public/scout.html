@@ -32,7 +32,7 @@
   <div class="page-head">
     <span class="agent-tag scout">Agent 1</span>
     <h1>Build the Recipe Scout</h1>
-    <p class="lede">An agent that takes a theme, searches a real recipe database, chooses five recipes that fit, and saves them to the coordinator for the Meal Planners to use.</p>
+    <p class="lede">An agent that takes a theme, searches a real recipe database, chooses four recipes that fit, and saves them to the coordinator for the Meal Planners to use.</p>
   </div>
 
 
@@ -78,7 +78,7 @@
   </section>
   <section class="step" id="step-2">
     <h3 class="step-title"><span class="step-num">Step 2</span>Add the Recipe Scout agent</h3>
-    <div class="step-goal"><p class="step-label">Goal</p><p>Add an AI agent that decides how to search, examines the results and selects five recipes. This is the first step with a “What the Scout Agent is doing” panel.</p></div>
+    <div class="step-goal"><p class="step-label">Goal</p><p>Add an AI agent that decides how to search, examines the results and selects four recipes. This is the first step with a “What the Scout Agent is doing” panel.</p></div>
     <div class="prompt scout">
       <div class="prompt-head">
         <p class="prompt-kind">Sample prompt</p>
@@ -87,10 +87,10 @@
       <div class="prompt-body" id="p2" data-prompt="/prompts/scout/step-2.txt" data-step="12"></div>
     </div>
     <div class="step-after">
-      <div><p class="step-label">What you should see</p><ul><li>The Scout Agent decides how to search and leaves traces of its behavior</li><li>Five selected recipes with photos and explanations</li><li>A clear explanation if the Scout Agent cannot finish</li></ul></div>
+      <div><p class="step-label">What you should see</p><ul><li>The Scout Agent decides how to search and leaves traces of its behavior</li><li>Four selected recipes with photos and explanations</li><li>A clear explanation if the Scout Agent cannot finish</li></ul></div>
       <div><p class="step-label">Things you can try</p><ul><li><em>Comfort food</em></li><li><em>20-minute vegetarian dinners</em></li><li><em>Vegan dinners with beef</em></li><li><em>Antarctic street food</em></li></ul></div>
     </div>
-    <p class="step-note">The important question is not only “Did it find five recipes?” Also ask: “What did it try, and did its choices make sense?”</p>
+    <p class="step-note">The important question is not only “Did it find four recipes?” Also ask: “What did it try, and did its choices make sense?”</p>
   </section>
   <section class="step step-group" id="step-3">
     <h3 class="step-title"><span class="step-num">Step 3</span>Join the multi-agent system</h3>
@@ -134,7 +134,7 @@
       <div class="prompt-body" id="p3b" data-prompt="/prompts/scout/step-3b.txt" data-step="14"></div>
     </div>
     <div class="step-after">
-      <div><p class="step-label">What you should see</p><ul><li>The Scout Agent discovers the coordinator tools at the beginning of the run and learns how to work with the coordinator.</li><li>The Scout Agent follows the formats, rules and limits returned by the coordinator.</li><li>It searches and examines real recipes through TheMealDB and submits recipes to the coordinator.</li><li>Accepted and rejected submissions are clearly identified and the Scout Agent tries to correct rejected recipes.</li><li>Five accepted recipes appear on the <a href="/coordinator">Coordinator page</a> and the <a href="/pricer">Recipe Pricer</a> queues or begins processing the accepted recipes.</li></ul></div>
+      <div><p class="step-label">What you should see</p><ul><li>The Scout Agent discovers the coordinator tools at the beginning of the run and learns how to work with the coordinator.</li><li>The Scout Agent follows the formats, rules and limits returned by the coordinator.</li><li>It searches and examines real recipes through TheMealDB and submits recipes to the coordinator.</li><li>Accepted and rejected submissions are clearly identified and the Scout Agent tries to correct rejected recipes.</li><li>Four accepted recipes appear on the <a href="/coordinator">Coordinator page</a> and the <a href="/pricer">Recipe Pricer</a> queues or begins processing the accepted recipes.</li></ul></div>
       <div><p class="step-label">Things you can try</p><ul><li>Run the same theme twice and observe duplicate handling.</li><li>Try a contradictory theme.</li><li>Open a rejected exchange on the Coordinator page and compare it with an accepted one.</li><li>Change one Scout instruction and compare its behavior.</li></ul></div>
     </div>
     <p class="step-note">Each group can save a limited number of recipes in total (the coordinator tells your agent how many), so plan your runs: once the limit is reached, further saves are rejected.</p>

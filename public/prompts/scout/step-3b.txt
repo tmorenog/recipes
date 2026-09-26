@@ -6,7 +6,7 @@ Do not write the coordinator’s recipe format, validation rules or limits into 
 
 Replace the Scout Agent’s local recipe-selection action from Step 2 with the appropriate coordinator tool. Keep the actions that search TheMealDB and the action that ends the run.
 
-Keep the checks from Step 2: before sending a recipe to the coordinator, the app confirms its complete details were retrieved during this run, and stops the Scout Agent once five recipes have been accepted. Raise the limit to 35 actions.
+Keep the checks from Step 2: before sending a recipe to the coordinator, the app confirms its complete details were retrieved during this run, and stops the Scout Agent once four recipes have been accepted. Raise the limit to 35 actions.
 
 These are the goals and rules for the Scout Agent:
 
@@ -18,8 +18,8 @@ These are the goals and rules for the Scout Agent:
 - If the coordinator says to wait or that a limit has been reached, stop and explain instead of retrying.
 - Treat a rejection as useful feedback, not as an application failure.
 - Never invent recipe information.
-- Finish after five recipes have been accepted.
-- If five recipes cannot be accepted, explain why.
+- Finish after four recipes have been accepted.
+- If four recipes cannot be accepted, explain why.
 
 Run every tool requested by the Scout Agent and return the complete result to it.
 

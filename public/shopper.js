@@ -40,7 +40,7 @@
       el('td', { className: 'small muted', textContent: l.used_for.join('; ') })));
     $('choice').replaceChildren(el('article', { className: 'plan class-plan' },
       el('div', { className: 'plan-head' },
-        el('div', {}, el('strong', { textContent: `${plan.group_name}’s plan` }), el('span', { className: 'small muted', textContent: ` · chosen ${when(choice.created_at)}` })),
+        el('div', {}, el('strong', { textContent: `Created by ${plan.group_name}` }), el('span', { className: 'small muted', textContent: ` · their Planner Agent saved it ${when(plan.created_at)} · chosen ${when(choice.created_at)}` })),
         el('span', { className: 'plan-total' }, money(plan.total_cost_usd),
           el('small', { textContent: [`per person for the week`, perDinner != null ? `${money(perDinner)} a dinner` : null, plan.budget_usd != null ? `budget ${money(plan.budget_usd)} a dinner` : null].filter(Boolean).join(' · ') }))),
       el('blockquote', { className: 'choice-reason', textContent: choice.reason }),

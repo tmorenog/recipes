@@ -67,12 +67,12 @@ for (const backend of BACKENDS) {
       assert.equal((await api('POST', { body: { agent: 'chef', group: 'team-1', theme: 'x' } })).status, 400);
     });
 
-    test('the Scout Agent finds tools over MCP, must look a recipe up before saving it, and stops at five', async () => {
+    test('the Scout Agent finds tools over MCP, must look a recipe up before saving it, and stops at four', async () => {
       const turns = [
         [['get_contract', {}]],
         [['search_meals', { name: 'meal' }]],
         [['save_recipe', asRecipe(MEALS[0])]], // not looked up yet: the app refuses
-        ...MEALS.slice(0, 5).map((m) => [['get_meal', { meal_id: m.idMeal }], ['save_recipe', asRecipe(m)]]),
+        ...MEALS.slice(0, 5).map((m) => [['get_meal', { meal_id: m.idMeal }], ['save_recipe', asRecipe(m)]]), // the fifth is never reached
       ];
       const { model, seen } = scripted(turns);
       setBackupForTests({ model });
@@ -81,16 +81,16 @@ for (const backend of BACKENDS) {
 
       const run = (await api('GET', { id: started.body.id })).body;
       assert.equal(run.status, 'done', JSON.stringify(run.steps.slice(-3)));
-      assert.equal(run.outcome, 'Five recipes saved');
+      assert.equal(run.outcome, 'Four recipes saved');
       assert.equal(run.group_name, 'backup-team');
       const toolNames = seen[0].tools.map((t) => t.name);
       assert.deepEqual(toolNames, ['get_contract', 'save_recipe', 'search_meals', 'filter_meals', 'get_meal', 'finish'], 'coordinator tools come from tools/list');
       assert.ok(run.steps.some((s) => s.kind === 'error' && /get_meal first/.test(s.text)));
 
       const recipes = await getStore().listRecipes({ status: 'all', limit: 50 });
-      assert.equal(recipes.length, 5);
+      assert.equal(recipes.length, 4);
       const ex = await getStore().listExchanges({ group: 'backup-team', agent: 'scout', limit: 50 });
-      assert.equal(ex.filter((e) => e.tool === 'save_recipe').length, 5, 'saves are logged like any agent’s');
+      assert.equal(ex.filter((e) => e.tool === 'save_recipe').length, 4, 'saves are logged like any agent’s');
       assert.match(JSON.stringify(ex), /tools\/list/);
     });
 

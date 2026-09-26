@@ -4,7 +4,7 @@ The goal of Recipe Scout is to scout potential recipes that will be used to buil
 
 - Take a dinner theme from the user
 - Search a real recipe database
-- Find five recipes that fit the theme
+- Find four recipes that fit the theme
 - Examine each recipe before selecting it
 - Send the selected recipes to a coordinator so other agents can price them and use them in a meal plan
 
