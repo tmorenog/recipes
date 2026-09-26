@@ -116,7 +116,7 @@
           <label>Same category, at most <input type="number" min="0" max="5" step="1" name="checks.max_same_category"></label>
           <label>Most a dinner may cost, $ per person <input type="number" min="0" max="100" step="0.25" name="checks.max_dinner_usd"></label>
           <label>Longest cooking time, minutes <input type="number" min="0" max="600" step="5" name="checks.max_minutes"></label>
-          <label>Dinners picked by 2+ groups, at least <input type="number" min="0" max="5" step="1" name="checks.min_popular"></label>
+          <label>Dinners scouted by 2+ groups, at least <input type="number" min="0" max="5" step="1" name="checks.min_popular"></label>
         </div>
         <label class="check"><input type="checkbox" name="checks.require_vegetarian"> At least one vegetarian or vegan dinner</label>
         <label class="check"><input type="checkbox" name="checks.no_category_twice_in_a_row"> No category (e.g. Beef) on two days in a row</label>
@@ -159,7 +159,7 @@
     </div>
     <div class="table-wrap admin-table">
       <table>
-        <thead><tr><th>Recipe</th><th>Picked by</th><th>Price</th><th>Meal Planner</th><th>Saved</th><th></th></tr></thead>
+        <thead><tr><th>Recipe</th><th>Scouted by</th><th>Price</th><th>Meal Planner</th><th>Saved</th><th></th></tr></thead>
         <tbody id="recipes"></tbody>
       </table>
     </div>
@@ -198,7 +198,7 @@
     </div>
     <div class="panel sample-panel" id="sample">
       <h3 style="margin-top:0">Load the sample database</h3>
-      <p class="small">If something goes wrong in class, replace <strong>everything</strong> with a ready-made database, always the same: <span id="sample-what">20 real TheMealDB recipes picked by five groups</span>. No meal plans or activity. Download a backup first if you want to keep what’s there.</p>
+      <p class="small">If something goes wrong in class, replace <strong>everything</strong> with a ready-made database, always the same: <span id="sample-what">20 real TheMealDB recipes scouted by five groups</span>. No meal plans or activity. Download a backup first if you want to keep what’s there.</p>
       <label class="small check"><input type="checkbox" id="sample-prices" checked> Include ready-made prices, so the Meal Planner Agents can start at once. They’re labelled as estimates, not Kroger prices; unticked, the Pricer Agent prices the recipes with Kroger in the next few minutes.</label>
       <div class="confirm-row">
         <label class="small" for="sample-word">Type <code>SAMPLE</code> to confirm</label>

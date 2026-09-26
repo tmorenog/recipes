@@ -68,7 +68,7 @@ for (const backend of BACKENDS) {
       assert.equal(r['No dinner costs more than $4.00 per person'].detail, 'Wednesday: Dinner 2 $6.00');
       assert.equal(r['No dinner takes more than 60 minutes (the Scout Agent’s estimate)'].detail, 'Wednesday: Dinner 2 90 min');
       assert.equal(r['No dinner contains peanut, shrimp'].detail, 'Wednesday: Dinner 2 (Peanut Butter)', 'capitals don’t matter, and nutmeg isn’t a nut');
-      assert.deepEqual([r['At least 3 dinners picked by two or more groups'].passed, r['At least 3 dinners picked by two or more groups'].detail], [false, '2 of 5']);
+      assert.deepEqual([r['At least 3 dinners scouted by two or more groups'].passed, r['At least 3 dinners scouted by two or more groups'].detail], [false, '2 of 5']);
       assert.equal(e.all_rules_passed, false);
     });
 

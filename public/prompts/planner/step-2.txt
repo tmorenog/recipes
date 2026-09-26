@@ -11,7 +11,7 @@ Once you have established the connection:
 - Show the connection status, including the group name the coordinator confirms.
 - Explain the tools that are available and the information each one requires.
 - Use the coordinator tool that explains how to work with the coordinator, and show its answer in a collapsible “How the coordinator works” section.
-- Get all the recipes the class has saved that already have a price, and show them in an “Available recipes” table below the week: photo, name, cuisine, cost per serving and how many groups picked it.
+- Get all the recipes the class has saved that already have a price, and show them in an “Available recipes” table below the week: photo, name, cuisine, cost per serving and the groups that scouted it.
 
 The coordinator’s answers are text with data inside: turn them into ready-to-show information in the backend, once. If a section can’t be shown, display a short message in that section instead of breaking the page.
 

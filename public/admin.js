@@ -435,7 +435,7 @@
   async function describeSample() {
     const r = await api('GET', 'sample');
     // If it fails, the page's own description stays.
-    if (r.ok) $('sample-what').textContent = `${r.body.recipes} real TheMealDB recipes picked by ${r.body.groups.length} groups (${r.body.groups.join(', ')}), ${r.body.picks - r.body.recipes} of them by two groups`;
+    if (r.ok) $('sample-what').textContent = `${r.body.recipes} real TheMealDB recipes scouted by ${r.body.groups.length} groups (${r.body.groups.join(', ')}), ${r.body.picks - r.body.recipes} of them by two groups`;
   }
 
   // ---------------------------------------------------------------- class notes (shown on the FAQ page)

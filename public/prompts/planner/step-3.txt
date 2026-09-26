@@ -21,7 +21,7 @@ Update the page:
 
 - “Plan my week” starts the Meal Planner Agent and is disabled while it works
 - “What the Meal Planner Agent is doing” shows its actions and the coordinator’s answers as they happen; make failed checks and rejections easy to spot without showing them as crashes
-- “The week” shows the saved plan: for each day the photo, name, cost per serving, the groups that picked it and why it was chosen; below the days, the average cost of a dinner against the budget and each check with ✓ or ✗
+- “The week” shows the saved plan: for each day the photo, name, cost per serving, the groups that scouted it and why it was chosen; below the days, the average cost of a dinner against the budget and each check with ✓ or ✗
 - The outcome: “Valid plan found” when the saved plan passes every check, “No feasible plan found” otherwise, or “Run failed” when the run stopped on an error or a limit, with the agent’s summary
 - A link to the class Coordinator page ({{SITE}}/coordinator) and credit to TheMealDB for the photos
 - Keep “How the coordinator works” and “Available recipes” as collapsible sections

@@ -63,7 +63,7 @@
       /^https:\/\//.test(m.image_url || '') ? el('img', { src: m.image_url, alt: '', loading: 'lazy' }) : el('span', { className: 'ph' }),
       el('span', { className: 'week-recipe' },
         el('strong', { textContent: m.name }),
-        el('span', { className: 'small muted', textContent: [m.cuisine, `${money(m.cost_per_serving_usd)} a serving`, m.picked_by?.length ? `picked by ${m.picked_by.join(', ')}` : null].filter(Boolean).join(' · ') })))));
+        el('span', { className: 'small muted', textContent: [m.cuisine, `${money(m.cost_per_serving_usd)} a serving`, m.picked_by?.length ? `scouted by ${m.picked_by.join(', ')}` : null].filter(Boolean).join(' · ') })))));
 
     const planner = el('div', { className: 'planned-by' },
       el('div', {},

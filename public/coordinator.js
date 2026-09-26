@@ -116,7 +116,7 @@
     else if (safeUrl(r.source_url)) link.href = r.source_url;
     const meta = [r.cuisine, r.category, r.est_minutes && `${r.est_minutes} min`, r.est_servings && `serves ${r.est_servings}`].filter(Boolean).join(' · ');
 
-    // Each recipe is stored once; every group that picked it is shown (its popularity).
+    // Each recipe is stored once; every group that scouted it is shown (its popularity).
     const groups = r.picked_by?.length ? r.picked_by : [r.group];
     const themes = [...new Set((r.picks?.length ? r.picks : [{ theme: r.theme }]).map((p) => p.theme))];
     const open = openRows.has(r.id);
@@ -142,7 +142,7 @@
     const ings = r.ingredients || [];
     row.append(el('div', { className: 'db-detail' },
       el('div', {},
-        el('h3', { textContent: 'Why the groups picked it' }),
+        el('h3', { textContent: 'Why the groups scouted it' }),
         el('ul', { className: 'db-whys' }, ...picks.map((p) => el('li', {}, chip(p.group), ` ${p.why_chosen} `, el('span', { className: 'muted small', textContent: `(${p.theme})` })))),
         el('p', { className: 'small' },
           el('a', { href: `/pricer#${encodeURIComponent(r.meal_id)}`, textContent: 'Cart on the Pricer page' }),
@@ -207,7 +207,7 @@
             el('div', { className: 'day', textContent: typeof m.day === 'number' ? `Day ${m.day}` : m.day }),
             el('div', { className: 'mname', textContent: m.name || r?.name || `Recipe ${m.recipe_id.slice(0, 8)}…` }),
             el('div', { className: 'mfacts', textContent: facts.join(' · ') }),
-            by.length ? el('div', { className: 'mby', textContent: `Picked by ${by.length} group${by.length === 1 ? '' : 's'}: ${by.join(', ')}` }) : null,
+            by.length ? el('div', { className: 'mby', textContent: `Scouted by ${by.length} group${by.length === 1 ? '' : 's'}: ${by.join(', ')}` }) : null,
             m.why ? el('div', { className: 'mwhy', textContent: m.why }) : null));
       }));
 

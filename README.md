@@ -108,7 +108,7 @@ The coordinator checks every meal plan against the class's rules and reports eac
 | No dinner costs more than $X per person | `max_dinner_usd` |
 | No dinner takes more than N minutes (the Scout Agent's estimate) | `max_minutes` |
 | No dinner contains these ingredients (comma-separated; `peanut` matches “peanut butter”, not “nutmeg”) | `excluded_ingredients` |
-| At least N dinners picked by two or more groups | `min_popular` |
+| At least N dinners scouted by two or more groups | `min_popular` |
 
 Presets: **Standard** (3 cuisines, a category at most twice, one vegetarian night: the default), **Budget week**, **Allergy-aware**, **World tour**, **Quick dinners** and **Crowd favourites**.
 
