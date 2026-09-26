@@ -10,6 +10,9 @@ import { GET as exchangesApi } from '../api/exchanges.js';
 import { POST as mcpPost } from '../api/mcp.js';
 import { getStore } from '../lib/store/index.js';
 import { redactDeep } from '../lib/secrets.js';
+import { saveSettings } from '../lib/settings.js';
+import { setPricerForTests, runQueue } from '../lib/pricer.js';
+import Anthropic from '@anthropic-ai/sdk';
 import { BACKENDS, CLASS_KEY, as, recipe, markPriced, closeDatabase } from './helpers.js';
 
 const ADMIN_KEY = 'admin-key-for-tests';
@@ -77,6 +80,60 @@ for (const backend of BACKENDS) {
     test('many saves at once finish: a save never waits on a second pool connection', { timeout: 20_000 }, async () => {
       const saved = await Promise.all(Array.from({ length: 6 }, (_, i) => save(`team-${i + 1}`, { name: `Parallel ${i}` })));
       assert.equal(saved.length, 6);
+    });
+
+    test('saves sent at the same moment cannot pass the per-group limit', async () => {
+      await saveSettings({ max_recipes_per_group: 2, max_saves_per_minute: 0 });
+      const results = await Promise.all(Array.from({ length: 5 }, (_, i) => rest.POST(new Request('http://x/api/recipes', {
+        method: 'POST', headers: { ...as('team-1'), 'content-type': 'application/json' }, body: JSON.stringify(recipe({ name: `R${i}` })),
+      }))));
+      assert.deepEqual(results.map((r) => r.status).sort(), [201, 201, 403, 403, 403].sort());
+      assert.equal((await list('status=all')).length, 2);
+    });
+
+    test('attempts turned away by the rate limit do not keep the group locked out', async () => {
+      await saveSettings({ max_saves_per_minute: 2 });
+      for (let i = 0; i < 2; i++) await save('team-1', { name: `R${i}` });
+      for (let i = 0; i < 3; i++) {
+        const res = await rest.POST(new Request('http://x/api/recipes', { method: 'POST', headers: { ...as('team-1'), 'content-type': 'application/json' }, body: JSON.stringify(recipe()) }));
+        assert.equal(res.status, 429);
+      }
+      assert.equal(await getStore().recentAttempts('team-1', new Date(Date.now() - 60_000).toISOString()), 2);
+    });
+
+    test('Planner Agents see every recipe, including ones marked processed', async () => {
+      const r = await save('team-1');
+      await markPriced(db.pool, [r.id]);
+      await rest.POST(new Request(`http://x/api/recipes?id=${r.id}&action=processed`, { method: 'POST', headers: as('team-2') }));
+      const call = async (agent) => {
+        const res = await mcpPost(new Request(`http://x/api/mcp?agent=${agent}`, {
+          method: 'POST',
+          headers: { ...as('team-3'), 'content-type': 'application/json', accept: 'application/json, text/event-stream' },
+          body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'list_recipes', arguments: { priced: true } } }),
+        }));
+        return JSON.parse((await res.json()).result.content[0].text).count;
+      };
+      assert.equal(await call('planner'), 1);
+    });
+
+    test('a busy AI service stops the pricing run instead of retrying at once', async () => {
+      const env = { KROGER_CLIENT_ID: 'test-id', KROGER_CLIENT_SECRET: 'test-secret', ANTHROPIC_API_KEY: 'sk-ant-api03-regressiontestkey0000000000' };
+      const before = Object.fromEntries(Object.keys(env).map((k) => [k, process.env[k]]));
+      Object.assign(process.env, env);
+      const reply = (body) => new Response(JSON.stringify(body), { status: 200, headers: { 'content-type': 'application/json' } });
+      const fetch = async (url) => (String(url).includes('/locations')
+        ? reply({ data: [{ locationId: '01400943', name: 'Kroger Test', chain: 'KROGER', address: { addressLine1: '1 Main St', city: 'Cincinnati', state: 'OH', zipCode: '45202' } }] })
+        : reply({ access_token: 't', expires_in: 1800 }));
+      let calls = 0;
+      setPricerForTests({ auto: false, fetch, model: async () => { calls += 1; throw new Anthropic.RateLimitError(429, { type: 'error' }, 'busy', new Headers()); } });
+      try {
+        await save('team-1');
+        await runQueue({ budgetMs: 2000 });
+      } finally {
+        setPricerForTests({ model: null, fetch: null, auto: true });
+        for (const [k, v] of Object.entries(before)) if (v === undefined) delete process.env[k]; else process.env[k] = v;
+      }
+      assert.equal(calls, 1, 'one call, then the run stops');
     });
 
     test('secrets are redacted at any depth, and the public activity log leaves out what was sent', async () => {

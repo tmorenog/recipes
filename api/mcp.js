@@ -31,11 +31,15 @@ const postOnly = () =>
 // (the spec asks for both types; many clients send one or none).
 async function tidy(request) {
   const text = await request.text();
+  const headers = new Headers(request.headers);
+  headers.set('content-type', 'application/json');
+  headers.set('accept', 'application/json, text/event-stream');
   let body;
   try {
     body = JSON.parse(text);
   } catch {
-    return { request: new Request(request.url, { method: 'POST', headers: request.headers, body: text }), body: null };
+    // Not JSON: passed on as it is, with the right headers, so the answer is a parse error.
+    return { request: new Request(request.url, { method: 'POST', headers, body: text }), body: null };
   }
   for (const m of Array.isArray(body) ? body : [body]) {
     if (m?.method === 'tools/call' && typeof m.params?.arguments === 'string') {
@@ -44,9 +48,6 @@ async function tidy(request) {
     // The tool's earlier name, for agents built before it was renamed.
     if (m?.method === 'tools/call' && m.params?.name === 'get_expectations') m.params.name = 'get_contract';
   }
-  const headers = new Headers(request.headers);
-  headers.set('content-type', 'application/json');
-  headers.set('accept', 'application/json, text/event-stream');
   return { request: new Request(request.url, { method: 'POST', headers, body: JSON.stringify(body) }), body };
 }
 

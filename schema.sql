@@ -75,8 +75,8 @@ create table if not exists plans (
 );
 create index if not exists plans_created_idx on plans (created_at desc);
 
--- The Pricer: an agent on the coordinator that prices each recipe at the
--- class's Kroger store and works out its nutrition. One pricing per TheMealDB
+-- The Recipe Pricer: an agent that prices each recipe at the class's Kroger
+-- store and saves the price here. One pricing per TheMealDB
 -- recipe (meal_id), shared by every group that saved it.
 create table if not exists pricings (
   meal_id          text primary key,
@@ -112,7 +112,7 @@ create table if not exists pricer_steps (
 );
 create index if not exists pricer_steps_meal_idx on pricer_steps (meal_id, id);
 
--- Kroger and USDA answers, so the same search is made once for the class.
+-- Kroger and TheMealDB answers, so the same search is made once for the class.
 create table if not exists pricer_cache (
   key   text primary key,
   data  jsonb not null,

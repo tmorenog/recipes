@@ -27,7 +27,8 @@ export const GET = guarded(async (request) => {
   await resumePricer(); // restart a run if recipes are waiting or one stopped part-way
   const test = url.searchParams.get('test');
   if (test) {
-    const t = await store.getPricerTest(test === 'latest' ? null : test);
+    const valid = test === 'latest' || /^[0-9a-f-]{36}$/i.test(test);
+    const t = valid ? await store.getPricerTest(test === 'latest' ? null : test) : null;
     return t ? json(200, t) : json(404, { errors: ['No test runs yet.'] });
   }
   const mealId = url.searchParams.get('meal_id');
