@@ -467,6 +467,11 @@ details.trace > summary { cursor: pointer; padding: 8px 0; }
 .pill.estimated { margin-left: 6px; background: var(--new-bg); color: var(--new-ink); }
 
 .estimated-why { color: var(--new-ink); }
+.pill.substitute { margin-left: 6px; background: var(--surface-2); color: var(--ink); border: 1px solid var(--line); }
+.substitute-why { color: var(--muted); }
+.pill.unavailable { margin-left: 6px; background: var(--bad-bg); color: var(--bad-ink); }
+.pill.replaced { margin-left: 6px; background: var(--surface-2); color: var(--ink); border: 1px solid var(--line); }
+.line-note { display: block; margin-top: 2px; }
 
 /* Database cards: popularity */
 
@@ -743,7 +748,6 @@ section.step.collapsed { padding-block: 10px; }
 .class-plan h3 { margin: 6px 0 0; }
 .choice-reason { margin: 0; padding: 12px 16px; border-left: 4px solid var(--shopper); background: var(--shopper-soft); border-radius: 0 10px 10px 0; font-style: italic; }
 .cart-table td, .cart-table th { vertical-align: top; }
-.cart-product { display: flex; gap: 10px; align-items: flex-start; }
 .cart-thumb { flex: none; width: 40px; height: 40px; border-radius: 8px; background: #fff; border: 1px solid var(--line); display: grid; place-items: center; overflow: hidden; }
 .cart-thumb img { width: 100%; height: 100%; object-fit: contain; }
 .cart-table .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }

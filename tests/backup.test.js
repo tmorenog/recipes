@@ -4,6 +4,8 @@ import { describe, test, beforeEach, after } from 'node:test';
 import assert from 'node:assert/strict';
 import * as adminApi from '../api/admin.js';
 import { setBackupForTests } from '../lib/backup-agents.js';
+import { setPricerForTests } from '../lib/pricer.js';
+import { resetKroger } from '../lib/kroger.js';
 import { getStore } from '../lib/store/index.js';
 import { saveChoice, buildWeekCart } from '../lib/shopper.js';
 import { BACKENDS, as, recipe, markPriced, closeDatabase } from './helpers.js';
@@ -202,6 +204,98 @@ for (const backend of BACKENDS) {
       const empty = await (await plansApi.GET(new Request('http://x/api/meal-plans?choice=latest'))).json();
       assert.deepEqual([empty.choice, empty.history, empty.run], [null, [], null]);
       assert.equal((await (await plansApi.GET(new Request('http://x/api/meal-plans'))).json()).count, 1);
+    });
+
+    test('the Shopper checks the cart with Kroger today and buys replacements for what the store no longer carries', async () => {
+      const ids = [];
+      for (const [n, cuisine] of ['Indian', 'Italian', 'Thai', 'Mexican', 'Greek'].entries()) {
+        const res = await rest.POST(new Request('http://x/api/recipes', { method: 'POST', headers: { ...as(`team-${n}`), 'content-type': 'application/json' }, body: JSON.stringify(recipe({ cuisine, category: n < 2 ? 'Vegetarian' : ['Beef', 'Chicken', 'Pork'][n - 2] })) }));
+        ids.push((await res.json()).recipe.id);
+      }
+      const pool = getStore().pool;
+      await markPriced(pool, ids, () => 2);
+      for (const [n, id] of ids.entries()) {
+        const basket = [
+          { line: 1, ingredient: 'rice', status: 'bought', product: { id: 'rice-1', description: 'Kroger Rice', size: '2 lb', price_usd: 3 }, fraction: 0.5 },
+          n === 4
+            ? { line: 2, ingredient: 'saffron', status: 'estimated', product: { id: 'estimate-2', description: 'saffron', size: '1 g', price_usd: 9 }, fraction: 1 }
+            : { line: 2, ingredient: n === 3 ? 'gruyère' : `item ${n}`, status: 'bought', product: { id: `p-${n}`, description: `Item ${n}`, size: '1 ea', price_usd: 4 }, fraction: 1, substitute_for: n === 3 ? 'gruyère: none at this store' : null },
+        ];
+        await pool.query('update pricings set basket = $2 where meal_id = (select meal_id from recipes where id = $1)', [id, JSON.stringify(basket)]);
+      }
+      const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+      const plan = { budget_usd: 3, summary: 'Five cheap dinners from five cuisines.', meals: ids.map((recipe_id, i) => ({ day: days[i], recipe_id, why: 'Cheap.' })) };
+      const planId = (await (await plansApi.POST(new Request('http://x/api/meal-plans', { method: 'POST', headers: { ...as('team-9'), 'content-type': 'application/json' }, body: JSON.stringify(plan) }))).json()).plan.id;
+
+      // Kroger today: the rice costs more, one item has no price, one is no longer carried. Stock levels are ignored.
+      const TODAY = {
+        'rice-1': { size: '2 lb', price: 3.5, stock: 'HIGH' },
+        'p-0': { size: '1 ea', price: null },
+        'p-2': { size: '1 ea', price: 4, stock: 'TEMPORARILY_OUT_OF_STOCK' },
+        'p-3': { size: '1 ea', price: 4 },
+        'alt-0': { size: '1 ea', price: 5, stock: 'HIGH' },
+        'rice-5lb': { size: '5 lb', price: 6 },
+        'alt-1': { size: '8 oz', price: 2 },
+        'saffron-1': { size: '0.5 g', price: 7 },
+      };
+      const fetchImpl = async (url) => {
+        const json = (status, body) => new Response(JSON.stringify(body), { status });
+        if (url.endsWith('/connect/oauth2/token')) return json(200, { access_token: 'tok', expires_in: 1800 });
+        if (url.includes('/locations')) return json(200, { data: [{ locationId: '01400943', name: 'Kroger Hyde Park', address: {} }] });
+        const id = url.match(/\/products\/([^?]+)/)?.[1];
+        const p = TODAY[id];
+        if (!p) return json(404, {});
+        return json(200, { data: { productId: id, description: `Product ${id}`, items: [{ size: p.size, price: { regular: p.price }, ...(p.stock && { inventory: { stockLevel: p.stock } }) }] } });
+      };
+      process.env.KROGER_CLIENT_ID = 'id';
+      process.env.KROGER_CLIENT_SECRET = 'secret';
+      resetKroger();
+      setPricerForTests({ fetch: fetchImpl });
+      try {
+        const today = await buildWeekCart({ plan_id: planId });
+        assert.ok(today.ok, JSON.stringify(today.errors));
+        const line = (id) => today.cart.lines.find((l) => l.product_id === id);
+        assert.deepEqual([line('rice-1').availability, line('rice-1').price_usd, line('rice-1').priced_at_usd, line('rice-1').packages], ['available', 3.5, 3, 3]);
+        assert.deepEqual([line('p-0').availability, line('p-0').unavailable_reason], ['unavailable', 'no price at the store today']);
+        assert.deepEqual([line('p-1').availability, line('p-1').unavailable_reason], ['unavailable', 'the store no longer carries it']);
+        assert.equal(line('p-2').availability, 'available', 'stock levels are not checked');
+        assert.deepEqual(line('p-3').substitutes, ['Thursday: instead of gruyère: none at this store']);
+        const estimate = today.cart.lines.find((l) => l.estimated);
+        assert.match(estimate.product_id, /^estimate-/);
+        assert.equal(estimate.availability, 'estimated');
+        assert.deepEqual(today.cart.unavailable.map((u) => u.product_id).sort(), ['p-0', 'p-1']);
+        assert.match(today.cart.kroger_check, /Kroger Hyde Park: 3 products carried, 2 no longer carried, 1 price changed since pricing\. Double-check stock quantities/);
+
+        // Replacements: sizes that compare are worked out; others need "packages".
+        const bad = await buildWeekCart({ plan_id: planId, replacements: [{ product_id: 'p-1', replacement_product_id: 'alt-1', reason: 'gone; similar item' }] });
+        assert.match(bad.errors[0], /sizes don't compare .*give "packages"/);
+        const gone = await buildWeekCart({ plan_id: planId, replacements: [{ product_id: 'p-0', replacement_product_id: 'nowhere', reason: 'out of stock' }] });
+        assert.equal(gone.status, 409);
+        const replacements = [
+          { product_id: 'p-0', replacement_product_id: 'alt-0', reason: 'no price today; same item, another brand' },
+          { product_id: 'p-1', replacement_product_id: 'alt-1', reason: 'gone; similar item', packages: 2 },
+          { product_id: 'rice-1', replacement_product_id: 'rice-5lb', reason: 'cheaper in the big bag' },
+          { product_id: estimate.product_id, replacement_product_id: 'saffron-1', reason: 'Kroger has saffron today' },
+        ];
+        const fixed = await buildWeekCart({ plan_id: planId, replacements });
+        assert.ok(fixed.ok, JSON.stringify(fixed.errors));
+        const f = (id) => fixed.cart.lines.find((l) => l.product_id === id);
+        assert.deepEqual([f('alt-0').packages, f('alt-0').replaces.description, f('alt-0').replaces.why], [1, 'Item 0', 'no price at the store today']);
+        assert.equal(f('alt-1').packages, 2);
+        assert.deepEqual([f('rice-5lb').packages, f('rice-5lb').cost_usd], [1, 6], '2.5 bags of 2 lb is 5 lb: one 5 lb bag');
+        assert.deepEqual([f('saffron-1').packages, f('saffron-1').estimated, f('saffron-1').replaces.why], [2, false, 'its price was only an estimate']);
+        assert.deepEqual([fixed.cart.unavailable, fixed.cart.estimated_lines, fixed.cart.replaced_lines], [[], 0, 4]);
+
+        // The class's choice keeps them.
+        const saved = await saveChoice({ plan_id: planId, reason: 'The only plan, with replacements for what is missing today.', replacements });
+        assert.ok(saved.ok, JSON.stringify(saved.errors));
+        assert.equal(saved.choice.cart.replaced_lines, 4);
+      } finally {
+        setPricerForTests({ fetch: null });
+        resetKroger();
+        delete process.env.KROGER_CLIENT_ID;
+        delete process.env.KROGER_CLIENT_SECRET;
+      }
     });
 
     test('a model error ends the run as failed, with the reason', async () => {

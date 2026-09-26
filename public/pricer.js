@@ -397,6 +397,7 @@
     let summary = 'Done';
     if (s.tool === 'search_kroger') summary = o.count ? `${o.count} products, e.g. ${o.products[0].description} (${o.products[0].size}) ${money(o.products[0].promo_price_usd ?? o.products[0].price_usd)}` : 'No products found';
     if (s.tool === 'record_ingredient') summary = `Line ${o.recorded}: buy ${o.packages_to_buy} for ${money(o.cost_to_buy_usd)}, uses ${money(o.cost_used_usd)} worth`;
+    if (s.tool === 'record_ingredient' && o.substitute) summary += ' (a substitute)';
     if (s.tool === 'skip_ingredient') summary = `Line ${o.skipped} skipped`;
     if (s.tool === 'estimate_ingredient') summary = `Line ${o.estimated}: ESTIMATED, buy ${o.packages_to_buy} for ${money(o.cost_to_buy_usd)}`;
     return el('li', { className: 'trace-step result' }, head,
@@ -431,7 +432,9 @@
         el('td', { className: 'cart-product' }, img ? el('img', { src: img, alt: '', loading: 'lazy' }) : null,
           el('span', {}, p.description, el('br'), el('span', { className: 'small muted', textContent: [p.size, p.brand].filter(Boolean).join(' · ') }), p.on_sale ? el('span', { className: 'pill sale', textContent: 'On sale' }) : null,
             e.status === 'estimated' ? el('span', { className: 'pill estimated', textContent: 'Estimated', title: `Not from Kroger: ${e.reason}` }) : null,
-            e.status === 'estimated' ? el('span', { className: 'small estimated-why', textContent: ` ${e.reason}` }) : null)),
+            e.status === 'estimated' ? el('span', { className: 'small estimated-why', textContent: ` ${e.reason}` }) : null,
+            e.substitute_for ? el('span', { className: 'pill substitute', textContent: 'Substitute', title: `Instead of ${e.substitute_for}` }) : null,
+            e.substitute_for ? el('span', { className: 'small substitute-why', textContent: ` Instead of ${e.substitute_for}` }) : null)),
         el('td', { className: 'num' }, el('strong', { textContent: `× ${e.packages}` }), el('br'), el('span', { className: 'small muted', textContent: `at ${money(p.price_usd)}` })),
         el('td', { className: 'num' }, el('strong', { textContent: money(e.cost_to_buy_usd) })),
         el('td', { className: 'num' }, `${num(e.amount_used, 2)} ${e.unit_used}`, el('br'), el('span', { className: 'small muted', textContent: `${money(e.cost_used_usd)} used` })),

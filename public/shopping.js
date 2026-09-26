@@ -29,6 +29,21 @@
     return box;
   }
 
+  // What's special about a line: estimated or substituted when priced; how it
+  // stood at Kroger when the Shopper checked; what it replaces.
+  function labels(l) {
+    const pill = (cls, text, title) => el('span', { className: `pill ${cls}`, textContent: text, title: title || '' });
+    const note = (text) => el('span', { className: 'small muted line-note', textContent: text });
+    return [
+      l.estimated ? pill('estimated', 'Estimated', 'Not from Kroger: the Pricer Agent estimated this price') : null,
+      l.availability === 'unavailable' ? pill('unavailable', 'Not carried', `At Kroger today: ${l.unavailable_reason || 'not carried'}`) : null,
+      l.replaces ? pill('replaced', 'Replacement') : null,
+      l.replaces ? note(`Instead of ${l.replaces.description}${l.replaces.size ? ` (${l.replaces.size})` : ''}: ${l.replaces.why}.${l.replacement_reason ? ` ${l.replacement_reason[0].toUpperCase()}${l.replacement_reason.slice(1)}` : ''}`) : null,
+      l.substitutes?.length ? pill('substitute', 'Substitute') : null,
+      l.substitutes?.length ? note(l.substitutes.join('; ')) : null,
+    ];
+  }
+
   window.shoppingPlan = (choice) => {
     const { plan, cart } = choice;
     const perDinner = plan.meals.length ? plan.total_cost_usd / plan.meals.length : null;
@@ -40,10 +55,10 @@
         el('div', { className: 'mfacts', textContent: [`${money(m.cost_per_serving_usd)}/serving`, m.cuisine].filter(Boolean).join(' · ') }),
         m.picked_by?.length ? el('div', { className: 'mby', textContent: `Picked by ${m.picked_by.length} group${m.picked_by.length === 1 ? '' : 's'}: ${m.picked_by.join(', ')}` }) : null))));
     const rows = cart.lines.map((l) => el('tr', {},
-      el('td', { className: 'cart-product' }, thumb(l), el('span', {}, l.description, l.estimated ? el('span', { className: 'pill estimated', textContent: 'Estimated', title: 'Not from Kroger: the Pricer Agent estimated this price' }) : null)),
+      el('td', { className: 'cart-product' }, thumb(l), el('span', {}, l.description, ...labels(l))),
       el('td', { textContent: l.size || '' }),
       el('td', { className: 'num', textContent: String(l.packages) }),
-      el('td', { className: 'num', textContent: money(l.price_usd) }),
+      el('td', { className: 'num' }, money(l.price_usd), l.priced_at_usd != null ? el('span', { className: 'small muted line-note', textContent: `was ${money(l.priced_at_usd)}`, title: 'The Recipe Pricer’s price; this is Kroger’s today' }) : null),
       el('td', { className: 'num', textContent: money(l.cost_usd) }),
       el('td', { className: 'small muted', textContent: l.used_for.join('; ') })));
     return el('article', { className: `plan class-plan${choice.status === 'historical' ? ' historical' : ''}`, 'data-key': choice.id },
@@ -58,6 +73,7 @@
       dinners,
       el('h3', { textContent: `Shopping list: the Kroger cart${cart.people ? ` for ${cart.people} people` : ''}, ${money(cart.total_usd)}` }),
       cart.people ? el('p', { className: 'small', textContent: `Per person, the plan costs ${money(plan.total_cost_usd)} for the week (each dinner pays for the share of each package it uses). Shopping for ${cart.people} people, the cart comes to ${money(cart.total_usd / cart.people)} each, because packages are bought whole.` }) : null,
+      cart.kroger_check ? el('p', { className: `small ${cart.unavailable?.length ? 'bad' : ''}`, textContent: `${cart.kroger_check}${cart.checked_at ? ` (${when(cart.checked_at)})` : ''}${cart.replaced_lines ? ` The Shopper Agent replaced ${cart.replaced_lines} product${cart.replaced_lines === 1 ? '' : 's'}.` : ''}` }) : null,
       el('p', { className: 'small muted', textContent: `${cart.note}${cart.estimated_lines ? ` ${cart.estimated_lines} price${cart.estimated_lines === 1 ? ' is' : 's are'} estimated: Kroger had no match.` : ''}` }),
       el('div', { className: 'table-wrap' }, el('table', { className: 'cart-table' },
         el('thead', {}, el('tr', {}, ...['Product', 'Size', 'Packages', 'Price', 'Cost', 'Used for'].map((h) => el('th', { textContent: h })))),
