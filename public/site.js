@@ -181,7 +181,9 @@
   window.addEventListener('storage', (e) => {
     if (e.key !== GROUP_KEY) return;
     group = normalize(e.newValue);
+    for (const input of document.querySelectorAll('.group-input')) input.value = group;
     fill();
+    updateGates();
   });
 
   // Sample prompts: the text files under /prompts/ (<div data-prompt="/prompts/scout/step-2.txt" data-step="12">),
@@ -201,6 +203,7 @@
     else slots.push((p.slot = { node, template }));
     p.slot.template = template;
     fill();
+    gatePrompt(p);
   };
   const agents = [...new Set(boxes.map((p) => p.agent).filter(Boolean))];
   // A step shows the live edit, else the instructor's safe copy, else its file.
@@ -360,7 +363,8 @@
     return usedGroups;
   };
 
-  for (const input of document.querySelectorAll('.group-input')) {
+  for (const input of document.querySelectorAll('.group-input')) wireGroupInput(input);
+  function wireGroupInput(input) {
     const note = input.closest('.group-box')?.querySelector('.group-note');
     let timer;
     const show = () => {
@@ -393,7 +397,42 @@
       for (const other of document.querySelectorAll('.group-input')) if (other !== input) other.value = input.value;
       fill();
       show();
+      updateGates();
     });
+  }
+
+  // Prompts that use the group name (the steps that connect to the coordinator)
+  // can't be copied without it: the coordinator, the Coordinator page and the
+  // Shopper's credit all go by that name. A group-name box sits right above
+  // the prompt, so students don't need to go back to the Welcome page.
+  const gates = [];
+  function gatePrompt(p) {
+    const uses = /\{\{GROUP\}\}/.test(p.template || '');
+    const frame = p.box.closest('.prompt');
+    const btn = frame?.querySelector('[data-copy]');
+    if (!uses || !btn) {
+      if (p.gate) { p.gate.el.remove(); btn && (btn.disabled = false); gates.splice(gates.indexOf(p.gate), 1); p.gate = null; }
+      return;
+    }
+    if (p.gate) return updateGates();
+    const make = (tag, props = {}, ...kids) => { const n = Object.assign(document.createElement(tag), props); n.append(...kids); return n; };
+    const label = make('p', { className: 'group-gate-label' });
+    const input = make('input', { className: 'group-input', type: 'text', placeholder: 'e.g. team-3', autocomplete: 'off', spellcheck: false, value: group });
+    input.setAttribute('aria-label', 'Your group name');
+    const el = make('div', { className: 'group-gate group-box' }, label, input, make('p', { className: 'group-note small' }));
+    frame.querySelector('.prompt-head')?.after(el);
+    wireGroupInput(input);
+    p.gate = { el, btn, label };
+    gates.push(p.gate);
+    updateGates();
+  }
+  function updateGates() {
+    for (const g of gates) {
+      g.btn.disabled = !group;
+      g.btn.title = group ? '' : 'Enter your group name first';
+      g.label.textContent = group ? 'Your group name (the prompt uses it)' : 'Enter your group name first: this prompt uses it';
+      g.el.classList.toggle('missing', !group);
+    }
   }
 
   // Copy buttons: data-copy="<id of the element to copy>".

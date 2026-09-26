@@ -4,6 +4,6 @@ For now, only establish the connection and discover the tools offered by the coo
 
 The coordinator requires two things on every request: our class key and our group name. All requests to the coordinator must be made from the backend.
 
-Create a protected Lovable secret called CLASS_KEY and ask me to enter its value. Never place the class key in the page, browser code, logs or AI instructions. Also ask me our group name if you don’t know it.
+Create a protected Lovable secret called CLASS_KEY and ask me to enter its value. Never place the class key in the page, browser code, logs or AI instructions. Our group name is {{GROUP}}.
 
 Once you have established the connection, confirm the connection and explain the tools that are available. Show the connection status and the tools, with their descriptions, in a “Coordinator connection” section on the page.
