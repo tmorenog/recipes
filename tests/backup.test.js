@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import * as adminApi from '../api/admin.js';
 import { setBackupForTests } from '../lib/backup-agents.js';
 import { getStore } from '../lib/store/index.js';
-import { saveChoice } from '../lib/shopper.js';
+import { saveChoice, buildWeekCart } from '../lib/shopper.js';
 import { BACKENDS, as, recipe, markPriced, closeDatabase } from './helpers.js';
 import * as rest from '../api/recipes.js';
 import * as plansApi from '../api/meal-plans.js';
@@ -177,6 +177,14 @@ for (const backend of BACKENDS) {
       assert.equal(view.choice.cart.estimated_lines, 1);
       assert.equal(view.choice.cart.people, 50);
       assert.equal(view.run.outcome, 'Plan chosen');
+      assert.equal(view.run.input.people, 50, 'the Shopper shops for 50 by default');
+
+      // The Pricer's carts are for 50 people; shopping for 100 doubles each share before rounding up.
+      const big = await buildWeekCart({ plan_id: planId, people: 100 });
+      const bigRice = big.cart.lines.find((l) => l.product_id === 'rice-1');
+      assert.deepEqual([big.cart.people, bigRice.packages, big.cart.lines.find((l) => l.product_id === 'p-0').packages], [100, 5, 2]);
+      const small = await buildWeekCart({ plan_id: planId, people: 5 });
+      assert.deepEqual([small.cart.lines.find((l) => l.product_id === 'rice-1').packages, small.cart.total_usd], [1, 3 + 5 * 4], 'a few people still buy whole packages');
       assert.equal(view.choice.status, 'active');
       assert.deepEqual(view.history, []);
 

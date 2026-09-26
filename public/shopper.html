@@ -38,13 +38,14 @@
   <ol class="how-strip" aria-label="How the Shopper Agent works">
     <li><strong>The Planner Agents save plans</strong><span>Each group’s plan goes to the coordinator.</span></li>
     <li><strong>The Shopper Agent compares them</strong><span>Checks passed, cost, variety and popularity.</span></li>
-    <li><strong>The coordinator builds the cart</strong><span>From the Pricer Agent’s carts: each Kroger product once, in whole packages.</span></li>
+    <li><strong>The coordinator builds the cart</strong><span>The plan is priced per person; the cart scales it to the number of people shopping, in whole packages.</span></li>
     <li><strong>The class’s plan appears here</strong><span>With the reason it was chosen.</span></li>
   </ol>
 
   <div class="panel instructor-only" id="run-panel" hidden>
     <p style="margin-top:0"><strong>For the instructor:</strong> run the Shopper Agent once the Planner Agents have saved their plans. It uses the AI key the Pricer Agent uses, and takes a minute or two.</p>
-    <button class="btn primary" type="button" id="run">Run the Shopper Agent</button>
+    <p class="row-actions"><label class="people-field">People to shop for <input type="number" id="people" min="1" max="1000" value="50"></label>
+    <button class="btn primary" type="button" id="run">Run the Shopper Agent</button></p>
     <p class="small" id="run-msg" aria-live="polite"></p>
   </div>
 

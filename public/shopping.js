@@ -40,6 +40,7 @@
       el('blockquote', { className: 'choice-reason', textContent: choice.reason }),
       dinners,
       el('h3', { textContent: `Shopping list: the Kroger cart${cart.people ? ` for ${cart.people} people` : ''}, ${money(cart.total_usd)}` }),
+      cart.people ? el('p', { className: 'small', textContent: `Per person, the plan costs ${money(plan.total_cost_usd)} for the week (each dinner pays for the share of each package it uses). Shopping for ${cart.people} people, the cart comes to ${money(cart.total_usd / cart.people)} each, because packages are bought whole.` }) : null,
       el('p', { className: 'small muted', textContent: `${cart.note}${cart.estimated_lines ? ` ${cart.estimated_lines} price${cart.estimated_lines === 1 ? ' is' : 's are'} estimated: Kroger had no match.` : ''}` }),
       el('div', { className: 'table-wrap' }, el('table', { className: 'cart-table' },
         el('thead', {}, el('tr', {}, ...['Product', 'Size', 'Packages', 'Price', 'Cost', 'Used for'].map((h) => el('th', { textContent: h })))),

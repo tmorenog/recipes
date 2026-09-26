@@ -41,6 +41,7 @@
     <li><strong>The Pricer Agent does the maths</strong><span>Packages to buy, the cart total and the cost per serving.</span></li>
     <li><strong>The Pricer Agent saves the price</strong><span>To the coordinator, where the Planner Agents read it.</span></li>
   </ol>
+  <p class="small per-person-note"><strong>Why per person?</strong> The Meal Planners compare dinners by what one serving costs. The class’s recipes will be cooked for many people, so the Pricer Agent prices each recipe at scale (a cart for 50 people) and each serving pays only for the share of each package it uses. The <a href="/shopper">Shopper Agent</a> later turns the chosen plan into one real cart for the number of people shopping, in whole packages.</p>
   <p class="pricer-facts small" id="facts"></p>
   <section class="notice" id="problem" hidden></section>
 

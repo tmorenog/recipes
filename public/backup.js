@@ -171,7 +171,7 @@
     const r = await pricer('clear-all', { confirm: 'CLEAR' });
     say(r.ok ? `Prices removed from ${r.body.cleared} recipes. They stay unpriced until you price them.` : r.error);
   });
-  $('run-shopper').addEventListener('click', (e) => start(e.currentTarget.closest('section'), { agent: 'shopper' }));
+  $('run-shopper').addEventListener('click', (e) => start(e.currentTarget.closest('section'), { agent: 'shopper', people: Number($('shopper-people').value) || 50 }));
   setInterval(() => { if (!$('backup').hidden && !document.hidden) refreshAgents(); }, 10000);
 
   if (key) signIn(key);

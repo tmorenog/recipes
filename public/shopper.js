@@ -71,7 +71,7 @@
       $('run').disabled = true;
       $('run-msg').textContent = 'Starting…';
       const res = await fetch('/api/admin/agent-runs', {
-        method: 'POST', headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' }, body: JSON.stringify({ agent: 'shopper' }),
+        method: 'POST', headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' }, body: JSON.stringify({ agent: 'shopper', people: Number($('people').value) || 50 }),
       });
       const body = await res.json().catch(() => ({}));
       $('run-msg').textContent = res.ok ? 'Running: follow it below.' : (body.errors || [`HTTP ${res.status}`]).join(' ');
