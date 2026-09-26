@@ -58,8 +58,9 @@
   }
 
   // Collapsible steps (Recipe Scout, Meal Planner and Admin): the step title
-  // opens and closes the step. The first step starts open; what a student
-  // opens is remembered in this browser, and a link to a step opens it.
+  // opens and closes the step. Every step starts closed, so the page is a short
+  // list of steps (on Admin, the first part starts open); what a student opens
+  // is remembered in this browser, and a link to a step opens it.
   const stepSections = [...document.querySelectorAll('section.step')];
   if (stepSections.length) {
     const memoryKey = `rc-steps:${location.pathname}`;
@@ -89,7 +90,7 @@
         remembered[sec.id] = open;
         remember();
       });
-      setOpen(sec, remembered[sec.id] ?? i === 0);
+      setOpen(sec, remembered[sec.id] ?? (i === 0 && sec.classList.contains('admin-part')));
     });
     const all = (open) => { for (const sec of stepSections) { setOpen(sec, open); remembered[sec.id] = open; } remember(); };
     const bar = document.createElement('p');
