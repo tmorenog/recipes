@@ -1,6 +1,6 @@
 Now turn the app into an AI Meal Planner using Lovable’s built-in AI.
 
-At the start of every run, ask the coordinator which tools it offers, and give them to the Meal Planner Agent exactly as the coordinator describes them. Let the coordinator describe its own formats, checks and limits: don’t copy them into the app. Also give the Meal Planner Agent a way to end the run with a summary.
+At the start of every run, ask the coordinator which tools it offers, and give them to the Meal Planner Agent as the coordinator describes them, with the same names, descriptions and inputs. Let the coordinator describe its own formats, checks and limits: don’t copy them into the app. Also give the Meal Planner Agent a way to end the run with a summary.
 
 Pass the page’s inputs to the Meal Planner Agent (“none” for an empty box).
 

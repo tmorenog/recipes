@@ -1,6 +1,6 @@
 Now let the Scout Agent use the coordinator tools you discovered when connecting to the coordinator.
 
-At the start of every run, ask the coordinator which tools it offers, and give them to the Scout Agent exactly as the coordinator describes them.
+At the start of every run, ask the coordinator which tools it offers, and give them to the Scout Agent as the coordinator describes them, with the same names, descriptions and inputs.
 
 Let the coordinator describe its own formats, rules and limits: don’t copy them into the app.
 
