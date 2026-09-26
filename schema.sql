@@ -119,9 +119,6 @@ create table if not exists pricer_cache (
   at    timestamptz not null default now()
 );
 
--- Recipes saved before the Pricer existed get priced too.
-insert into pricings (meal_id) select distinct meal_id from recipes on conflict do nothing;
-
 -- How many people the cart feeds (from the Pricer's instructions) and the
 -- instructions it followed, so a change of prompt is visible per recipe.
 alter table pricings add column if not exists people int;
@@ -177,10 +174,6 @@ update pricings set error = regexp_replace(error, 'sk-ant-[A-Za-z0-9_-]{8,}', 's
 -- asks for it to be priced.
 alter table pricings drop constraint if exists pricings_status_check;
 alter table pricings add constraint pricings_status_check check (status in ('unpriced', 'pending', 'pricing', 'priced', 'failed'));
-
--- The Lovable secret for the class key is called CLASS_KEY (it was
--- COORDINATOR_KEY): bring step prompts edited on the site in line.
-update prompt_overrides set text = replace(text, 'COORDINATOR_KEY', 'CLASS_KEY'), updated_at = now() where text like '%COORDINATOR_KEY%';
 
 -- ---------------------------------------------------------------- One recipe per meal
 -- Each TheMealDB recipe is stored once. Every group that picks it adds a
@@ -254,17 +247,11 @@ update pricings set meal_id = meal_id;
 
 -- A Pricer prompt saved before nutrition moved to the Meal Planner tells the
 -- agent to use USDA tools that no longer exist: drop it so the default applies.
+-- (Every deploy: a prompt naming those tools can't work, whenever it was saved.)
 delete from pricer_config where key = 'prompt' and value ~* '(search_usda|usda_fdc_id)';
 
 -- A test run is priced as a named recipe.
 alter table pricer_tests add column if not exists name text;
-
--- The Meal Planner no longer has a nutrition look-up tool (search_foods): the
--- agent estimates nutrition itself. Take it out of step prompts edited on the site.
-update prompt_overrides set
-  text = regexp_replace(regexp_replace(text, '\s*Also call search_foods[^\n]*?show me the result\.', '', 'g'), ',? and USDA nutrition data', '', 'g'),
-  updated_at = now()
-where agent = 'planner' and text ~ '(search_foods|USDA nutrition data)';
 
 -- The coordinator's exchange log (Coordinator page): each MCP request an agent
 -- sent and the answer, and each Pricer result. Headers, so the class key, are
@@ -284,17 +271,6 @@ create table if not exists exchanges (
   ms               int
 );
 
--- The exercise plans dinners: bring a Scout step 1 edited on the site in line.
-update prompt_overrides set text = replace(text, '"15-minute lunches"', '"20-minute dinners"'), updated_at = now()
-where agent = 'scout' and text like '%"15-minute lunches"%';
-
--- The site is called Meal Squad, and the Recipe Pricer is an agent of its own:
--- update that line in a Pricer prompt saved from the earlier default.
-update pricer_config set
-  value = replace(value, 'You are the Pricer, an agent that runs on the class''s recipe coordinator.', 'You are the Recipe Pricer, one of the agents in the class''s Meal Squad system.'),
-  updated_at = now()
-where key = 'prompt' and value like '%an agent that runs on the class''s recipe coordinator.%';
-
 -- The coordinator's limits and checks, set on the Admin page (lib/settings.js).
 create table if not exists coordinator_settings (
   key         text primary key,
@@ -302,19 +278,12 @@ create table if not exists coordinator_settings (
   updated_at  timestamptz not null default now()
 );
 
--- get_expectations was renamed get_contract: bring step prompts edited on the site in line.
-update prompt_overrides set text = replace(text, 'get_expectations', 'get_contract'), updated_at = now()
-where text like '%get\_expectations%';
-
--- Meal Planner step 2 edited on the site: add the fix for a blank page when
--- the page parses an already-parsed coordinator result (once only).
-update prompt_overrides set
-  text = replace(text, 'If there are no priced recipes yet, say so plainly instead of showing an error.',
-    E'Each coordinator tool returns its answer as text that contains JSON. Parse it once, in the backend, and send the page ready-to-use data; the page should not parse it again. If a section can’t be shown, display a short message in that section instead of breaking the page.\n\nIf there are no priced recipes yet, say so plainly instead of showing an error.'),
-  updated_at = now()
-where agent = 'planner' and step = 11
-  and text like '%If there are no priced recipes yet, say so plainly instead of showing an error.%'
-  and text not like '%Parse it once, in the backend%';
+-- Recipes saved before the Pricer existed get priced too (or wait, unpriced,
+-- when the instructor paused automatic pricing).
+insert into pricings (meal_id, status)
+  select distinct meal_id, case when (select value->>'auto_pricing' from coordinator_settings where key = 'main') = 'false' then 'unpriced' else 'pending' end
+  from recipes
+on conflict do nothing;
 
 -- Runs of the instructor's backup agents (a Scout or Meal Planner Agent run from
 -- the site): the input, every step as it happens, and how it ended.
@@ -333,31 +302,6 @@ create table if not exists backup_runs (
 );
 create index if not exists backup_runs_created_idx on backup_runs (created_at desc);
 
--- Step prompts edited on the site that don't say how to send the group name
--- (the X-Group header): add it, once, to the versions saved on 2026-09-26.
-update prompt_overrides set
-  text = replace(replace(replace(replace(text,
-    'The coordinator requires two things on every request: our class key and our group name.',
-    'The coordinator requires two things on every request: our class key, sent as the header “Authorization: Bearer ” followed by the value of the CLASS_KEY secret, and our group name, {{GROUP}}, sent as the header “X-Group”. All requests to the coordinator must be made from the backend.'),
-    'Ask me for the group name too.', 'If the group name is YOUR-GROUP-NAME, ask me for our group name first.'),
-    'Do not give the tools to the Recipe Scout yet, and do not change how the Scout works.', 'Do not give the tools to the Scout Agent yet, and do not change how it works.'),
-    'Once you have established the connection, explain the tools that are available.',
-    'Once you have established the connection, explain the tools that are available. Show the connection status and the tools, with their descriptions, in a “Coordinator connection” section on the page.'),
-  updated_at = now()
-where agent = 'scout' and step = 13 and text like '%our class key and our group name.%';
-
-update prompt_overrides set
-  text = replace(replace(text,
-    'followed by CLASS_KEY, and our group name.',
-    'followed by the value of the CLASS_KEY secret, and our group name, {{GROUP}}, sent as the header “X-Group”.'),
-    'If you don''t have our group name, ask me.', 'If the group name is YOUR-GROUP-NAME, ask me for our group name first.'),
-  updated_at = now()
-where agent = 'planner' and step = 11 and text like '%followed by CLASS_KEY, and our group name.%';
-
--- Meal Planner step 1: the instructor chose their own version with its typos
--- fixed, which is now the file; the older saved copy goes.
-delete from prompt_overrides where agent = 'planner' and step = 10 and text like '%Scouting Agents%';
-
 -- The Shopper Agent (run on the site) chooses the class's plan and the
 -- coordinator builds its Kroger cart from the Pricer's carts. The newest
 -- choice is the class's; earlier ones stay as history.
@@ -374,20 +318,6 @@ create index if not exists class_choices_created_idx on class_choices (created_a
 alter table backup_runs drop constraint if exists backup_runs_agent_check;
 alter table backup_runs add constraint backup_runs_agent_check check (agent in ('scout', 'planner', 'shopper'));
 
--- The Scout Agent now finds four recipes (five was easy to confuse with the
--- Meal Planner's five dinners): bring step prompts edited on the site in line.
-update prompt_overrides set
-  text = replace(replace(replace(replace(replace(replace(replace(text,
-    'find five real recipes', 'find four real recipes'),
-    'If five suitable recipes cannot be found', 'If four suitable recipes cannot be found'),
-    'No more than five recipes can be selected', 'No more than four recipes can be selected'),
-    'Find five recipes that fit the theme', 'Find four recipes that fit the theme'),
-    'once five recipes have been accepted', 'once four recipes have been accepted'),
-    'Finish after five recipes have been accepted', 'Finish after four recipes have been accepted'),
-    'If five recipes cannot be accepted', 'If four recipes cannot be accepted'),
-  updated_at = now()
-where agent = 'scout' and text ~ '(find five real recipes|five suitable recipes|than five recipes|Find five recipes|five recipes have been accepted|If five recipes)';
-
 -- The site agents' instructions can be edited on the Admin page too.
 alter table prompt_overrides drop constraint if exists prompt_overrides_agent_check;
 alter table prompt_overrides add constraint prompt_overrides_agent_check check (agent in ('scout', 'planner', 'backup_scout', 'backup_planner', 'shopper'));
@@ -402,6 +332,93 @@ create table if not exists prompt_defaults (
   updated_at  timestamptz not null default now(),
   primary key (agent, step)
 );
+
+-- Fixes to prompts edited on the site, from earlier versions of the exercise.
+-- They run once (a marker row): run on every deploy, they changed the
+-- instructor's later edits. A database that already has the marker below ran
+-- them on every deploy before, so it only gets the marker.
+do $m$
+begin
+  if not exists (select 1 from coordinator_settings where key = 'migration:prompt-text-fixes') then
+    if not exists (select 1 from coordinator_settings where key = 'migration:student-prompts-from-files') then
+    -- The Lovable secret for the class key is called CLASS_KEY (it was
+    -- COORDINATOR_KEY): bring step prompts edited on the site in line.
+    update prompt_overrides set text = replace(text, 'COORDINATOR_KEY', 'CLASS_KEY'), updated_at = now() where text like '%COORDINATOR_KEY%';
+
+    -- The Meal Planner no longer has a nutrition look-up tool (search_foods): the
+    -- agent estimates nutrition itself. Take it out of step prompts edited on the site.
+    update prompt_overrides set
+      text = regexp_replace(regexp_replace(text, '\s*Also call search_foods[^\n]*?show me the result\.', '', 'g'), ',? and USDA nutrition data', '', 'g'),
+      updated_at = now()
+    where agent = 'planner' and text ~ '(search_foods|USDA nutrition data)';
+
+    -- The exercise plans dinners: bring a Scout step 1 edited on the site in line.
+    update prompt_overrides set text = replace(text, '"15-minute lunches"', '"20-minute dinners"'), updated_at = now()
+    where agent = 'scout' and text like '%"15-minute lunches"%';
+
+    -- The site is called Meal Squad, and the Recipe Pricer is an agent of its own:
+    -- update that line in a Pricer prompt saved from the earlier default.
+    update pricer_config set
+      value = replace(value, 'You are the Pricer, an agent that runs on the class''s recipe coordinator.', 'You are the Recipe Pricer, one of the agents in the class''s Meal Squad system.'),
+      updated_at = now()
+    where key = 'prompt' and value like '%an agent that runs on the class''s recipe coordinator.%';
+
+    -- get_expectations was renamed get_contract: bring step prompts edited on the site in line.
+    update prompt_overrides set text = replace(text, 'get_expectations', 'get_contract'), updated_at = now()
+    where text like '%get\_expectations%';
+
+    -- Meal Planner step 2 edited on the site: add the fix for a blank page when
+    -- the page parses an already-parsed coordinator result (once only).
+    update prompt_overrides set
+      text = replace(text, 'If there are no priced recipes yet, say so plainly instead of showing an error.',
+        E'Each coordinator tool returns its answer as text that contains JSON. Parse it once, in the backend, and send the page ready-to-use data; the page should not parse it again. If a section can’t be shown, display a short message in that section instead of breaking the page.\n\nIf there are no priced recipes yet, say so plainly instead of showing an error.'),
+      updated_at = now()
+    where agent = 'planner' and step = 11
+      and text like '%If there are no priced recipes yet, say so plainly instead of showing an error.%'
+      and text not like '%Parse it once, in the backend%';
+
+    -- Step prompts edited on the site that don't say how to send the group name
+    -- (the X-Group header): add it, once, to the versions saved on 2026-09-26.
+    update prompt_overrides set
+      text = replace(replace(replace(replace(text,
+        'The coordinator requires two things on every request: our class key and our group name.',
+        'The coordinator requires two things on every request: our class key, sent as the header “Authorization: Bearer ” followed by the value of the CLASS_KEY secret, and our group name, {{GROUP}}, sent as the header “X-Group”. All requests to the coordinator must be made from the backend.'),
+        'Ask me for the group name too.', 'If the group name is YOUR-GROUP-NAME, ask me for our group name first.'),
+        'Do not give the tools to the Recipe Scout yet, and do not change how the Scout works.', 'Do not give the tools to the Scout Agent yet, and do not change how it works.'),
+        'Once you have established the connection, explain the tools that are available.',
+        'Once you have established the connection, explain the tools that are available. Show the connection status and the tools, with their descriptions, in a “Coordinator connection” section on the page.'),
+      updated_at = now()
+    where agent = 'scout' and step = 13 and text like '%our class key and our group name.%';
+
+    update prompt_overrides set
+      text = replace(replace(text,
+        'followed by CLASS_KEY, and our group name.',
+        'followed by the value of the CLASS_KEY secret, and our group name, {{GROUP}}, sent as the header “X-Group”.'),
+        'If you don''t have our group name, ask me.', 'If the group name is YOUR-GROUP-NAME, ask me for our group name first.'),
+      updated_at = now()
+    where agent = 'planner' and step = 11 and text like '%followed by CLASS_KEY, and our group name.%';
+
+    -- Meal Planner step 1: the instructor chose their own version with its typos
+    -- fixed, which is now the file; the older saved copy goes.
+    delete from prompt_overrides where agent = 'planner' and step = 10 and text like '%Scouting Agents%';
+
+    -- The Scout Agent now finds four recipes (five was easy to confuse with the
+    -- Meal Planner's five dinners): bring step prompts edited on the site in line.
+    update prompt_overrides set
+      text = replace(replace(replace(replace(replace(replace(replace(text,
+        'find five real recipes', 'find four real recipes'),
+        'If five suitable recipes cannot be found', 'If four suitable recipes cannot be found'),
+        'No more than five recipes can be selected', 'No more than four recipes can be selected'),
+        'Find five recipes that fit the theme', 'Find four recipes that fit the theme'),
+        'once five recipes have been accepted', 'once four recipes have been accepted'),
+        'Finish after five recipes have been accepted', 'Finish after four recipes have been accepted'),
+        'If five recipes cannot be accepted', 'If four recipes cannot be accepted'),
+      updated_at = now()
+    where agent = 'scout' and text ~ '(find five real recipes|five suitable recipes|than five recipes|Find five recipes|five recipes have been accepted|If five recipes)';
+    end if;
+    insert into coordinator_settings (key, value) values ('migration:prompt-text-fixes', to_jsonb(now()::text));
+  end if;
+end $m$;
 
 -- Once (September 2026): the students' prompt files, tested end to end, become
 -- both the live prompts and the safe copies. Edits saved on the site before

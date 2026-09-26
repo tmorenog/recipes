@@ -77,12 +77,12 @@ export const POST = guarded(async (request) => {
     case 'price': {
       const mealId = String(body.meal_id ?? '');
       if (!(await store.resetPricing(mealId))) return json(404, { errors: [`no recipe has meal_id ${mealId}`] });
-      kickPricer();
+      kickPricer({ requested: true });
       return json(200, { queued: mealId });
     }
     case 'price-unpriced': {
       const n = await store.queueUnpriced();
-      kickPricer();
+      kickPricer({ requested: true });
       return json(200, { queued: n });
     }
     case 'clear-all': {
@@ -92,16 +92,16 @@ export const POST = guarded(async (request) => {
     case 'reprice-all': {
       if (body.confirm !== 'REPRICE') return json(400, { errors: ['Send {"confirm": "REPRICE"} to price every recipe again.'] });
       const n = await store.resetPricings({ onlyFailed: false });
-      kickPricer();
+      kickPricer({ requested: true });
       return json(200, { queued: n });
     }
     // Older names, kept for scripts.
     case 'run':
-      kickPricer();
+      kickPricer({ requested: true });
       return json(200, { started: true });
     case 'retry-failed': {
       const n = await store.resetPricings({ onlyFailed: true });
-      kickPricer();
+      kickPricer({ requested: true });
       return json(200, { queued: n });
     }
     default:
