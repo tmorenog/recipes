@@ -31,7 +31,7 @@
   <div class="page-head">
     <span class="agent-tag planner">Agent 3</span>
     <h1>Build the Meal Planner</h1>
-    <p class="lede">An agent that takes a budget, reads the recipes the Scout Agents found and the Pricer Agent priced, and plans five dinners, Monday to Friday, that are nutritious, varied and cheap. It shows the week and saves the plan to the coordinator.</p>
+    <p class="lede">An agent that takes a budget, reads the recipes the Scout Agents found and the Pricer Agent priced, and plans five dinners, Monday to Friday, that are nutritious, varied and cheap. It shows the week, lists the ingredients to buy and the total price and saves the plan to the coordinator.</p>
   </div>
 
 
@@ -98,7 +98,7 @@
       <div class="prompt-body" id="q3" data-prompt="/prompts/planner/step-3.txt" data-step="12"></div>
     </div>
     <div class="step-after">
-      <div><p class="step-label">What you should see</p><ul><li>The Planner Agent learns how to work with the coordinator at the beginning of the run.</li><li>It drafts a plan, asks the coordinator to check it and changes dinners when a check fails.</li><li>Five dinners fill Monday to Friday, with the week’s cost against the budget and each check marked ✓ or ✗.</li><li>The outcome: valid plan found, no feasible plan found, or run failed, with an explanation.</li><li>The saved plan appears on the <a href="/coordinator">Coordinator page</a> under your group.</li></ul></div>
+      <div><p class="step-label">What you should see</p><ul><li>The Planner Agent learns how to work with the coordinator at the beginning of the run.</li><li>It drafts a plan, asks the coordinator to check it and changes dinners when a check fails.</li><li>Five dinners fill Monday to Friday, with a shopping list, the week’s cost against the budget and each check marked ✓ or ✗.</li><li>The outcome: valid plan found, no feasible plan found, or run failed, with an explanation.</li><li>The saved plan appears on the <a href="/coordinator">Coordinator page</a> under your group.</li></ul></div>
       <div><p class="step-label">Things you can try</p><ul><li>A tiny budget, such as $3. Does it explain that it can’t be done, or pretend?</li><li><em>Vegetarian only</em> when there are fewer than five vegetarian recipes.</li><li>A rule of your own, such as <em>no dinner over 45 minutes</em>.</li><li>Change one Planner Agent instruction and compare its behavior.</li></ul></div>
     </div>
     <p class="step-note">The important question is not only “Did it save a plan?” Also ask: “Did it fix the checks that failed, and are its explanations honest?”</p>

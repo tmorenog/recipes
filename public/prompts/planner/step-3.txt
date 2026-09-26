@@ -42,6 +42,7 @@ Update the page:
 - Make failed checks and rejections easy to spot, without presenting them as technical failures
 - Show how many actions the Planner Agent has used and the time left
 - “The week” shows the saved plan: for each day the photo, name, cost per serving, estimated calories and protein, and why it was chosen; below the days, the week’s cost per person against the budget and each check with ✓ or ✗
+- Below the days, add a “Shopping list”: the ingredients to buy for the five dinners, combined from the recipes (the same ingredient listed once), with the week’s total price from the coordinator
 - Link each dinner to its recipe on TheMealDB (https://www.themealdb.com/meal/MEAL_ID) and credit TheMealDB for the photos
 - Fill the outcome area: “Valid plan found” when the saved plan passes every check; “No feasible plan found” with the Planner Agent’s explanation; “Run failed” with the reason when the run stopped on an error or a limit
 - Add a link to the class Coordinator page: {{SITE}}/coordinator
