@@ -109,7 +109,7 @@ test('MCP works with plain fetch: ?agent=scout shows only the Scout’s tools, a
   assert.deepEqual((await list.json()).result.tools.map((t) => t.name), ['get_contract', 'save_recipe']);
 
   const brief = JSON.parse((await (await rpc('?agent=scout', 'tools/call', { name: 'get_contract', arguments: {} })).json()).result.content[0].text);
-  assert.equal(brief.agent, 'Recipe Scout');
+  assert.equal(brief.agent, 'Scout Agent');
   assert.deepEqual(Object.keys(brief.recipe_format), Object.keys(recipeSchema.shape));
   assert.match(brief.recipe_format.why_chosen, /^required/);
   assert.match(brief.recipe_format.image_url, /^optional/);
@@ -118,7 +118,7 @@ test('MCP works with plain fetch: ?agent=scout shows only the Scout’s tools, a
   const planner = await (await rpc('?agent=planner', 'tools/list')).json();
   assert.deepEqual(planner.result.tools.map((t) => t.name).sort(), ['check_meal_plan', 'get_contract', 'list_recipes', 'save_meal_plan']);
   const plannerBrief = JSON.parse((await (await rpc('', 'tools/call', { name: 'get_contract', arguments: { agent: 'planner' } })).json()).result.content[0].text);
-  assert.equal(plannerBrief.agent, 'Meal Planner');
+  assert.equal(plannerBrief.agent, 'Meal Planner Agent');
   const { planSchema, mealSchema } = await import('../lib/plans.js');
   assert.deepEqual(Object.keys(plannerBrief.plan_format), Object.keys(planSchema.shape));
   assert.deepEqual(Object.keys(plannerBrief.meal_format), Object.keys(mealSchema.shape));

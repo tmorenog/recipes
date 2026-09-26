@@ -82,7 +82,7 @@ for (const backend of BACKENDS) {
     test('the contract tool also answers to its earlier name, get_expectations', async () => {
       const res = await handle(new Request('http://x/api/mcp?agent=scout', { method: 'POST', headers: { ...as('team-6'), 'content-type': 'application/json' },
         body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'get_expectations', arguments: {} } }) }));
-      assert.equal(JSON.parse((await res.json()).result.content[0].text).agent, 'Recipe Scout');
+      assert.equal(JSON.parse((await res.json()).result.content[0].text).agent, 'Scout Agent');
     });
 
     test('hand-written requests: GET is refused at once; text/plain JSON and string arguments are accepted', async () => {
@@ -98,7 +98,7 @@ for (const backend of BACKENDS) {
 
       const stringArgs = await raw({ method: 'POST', headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'tools/call', params: { name: 'get_contract', arguments: '{"agent": "planner"}' } }) });
-      assert.equal(JSON.parse((await stringArgs.json()).result.content[0].text).agent, 'Meal Planner');
+      assert.equal(JSON.parse((await stringArgs.json()).result.content[0].text).agent, 'Meal Planner Agent');
     });
 
     test('unambiguous slips are accepted with a note; ambiguous ones are still rejected', async () => {
@@ -187,7 +187,7 @@ for (const backend of BACKENDS) {
       const other = out(await (await mcp('team-1')).callTool({ name: 'save_recipe', arguments: { ...r, theme: 'comfort food', why_chosen: 'Warming.' } }));
       assert.equal(other.new_recipe, false);
       assert.deepEqual(other.picked_by, ['team-2', 'team-1']);
-      assert.match(other.note, /now picked by 2 groups/);
+      assert.match(other.note, /It has now been picked by 2 groups\./);
       assert.equal((await db.recipes()).length, 1);
       const listed = out(await client.callTool({ name: 'list_recipes', arguments: {} })).recipes[0];
       assert.equal(listed.pick_count, 2);
@@ -198,11 +198,20 @@ for (const backend of BACKENDS) {
       const bad = await client.callTool({ name: 'save_recipe', arguments: recipe({ why_chosen: ' ', est_servings: 0 }) });
       assert.equal(bad.isError, true);
       assert.equal(bad.content[0].text, 'Rejected:\n- est_servings must be at least 1\n- why_chosen is empty');
-
       const log = (await db.activity()).filter((l) => l.action === 'save_recipe');
       assert.deepEqual(log.map((l) => [l.group_name, l.channel, l.ok]), [
         ['team-2', 'mcp', true], ['team-2', 'mcp', false], ['team-1', 'mcp', true], ['team-2', 'mcp', false],
       ]);
+
+      const again = out(await client.callTool({ name: 'save_recipe', arguments: { ...r, theme: 'quick dinners' } }));
+      assert.deepEqual(again.picked_by, ['team-2', 'team-1']);
+      assert.match(again.note, /It has now been picked by 2 groups\./, 'a group counts once');
+      const team3 = await mcp('team-3');
+      const own = recipe({ meal_id: '52773', theme: 'first theme' });
+      out(await team3.callTool({ name: 'save_recipe', arguments: own }));
+      const repick = out(await team3.callTool({ name: 'save_recipe', arguments: { ...own, theme: 'second theme' } }));
+      assert.equal(repick.note, 'Your group had already saved this recipe for another theme, so this pick was added to it.');
+
     });
 
     test('list_recipes and mark_processed hand recipes over between groups', async () => {
