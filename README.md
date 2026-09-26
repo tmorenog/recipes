@@ -114,7 +114,7 @@ Presets: **Standard** (3 cuisines, a category at most twice, one vegetarian nigh
 
 Agents never have the rules written into them: `get_contract` lists the rules in force, the Meal Planner page shows them under “The checks”, and every check result names its rule, so a change applies from the next check. Plans already saved keep the results they were saved with. The rules are classroom rules, not dietary advice: an excluded-ingredients rule only checks ingredient names, so free-text dietary needs remain the Meal Planner Agent's job.
 
-Also under **Limits and checks**: when the class has no plan yet, the Shopper Agent starts by itself once `auto_shopper_after_plans` meal plans are saved (10 by default; 0 = only when you run it), at most once every 30 minutes.
+Also under **Limits and checks**: when the class has no plan yet, the Shopper Agent starts by itself once `auto_shopper_after_plans` meal plans are saved (6 by default; 0 = only when you run it), at most once every 30 minutes.
 
 Neon also keeps its own history: from Vercel's Storage tab, "Open in Neon" lets you restore the database to an earlier point in time.
 
