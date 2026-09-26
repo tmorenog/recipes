@@ -2,7 +2,7 @@
 //
 //   GET  /api/pricer                    every recipe and its price, and the agent's latest steps   (anyone)
 //   GET  /api/pricer?meal_id=…          one recipe: its shopping cart and every step               (anyone)
-//   GET  /api/pricer?test=latest|<id>   the latest (or one) test run                              (anyone)
+//   GET  /api/pricer?test=latest|<id>   the latest (or one) test run; {"test": null} before the first (anyone)
 //   POST /api/pricer?action=…           the instructor's controls, with Authorization: Bearer <ADMIN_KEY>
 //        price           body {"meal_id": "…"} prices that recipe (again) from scratch
 //        price-unpriced  prices every recipe without a price (cleared, or couldn't be priced)
@@ -29,6 +29,7 @@ export const GET = guarded(async (request) => {
   if (test) {
     const valid = test === 'latest' || /^[0-9a-f-]{36}$/i.test(test);
     const t = valid ? await store.getPricerTest(test === 'latest' ? null : test) : null;
+    if (!t && test === 'latest') return json(200, { test: null }); // none yet: not an error
     return t ? json(200, t) : json(404, { errors: ['No test runs yet.'] });
   }
   const mealId = url.searchParams.get('meal_id');

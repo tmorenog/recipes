@@ -15,8 +15,12 @@ import * as pricerApi from '../api/pricer.js';
 import { resetKroger } from '../lib/kroger.js';
 import { setBackupForTests, LIMITS as AGENT_LIMITS } from '../lib/backup-agents.js';
 import { createShopper } from '../lib/shopper-agent.js';
-import { choiceSchema } from '../lib/shopper.js';
-import { BACKENDS, as, recipe, mealPlan, markPriced, closeDatabase } from './helpers.js';
+import { choiceSchema, saveChoice } from '../lib/shopper.js';
+import { describe as describeExchange } from '../lib/exchanges.js';
+import { AI_KEY_LOOKS_WRONG } from '../lib/pricer.js';
+import * as whoamiApi from '../api/whoami.js';
+import { GET as health } from '../api/health.js';
+import { BACKENDS, CLASS_KEY, as, recipe, mealPlan, markPriced, closeDatabase } from './helpers.js';
 
 const ADMIN_KEY = 'admin-key-for-tests';
 process.env.ADMIN_KEY = ADMIN_KEY;
@@ -410,6 +414,63 @@ for (const backend of BACKENDS) {
         setPricerForTests({ fetch: null });
         resetKroger();
       }
+    });
+
+    test('secrets are removed before anything is shortened, and an invalid id is barely echoed', async () => {
+      const call = { jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'save_recipe', arguments: { note: `${'x'.repeat(95)}${CLASS_KEY}` } } };
+      const failed = describeExchange(call, { error: { message: `${'x'.repeat(130)}${CLASS_KEY}` } });
+      const rejected = describeExchange(call, { result: { isError: true, content: [{ type: 'text', text: `${'x'.repeat(1990)}${CLASS_KEY}` }] } });
+      for (const text of [failed.summary, failed.request_summary, rejected.response.text, rejected.summary]) {
+        assert.doesNotMatch(text, /class-key/, 'not even part of the key');
+      }
+
+      const id = `${CLASS_KEY}${'z'.repeat(100)}`;
+      const res = await getJson(await rest.POST(new Request(`http://x/api/recipes?id=${encodeURIComponent(id)}&action=processed`, { method: 'POST', headers: as('team-1') })));
+      assert.equal(res.status, 400);
+      assert.equal(res.body.errors[0], '"[hidden]zzzz…" is not a valid recipe id');
+    });
+
+    test('photos from other sites are left out, with a note, instead of rejecting the save', async () => {
+      const saved = await getJson(await saveRest('team-1', recipe({ image_url: 'https://evil.example/cat.jpg' })));
+      assert.equal(saved.status, 201);
+      assert.equal(saved.body.recipe.image_url, null);
+      assert.match(saved.body.format_notes.join(' '), /image_url wasn’t a TheMealDB photo/);
+      assert.equal((await getJson(await saveRest('team-1', recipe()))).body.recipe.image_url, recipe().image_url, 'TheMealDB photos are kept');
+
+      const ids = [saved.body.recipe.id];
+      for (const cuisine of ['Italian', 'Thai', 'Mexican', 'Greek']) ids.push((await (await saveRest('team-2', recipe({ cuisine }))).json()).recipe.id);
+      await markPriced(db.pool, ids);
+      const basket = [{ line: 1, ingredient: 'rice', status: 'bought', product: { id: 'rice-1', description: 'Rice', size: '2 lb', price_usd: 3 }, fraction: 0.5 }];
+      await db.pool.query('update pricings set basket = $1', [JSON.stringify(basket)]);
+      const plan = await (await plansApi.POST(new Request('http://x/api/meal-plans', { method: 'POST', headers: { ...as('team-1'), 'content-type': 'application/json' }, body: JSON.stringify(mealPlan(ids)) }))).json();
+      const line = (image_url) => ({ product_id: 'rice-1', description: 'Rice', size: '2 lb', price_usd: 3, packages: 3, cost_usd: 9, needs: ['mon-1', 'tue-1', 'wed-1', 'thu-1', 'fri-1'], image_url });
+      const res = await saveChoice({ plan_id: plan.plan.id, reason: 'The only plan, and it passes every check.', cart: { people: 50, lines: [line('https://evil.example/rice.jpg')], total_usd: 9 } });
+      assert.ok(res.ok, JSON.stringify(res.errors));
+      assert.equal(res.choice.cart.lines[0].image_url, null);
+      assert.match(res.notes[0], /wasn’t a Kroger product photo/);
+      const kroger = await saveChoice({ plan_id: plan.plan.id, reason: 'The only plan, and it passes every check.', cart: { people: 50, lines: [line('https://www.kroger.com/product/images/medium/front/0001')], total_usd: 9 } });
+      assert.equal(kroger.choice.cart.lines[0].image_url, 'https://www.kroger.com/product/images/medium/front/0001');
+    });
+
+    test('public pages say only that the AI key looks wrong, “no test yet” isn’t an error, and whoami has no open CORS', async () => {
+      const saved = process.env.ANTHROPIC_API_KEY;
+      process.env.ANTHROPIC_API_KEY = 'my anthropic key';
+      setPricerForTests({ model: null });
+      try {
+        const info = (await pricerApi.GET(new Request('http://x/api/pricer')).then(getJson)).body;
+        assert.equal(info.problem, AI_KEY_LOOKS_WRONG);
+        const h = (await health().then(getJson)).body;
+        assert.ok(h.warnings.includes(AI_KEY_LOOKS_WRONG));
+        assert.doesNotMatch(JSON.stringify([info, h]), /characters|sk-ant-|spaces inside/);
+      } finally {
+        if (saved === undefined) delete process.env.ANTHROPIC_API_KEY;
+        else process.env.ANTHROPIC_API_KEY = saved;
+      }
+
+      const latest = await pricerApi.GET(new Request('http://x/api/pricer?test=latest')).then(getJson);
+      assert.deepEqual([latest.status, latest.body], [200, { test: null }], 'no test yet is not an error');
+      assert.equal((await pricerApi.GET(new Request('http://x/api/pricer?test=00000000-0000-4000-8000-000000000009'))).status, 404);
+      assert.equal(whoamiApi.OPTIONS, undefined, 'no preflight answer: other sites’ pages can’t send the class key');
     });
   });
 }

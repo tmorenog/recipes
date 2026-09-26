@@ -6,7 +6,7 @@ import { TABLES_MISSING } from '../lib/store/errors.js';
 import { classKeySet } from '../lib/auth.js';
 import { adminKeySet } from '../lib/admin.js';
 import { krogerConfigured } from '../lib/kroger.js';
-import { pricerSettings, aiKeyLooksRight, pricerProblem, AI_KEY_EXTRACTED } from '../lib/pricer.js';
+import { pricerSettings, aiKeyLooksRight, AI_KEY_LOOKS_WRONG, AI_KEY_EXTRACTED } from '../lib/pricer.js';
 import { json } from '../lib/http.js';
 
 export async function GET() {
@@ -36,7 +36,7 @@ export async function GET() {
   if (!adminKeySet()) warnings.push('The Admin page is off: add ADMIN_KEY in Vercel, then redeploy.');
   const pricer = pricerSettings();
   if (!pricer.aiKey) warnings.push('The Pricer agent is off: add ANTHROPIC_API_KEY in Vercel, then redeploy.');
-  else if (!aiKeyLooksRight(pricer.aiKey)) warnings.push(pricerProblem());
+  else if (!aiKeyLooksRight(pricer.aiKey)) warnings.push(AI_KEY_LOOKS_WRONG); // anyone can read this: nothing about the key
   else if (pricer.aiKeyExtracted) warnings.push(AI_KEY_EXTRACTED);
 
   return json(problems.length ? 503 : 200, {
