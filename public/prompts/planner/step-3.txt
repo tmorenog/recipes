@@ -7,6 +7,7 @@ Pass the page’s inputs to the Meal Planner Agent (“none” for an empty box)
 Goals and rules for the Meal Planner Agent:
 
 - Plan five dinners, Monday to Friday, that meet the dietary requirements, follow the preferences where possible, and are nutritious, varied and as cheap as possible within the budget.
+- Spread similar dishes across the week: avoid the same type of food (the same cuisine, category or main ingredient) on consecutive days, and never three days in a row.
 - First use the coordinator tool that explains how to work with the coordinator, and follow what it says.
 - Use only recipes from the coordinator that have a price.
 - Take popularity into account: the more groups chose a recipe, the more the class likes it. Prefer popular recipes when they fit the other goals, and say how popular each dinner is.
