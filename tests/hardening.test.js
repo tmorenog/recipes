@@ -10,9 +10,10 @@ import * as krogerApi from '../api/kroger.js';
 import { POST as mcpPost } from '../api/mcp.js';
 import { getStore } from '../lib/store/index.js';
 import { saveSettings } from '../lib/settings.js';
-import { setPricerForTests, runQueue } from '../lib/pricer.js';
+import { setPricerForTests, runQueue, startTest } from '../lib/pricer.js';
+import * as pricerApi from '../api/pricer.js';
 import { resetKroger } from '../lib/kroger.js';
-import { BACKENDS, as, recipe, closeDatabase } from './helpers.js';
+import { BACKENDS, as, recipe, mealPlan, markPriced, closeDatabase } from './helpers.js';
 
 const ADMIN_KEY = 'admin-key-for-tests';
 process.env.ADMIN_KEY = ADMIN_KEY;
@@ -207,6 +208,122 @@ for (const backend of BACKENDS) {
       const answer = await deep.json();
       assert.ok(answer.error?.message, 'a readable JSON-RPC error');
       assert.doesNotMatch(answer.error.message, /invalid_type|expected/);
+    });
+
+    test('backup agent runs cut off by the server are reported as failed, not running forever', async () => {
+      const { rows: [old] } = await db.pool.query(
+        "insert into backup_runs (agent, group_name, input, created_at) values ('scout', 'team-1', '{}', now() - interval '10 minutes') returning id",
+      );
+      await db.pool.query("insert into backup_runs (agent, group_name, input) values ('planner', 'team-1', '{}')");
+      const store = getStore();
+      const one = await store.getBackupRun(old.id);
+      assert.deepEqual([one.status, one.outcome], ['failed', 'Run failed']);
+      assert.match(one.summary, /took too long/);
+      assert.equal((await store.latestAgentRun('scout')).status, 'failed');
+      const runs = await store.listBackupRuns();
+      assert.deepEqual(runs.map((r) => [r.agent, r.status]).sort(), [['planner', 'running'], ['scout', 'failed']]);
+    });
+
+    test('an admin edit and the Pricer’s price write lock in the same order, so they can’t deadlock', { timeout: 15_000 }, async () => {
+      const saved = await (await saveRest('team-1', recipe())).json();
+      const { meal_id: mealId, id } = saved.recipe;
+      const pricer = await db.pool.connect();
+      try {
+        // The Pricer's write: its pricing row first, then (in sync_recipe_price) the recipe.
+        await pricer.query('begin');
+        await pricer.query('select 1 from pricings where meal_id = $1 for update', [mealId]);
+        const edit = admin('POST', `recipe&id=${id}`, { ingredients: [{ name: 'lentils', amount: 1, unit: 'cup', raw: '1 cup' }] });
+        await new Promise((r) => setTimeout(r, 300)); // the edit is waiting now
+        await pricer.query('update recipes set price_status = price_status where meal_id = $1', [mealId]);
+        await pricer.query('commit');
+        const res = await edit;
+        assert.equal(res.status, 200, JSON.stringify(res.body));
+        assert.equal(res.body.repriced, true);
+      } finally {
+        await pricer.query('rollback').catch(() => {});
+        pricer.release();
+      }
+    });
+
+    test('sample prices don’t count toward the Pricer’s hourly limit', async () => {
+      assert.equal((await admin('POST', 'load-sample', { confirm: 'SAMPLE', prices: true })).status, 200);
+      assert.equal((await db.pool.query("select count(*)::int as n from pricings where status = 'priced'")).rows[0].n, 20);
+      assert.equal(await getStore().pricingsFinishedSince(new Date(Date.now() - 3_600_000).toISOString()), 0);
+    });
+
+    test('a run that lost its claim adds no steps to the next run’s trace, and the claim token stays private', async () => {
+      await saveRest('team-1', recipe({ meal_id: '4242' }));
+      const store = getStore();
+      const first = await store.claimPricing({ maxActive: 2 });
+      await store.addPricerStep({ meal_id: '4242', attempt: 1, kind: 'thought', text: 'first run', token: first.claim_token });
+      await store.resetPricing('4242'); // Start over
+      const second = await store.claimPricing({ maxActive: 2 });
+      await store.addPricerStep({ meal_id: '4242', attempt: 1, kind: 'thought', text: 'old run, still going', token: first.claim_token });
+      await store.addPricerStep({ meal_id: '4242', attempt: 1, kind: 'thought', text: 'new run', token: second.claim_token });
+      const { body } = await pricerApi.GET(new Request('http://x/api/pricer?meal_id=4242')).then(getJson);
+      assert.deepEqual(body.steps.map((s) => s.text), ['new run']);
+      assert.equal('claim_token' in body, false);
+      assert.equal('messages' in body, false);
+    });
+
+    test('backup and restore keep the class’s plan; older backups without it still restore', async () => {
+      const ids = [];
+      for (const cuisine of ['Indian', 'Italian', 'Thai', 'Mexican', 'Greek']) ids.push((await (await saveRest('team-1', recipe({ cuisine }))).json()).recipe.id);
+      await markPriced(db.pool, ids);
+      const plan = await (await plansApi.POST(new Request('http://x/api/meal-plans', { method: 'POST', headers: { ...as('team-1'), 'content-type': 'application/json' }, body: JSON.stringify(mealPlan(ids)) }))).json();
+      await getStore().saveChoice({ plan_id: plan.plan.id, reason: 'The only plan, and it passes.', people: 50, cart: { people: 50, lines: [] }, total_usd: 12.5 });
+      const backup = (await admin('GET', 'backup')).body;
+      assert.equal(backup.choices.length, 1);
+      assert.equal((await admin('POST', 'reset', { confirm: 'RESET' })).status, 200);
+      assert.equal((await admin('POST', 'restore', backup)).status, 200);
+      const [choice] = await getStore().listChoices();
+      assert.deepEqual([choice.plan_id, choice.total_usd, choice.reason], [plan.plan.id, 12.5, 'The only plan, and it passes.']);
+
+      const { choices, ...older } = backup;
+      assert.equal((await admin('POST', 'restore', older)).status, 200);
+      assert.equal((await getStore().listChoices()).length, 0);
+    });
+
+    test('a recipe is queued for the Pricer in the same transaction as its save, so a retry after a failure works', async () => {
+      const r = recipe({ meal_id: '5151' });
+      await db.pool.query('alter table pricings rename to pricings_away');
+      try {
+        assert.ok((await saveRest('team-1', r)).status >= 500);
+      } finally {
+        await db.pool.query('alter table pricings_away rename to pricings');
+      }
+      assert.equal((await db.pool.query('select count(*)::int as n from recipe_picks')).rows[0].n, 0, 'nothing was half saved');
+      assert.equal((await saveRest('team-1', r)).status, 201);
+      assert.equal((await db.pool.query("select status from pricings where meal_id = '5151'")).rows[0].status, 'pending');
+    });
+
+    test('the budget check uses the exact average, not the rounded one', async () => {
+      const ids = [];
+      for (const cuisine of ['Indian', 'Italian', 'Thai', 'Mexican', 'Greek']) ids.push((await (await saveRest('team-1', recipe({ cuisine }))).json()).recipe.id);
+      await markPriced(db.pool, ids, (i) => [10.01, 10.01, 10, 10, 10][i]);
+      const check = await (await plansApi.POST(new Request('http://x/api/meal-plans?check=true', { method: 'POST', headers: { ...as('team-1'), 'content-type': 'application/json' }, body: JSON.stringify(mealPlan(ids, { budget_usd: 10 })) }))).json();
+      const budget = check.checks[0];
+      assert.equal(budget.passed, false, '$10.004 a dinner is over a $10 budget');
+      assert.match(budget.detail, /^\$10\.004 a dinner on average/);
+    });
+
+    test('a Pricer test that fails and can’t even record its failure doesn’t crash the server', async () => {
+      process.env.KROGER_CLIENT_ID = 'test-id';
+      process.env.KROGER_CLIENT_SECRET = 'test-secret';
+      resetKroger();
+      setPricerForTests({ model: async () => ({ stop_reason: 'end_turn', content: [] }), fetch: fakeKroger, auto: false });
+      const store = getStore();
+      const saved = { step: store.addPricerTestStep, update: store.updatePricerTest };
+      store.addPricerTestStep = async () => { throw new Error('database gone'); };
+      store.updatePricerTest = async () => { throw new Error('database gone'); };
+      try {
+        const res = await startTest({ ingredients: ['1 onion'] });
+        assert.equal(res.ok, true, JSON.stringify(res.errors));
+        await res.run; // settles; no unhandled rejection
+      } finally {
+        store.addPricerTestStep = saved.step;
+        store.updatePricerTest = saved.update;
+      }
     });
   });
 }
