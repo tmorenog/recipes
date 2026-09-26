@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FAQ · Meal Squad</title>
+<meta name="description" content="Frequently asked questions about Meal Squad: what an agent is, how the agents and the coordinator work together, and what to do when something goes wrong.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=JetBrains+Mono:wght@400;500&family=Source+Sans+3:wght@400;600&display=swap">
+<link rel="stylesheet" href="/site.css">
+</head>
+<body>
+<header class="site-head">
+  <div class="wrap">
+    <a class="brand" href="/"><span class="brand-mark" aria-hidden="true">MS</span>Meal Squad</a>
+    <nav aria-label="Sections">
+      <ul class="tabs">
+        <li><a href="/">Welcome</a></li>
+        <li><a href="/scout"><span class="num">1</span>Recipe Scout</a></li>
+        <li><a href="/pricer"><span class="num">2</span>Recipe Pricer</a></li>
+        <li><a href="/planner"><span class="num">3</span>Meal Planner</a></li>
+        <li><a href="/coordinator">Coordinator</a></li>
+        <li><a href="/faq" aria-current="page">FAQ</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="page-head">
+    <h1>Frequently asked questions</h1>
+    <p class="lede">Short answers about agents, the coordinator and building in Lovable. Click a question to open it.</p>
+  </div>
+  <nav class="faq-toc" aria-label="Topics"><a href="#ideas">The ideas</a> · <a href="#building">Building in Lovable</a> · <a href="#problems">When something goes wrong</a> · <a href="#data">The data</a></nav>
+  <section class="faq-group" id="ideas">
+    <h2>The ideas</h2>
+    <div class="faq-list">
+      <details class="faq-item"><summary>What is an AI agent?</summary><div class="faq-answer"><p>An AI agent is an AI model that works toward a goal by deciding, step by step, what to do next. It can use <strong>actions</strong> (also called <strong>tools</strong>): searching for a recipe, looking one up, saving it. After each action it reads the result and decides the next one, until the job is done or it gives up and explains why.</p><p>A chatbot answers a question once. An agent keeps going: it plans, acts, checks what happened and adjusts.</p></div></details>
+      <details class="faq-item"><summary>What is an action (or tool)?</summary><div class="faq-answer"><p>Something the agent can do, such as “search recipes by ingredient” or “save a recipe”. An action is ordinary code that does one specific task and always does it the same way. The AI never runs code itself: it asks for an action, your app runs it, and the result goes back to the AI.</p></div></details>
+      <details class="faq-item"><summary>What’s the difference between an action and an agent?</summary><div class="faq-answer"><p>An action performs one specific task. An agent decides <em>which</em> actions to use and <em>in what order</em>. In the Recipe Scout, step 1 builds the actions and step 2 adds the agent that uses them.</p></div></details>
+      <details class="faq-item"><summary>What is a multi-agent system, and why use several agents?</summary><div class="faq-answer"><p>A system where several agents each do one job and pass their results on. In Meal Squad the Recipe Scout finds recipes, the Recipe Pricer prices them and the Meal Planner builds a five-day plan.</p><p>Splitting the work keeps each agent simple, lets each one be built, tested and improved on its own, and makes it easier to see where something went wrong.</p></div></details>
+      <details class="faq-item"><summary>What is the coordinator?</summary><div class="faq-answer"><p>The part of the system that manages the handoffs. The agents never talk to each other directly: each one saves its work to the coordinator, which checks it, stores it and makes it available to the next agent. It also tells each agent how to work with it: the formats, the checks and the limits. It does <em>not</em> tell agents what to aim for; their goals come from your instructions.</p></div></details>
+      <details class="faq-item"><summary>What is MCP?</summary><div class="faq-answer"><p>The Model Context Protocol: a standard way for an app to ask another system “what actions do you offer?” and then use them. Because the coordinator describes its own actions over MCP, your agent doesn’t need their names and formats written into its code.</p></div></details>
+      <details class="faq-item"><summary>What is the coordinator’s contract?</summary><div class="faq-answer"><p>What an agent gets when it calls the coordinator’s <code>get_contract</code> action: its role in the system, the coordinator’s actions, the exact format to send, what the coordinator checks, the limits, and what happens to what it saves. Think of it as the terms for working with the coordinator.</p></div></details>
+      <details class="faq-item"><summary>Why does my agent do something different each time?</summary><div class="faq-answer"><p>The AI decides what to do next, and its choices vary a little from run to run, like two people doing the same task differently. That’s normal. What matters is whether its choices make sense: look at what it tried, not only at the final result.</p></div></details>
+      <details class="faq-item"><summary>Is it a failure if my agent can’t finish?</summary><div class="faq-answer"><p>No. An agent that stops and explains honestly why it couldn’t finish, for example because no five recipes fit the theme, is doing its job. An agent that invents recipes or numbers to look finished is the real failure.</p></div></details>
+    </div>
+  </section>
+  <section class="faq-group" id="building">
+    <h2>Building in Lovable</h2>
+    <div class="faq-list">
+      <details class="faq-item"><summary>What is Lovable, and what is Lovable Cloud?</summary><div class="faq-answer"><a href="https://lovable.dev" target="_blank" rel="noopener">Lovable</a> builds a web app from plain-language descriptions. Lovable Cloud gives that app a backend: code that runs on a server rather than in the browser. Your agent and anything that uses the class key must run in the backend.</div></details>
+      <details class="faq-item"><summary>Do I have to use the sample prompts exactly?</summary><div class="faq-answer"><p>No. They’re a starting point. Copy one as it is, or change it to make the app your own. Paste one step at a time and check the result before moving on.</p></div></details>
+      <details class="faq-item"><summary>What is the class key, and why does it go in a “secret”?</summary><div class="faq-answer"><p>The class key is the password that lets your agent talk to the coordinator. Your instructor gives it to you. Lovable stores it as a secret, which only your app’s backend can read. Never paste it into a prompt, your page or a chat: anyone who sees it could save things in the class’s name.</p></div></details>
+      <details class="faq-item"><summary>What is the group name for?</summary><div class="faq-answer"><p>It labels everything your agents save, so you can find your work on the Coordinator page. Choose one in <a href="/#before-you-start">Before you start</a> and use it for every agent; the sample prompts fill it in.</p></div></details>
+      <details class="faq-item"><summary>A step didn’t work. What should I do?</summary><div class="faq-answer"><p>Tell Lovable what you expected and what happened instead, and paste any error message you see. Look at what the agent did (its trace) before changing anything. If a change made things worse, ask Lovable to go back to the previous version. You don’t need to start over.</p></div></details>
+    </div>
+  </section>
+  <section class="faq-group" id="problems">
+    <h2>When something goes wrong</h2>
+    <div class="faq-list">
+      <details class="faq-item"><summary>“Missing or wrong class key” (error 401)</summary><div class="faq-answer"><p>Re-enter the CLASS_KEY secret in Lovable, then ask: “Check that every request to the coordinator sends the header Authorization: Bearer followed by the CLASS_KEY secret.”</p></div></details>
+      <details class="faq-item"><summary>An error about “X-Group” (error 400)</summary><div class="faq-answer"><p>The coordinator needs your group name on every request. Ask Lovable: “Send our group name in the header X-Group on every request to the coordinator.”</p></div></details>
+      <details class="faq-item"><summary>The coordinator rejected a recipe or a plan</summary><div class="faq-answer"><p>That’s the coordinator doing its job, and the rejection lists every problem. A good agent reads the reasons, fixes them and tries again. Common reasons:</p><ul><li>a field is missing or in the wrong format;</li><li>the recipe doesn’t match TheMealDB (the coordinator checks that every recipe is real);</li><li>your group already picked that recipe for the same theme;</li><li>your group reached the class’s limit, or tried too many times in a minute.</li></ul><p>If the agent keeps making the same mistake, paste the reason into Lovable: “The coordinator rejects our recipes with: … Make sure the agent passes the rejection back to the AI.”</p></div></details>
+      <details class="faq-item"><summary>A “CORS” error in the browser</summary><div class="faq-answer"><p>Your page is calling the coordinator directly from the browser. Ask Lovable: “Move every call to the coordinator into a backend function.”</p></div></details>
+      <details class="faq-item"><summary>The agent stops early or goes round in circles</summary><div class="faq-answer"><p>Look at the last few steps it took. Tell Lovable what it did and what it should have done instead, or make its instructions clearer.</p></div></details>
+      <details class="faq-item"><summary>Where can I see what my agent actually did?</summary><div class="faq-answer"><p>On the <a href="/coordinator">Coordinator page</a>: every request your agent sends and the coordinator’s answer, live, including rejections and why. Filter by your group name.</p></div></details>
+    </div>
+  </section>
+  <section class="faq-group" id="data">
+    <h2>The data</h2>
+    <div class="faq-list">
+      <details class="faq-item"><summary>Where do the recipes come from?</summary><div class="faq-answer"><p>From <a href="https://www.themealdb.com/" target="_blank" rel="noopener">TheMealDB</a>, a free public recipe database. The coordinator only accepts recipes that exist there, with their real names and ingredients.</p></div></details>
+      <details class="faq-item"><summary>Where do the prices come from, and what does “estimated” mean?</summary><div class="faq-answer"><p>The Recipe Pricer builds a shopping cart for each recipe with real prices from Kroger, a US supermarket chain. When Kroger has no suitable product for an ingredient, the Pricer estimates its price and labels it as estimated.</p></div></details>
+      <details class="faq-item"><summary>Where does the nutrition information come from?</summary><div class="faq-answer"><p>The Meal Planner estimates it from each recipe’s ingredients. The numbers are estimates for the exercise, not dietary advice.</p></div></details>
+    </div>
+  </section>
+</main>
+
+<footer class="site-foot">
+  <div class="wrap">
+    <div><a href="/about" class="small">About</a> · <a href="/admin" class="small">Instructor admin</a></div>
+  </div>
+</footer>
+<script src="/site.js"></script>
+</body>
+</html>

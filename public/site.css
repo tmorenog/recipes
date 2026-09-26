@@ -813,3 +813,19 @@ section.step.collapsed { padding-block: 10px; }
 .prompt-head .prompt-kind { margin-right: auto; }
 .prompt-head.toggles { cursor: pointer; }
 .prompt-head.toggles:hover .prompt-toggle { color: var(--ink); }
+
+/* FAQ */
+.faq-toc { margin: 18px 0 8px; font-size: 15px; color: var(--muted); }
+.faq-group { margin-top: 26px; }
+.faq-group h2 { margin: 0 0 10px; }
+.faq-list { display: grid; gap: 8px; max-width: 78ch; }
+.faq-item { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+.faq-item summary { cursor: pointer; padding: 12px 16px; font: 700 17px/1.35 var(--display); list-style: none; display: flex; gap: 10px; align-items: baseline; }
+.faq-item summary::-webkit-details-marker { display: none; }
+.faq-item summary::before { content: "▸"; color: var(--muted); font-size: 15px; transition: transform .15s ease; }
+.faq-item[open] summary::before { transform: rotate(90deg); }
+.faq-item summary:hover { color: var(--accent); }
+.faq-answer { padding: 0 16px 12px 40px; }
+.faq-answer p { margin: 0 0 8px; }
+.faq-answer ul { margin: 0 0 8px; padding-left: 20px; }
+@media (prefers-reduced-motion: reduce) { .faq-item summary::before { transition: none; } }
