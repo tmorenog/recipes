@@ -81,7 +81,7 @@
     }
     const out = await res.json().catch(() => ({}));
     if (res.status === 401) signOut('Your admin key was rejected. Sign in again.');
-    return { ok: res.ok, body: out, errors: out.errors || (res.ok ? [] : [`HTTP ${res.status}`]) };
+    return { ok: res.ok, body: out, errors: out.errors || (res.ok ? [] : [`Couldn’t reach the server (HTTP ${res.status}). Try again in a minute.`]) };
   }
 
   let toastTimer;

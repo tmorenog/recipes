@@ -22,7 +22,7 @@
     try {
       const res = await fetch(url, { method: 'POST', headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' }, body: body === undefined ? undefined : JSON.stringify(body) });
       const out = await res.json().catch(() => ({}));
-      return { ok: res.ok, status: res.status, body: out, errors: out.errors || (res.ok ? [] : [`HTTP ${res.status}`]) };
+      return { ok: res.ok, status: res.status, body: out, errors: out.errors || (res.ok ? [] : [`Couldn’t reach the server (HTTP ${res.status}). Try again in a minute.`]) };
     } catch {
       return { ok: false, status: 0, body: {}, errors: [OFFLINE] };
     }

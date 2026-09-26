@@ -39,7 +39,7 @@
     }
     const out = await res.json().catch(() => ({}));
     if (res.status === 401) signOut('Your admin key was rejected. Sign in again.');
-    return { ok: res.ok, status: res.status, body: out, errors: out.errors || (res.ok ? [] : [`HTTP ${res.status}`]) };
+    return { ok: res.ok, status: res.status, body: out, errors: out.errors || (res.ok ? [] : [`Couldn’t reach the server (HTTP ${res.status}). Try again in a minute.`]) };
   }
 
   let toastTimer;
@@ -94,7 +94,7 @@
       return;
     }
     if (!res.ok) {
-      $('signin-result').textContent = `Couldn’t reach the server (${res.status ? res.errors[0] : 'no connection'}). Reload to try again.`;
+      $('signin-result').textContent = `Couldn’t reach the server (${res.status ? `HTTP ${res.status}` : 'no connection'}). Reload to try again.`;
       $('signin-result').className = 'keycheck-result bad';
       return;
     }
@@ -507,7 +507,7 @@
     }
     const out = await res.json().catch(() => ({}));
     if (res.status === 401) signOut('Your admin key was rejected. Sign in again.');
-    return { ok: res.ok, body: out, errors: out.errors || (res.ok ? [] : [`HTTP ${res.status}`]) };
+    return { ok: res.ok, body: out, errors: out.errors || (res.ok ? [] : [`Couldn’t reach the server (HTTP ${res.status}). Try again in a minute.`]) };
   }
 
   const NO_PROMPTS = 'Couldn’t load the prompts. Check your connection and try again.';

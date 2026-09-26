@@ -32,7 +32,7 @@
     }
     const out = await res.json().catch(() => ({}));
     if (res.status === 401) signOut('Your admin key was rejected. Sign in again.');
-    return { ok: res.ok, status: res.status, body: out, error: (out.errors || [`HTTP ${res.status}`])[0] };
+    return { ok: res.ok, status: res.status, body: out, error: (out.errors || [`Couldn’t reach the server (HTTP ${res.status}). Try again in a minute.`])[0] };
   }
 
   // ---------------------------------------------------------------- sign in
@@ -51,7 +51,7 @@
     // Only a rejected key signs out; if the server didn't answer, the key is kept for a reload.
     if (res.status === 401) return signOut(res.error);
     if (!res.ok) {
-      $('signin-result').textContent = `Couldn’t reach the server (${res.status ? res.error : 'no connection'}). Reload to try again.`;
+      $('signin-result').textContent = `Couldn’t reach the server (${res.status ? `HTTP ${res.status}` : 'no connection'}). Reload to try again.`;
       $('signin-result').className = 'keycheck-result bad';
       return;
     }
@@ -202,7 +202,7 @@
     }
     const out = await res.json().catch(() => ({}));
     if (res.status === 401) signOut('Your admin key was rejected. Sign in again.');
-    return { ok: res.ok, body: out, error: (out.errors || [`HTTP ${res.status}`])[0] };
+    return { ok: res.ok, body: out, error: (out.errors || [`Couldn’t reach the server (HTTP ${res.status}). Try again in a minute.`])[0] };
   }
   const say = (text) => { $('pricer-msg').textContent = text; setTimeout(refreshAgents, 1200); };
   $('price-unpriced').addEventListener('click', async (e) => {
