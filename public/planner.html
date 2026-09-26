@@ -35,12 +35,30 @@
     <p class="lede">An agent that takes a budget, reads the recipes the Scout Agents found and the Pricer Agent priced, and plans five dinners, Monday to Friday, that are nutritious, varied and cheap. It shows the week, lists the ingredients to buy and the total price and saves the plan to the coordinator.</p>
   </div>
 
-  <ol class="how-strip" aria-label="What the Meal Planner is made of">
-    <li><strong>A page</strong><span>Where you set a budget, dietary requirements and preferences, and see the week.</span></li>
-    <li><strong>The coordinator</strong><span>Where the agent reads the recipes the Scout Agents found and the Pricer Agent priced.</span></li>
-    <li><strong>The Meal Planner Agent</strong><span>An AI that plans five dinners and asks the coordinator to check the plan.</span></li>
-    <li><strong>The plan is saved</strong><span>To the coordinator, where the Shopper Agent compares every group’s plan.</span></li>
-  </ol>
+  <figure class="agent-flow planner" aria-label="What the Meal Planner Agent does: you give it a budget and requirements; it reads the priced recipes, drafts five dinners, asks the coordinator to check them and fixes what fails, in a loop until the checks pass; then it saves the week for the Shopper Agent.">
+    <div class="flow-in">
+      <p class="flow-label">You give it</p>
+      <div class="flow-card"><span class="flow-kicker">a budget</span><strong>$4 a dinner</strong></div>
+      <div class="flow-card"><span class="flow-kicker">what the group wants</span><strong>vegetarian twice, no fish</strong></div>
+    </div>
+    <div class="flow-arrow" aria-hidden="true"></div>
+    <div class="flow-agent">
+      <p class="flow-label">The Meal Planner Agent works in a loop</p>
+      <ol class="flow-loop">
+        <li><span class="flow-icon" aria-hidden="true">📋</span>Reads the priced recipes</li>
+        <li><span class="flow-icon" aria-hidden="true">🗓️</span>Drafts five dinners</li>
+        <li><span class="flow-icon" aria-hidden="true">✅</span>Asks the coordinator to check them</li>
+        <li><span class="flow-icon" aria-hidden="true">🔧</span>Fixes what failed</li>
+      </ol>
+      <p class="flow-repeat"><span aria-hidden="true">↻</span> again, until the checks pass</p>
+    </div>
+    <div class="flow-arrow" aria-hidden="true"></div>
+    <div class="flow-out">
+      <p class="flow-label">It saves</p>
+      <ol class="flow-week" aria-hidden="true"><li><b>Mon</b> Dal</li><li><b>Tue</b> Tacos</li><li><b>Wed</b> Risotto</li><li><b>Thu</b> Stir-fry</li><li><b>Fri</b> Curry</li></ol>
+      <p class="flow-note">the week, to the coordinator, where the Shopper Agent compares every group’s plan</p>
+    </div>
+  </figure>
 
   <h2 id="build">Build it in stages</h2>
   <div class="stages-intro">
