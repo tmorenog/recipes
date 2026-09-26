@@ -267,4 +267,13 @@ test('the coordinator says back which group it knows the app as, when it connect
   assert.match(hello.instructions, /^You're connected as group "team-green"\./);
   const contract = JSON.parse((await rpc('tools/call', { name: 'get_contract', arguments: {} })).content[0].text);
   assert.equal(contract.your_group, 'team-green');
+  const { tools } = await rpc('tools/list', {});
+  assert.match(tools.find((t) => t.name === 'get_contract').description, /^You're connected as group "team-green"\. Call this first\./);
+  const res = await handle(new Request('http://x/api/mcp?agent=planner', {
+    method: 'POST',
+    headers: { ...as('Team Green'), 'content-type': 'application/json', accept: 'application/json, text/event-stream' },
+    body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list', params: {} }),
+  }));
+  assert.equal(res.headers.get('x-coordinator-group'), 'team-green');
+  assert.ok((await res.json()).result.tools.length);
 });

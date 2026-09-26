@@ -71,7 +71,10 @@ export async function handle(request) {
     const responseBody = await response.clone().json().catch(() => null);
     await logMcp({ body, responseBody, group, agent, ms: Date.now() - started });
   }
-  return response;
+  // Says back the group on every answer too, for apps that check the connection over plain HTTP.
+  const headers = new Headers(response.headers);
+  if (group) headers.set('X-Coordinator-Group', group);
+  return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
 }
 
 export const POST = (request) => handle(request);
