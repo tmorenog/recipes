@@ -6,11 +6,11 @@ Do not write the coordinator’s tool names, plan format, checks or limits into 
 
 Also give the Planner Agent a way to end the run and summarize what happened.
 
-Pass the budget, the dietary requirements and the preferences from the page to the Planner Agent. Write “none” for an empty box.
+Pass the budget, the dietary requirements and the preferences from the page to the Planner Agent. Write “none” for an empty box. The page’s budget is per person per dinner; the coordinator expects the budget per person for all five dinners, so pass the page’s value multiplied by 5 as the week’s budget and say so.
 
 These are the goals and rules for the Planner Agent:
 
-- Plan five dinners, Monday to Friday, within the budget per person for the five dinners.
+- Plan five dinners, Monday to Friday, within the week’s budget per person (five times the budget per dinner).
 - Every dinner must meet the dietary requirements. Follow the preferences where possible.
 - Choose dinners that are nutritious and balanced, varied (different cuisines and main ingredients), and as cheap as possible within the budget.
 - Begin each run by using the coordinator tool that explains how to work with the coordinator.

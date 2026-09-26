@@ -1,41 +1,23 @@
 Build a web app called “Meal Planner” for a class exercise.
 
-The goal of Meal Planner is to plan five dinners, Monday through Friday, using recipes the class has already found and priced. It will eventually use AI to:
+The goal of Meal Planner is to plan five dinners, Monday through Friday, using recipes that Scout Agents have found and Pricer Agents have priced. It will eventually use AI to:
 
 - Take a budget, dietary requirements and preferences from the user
 - Read the recipes saved by the class, with their prices
 - Choose five dinners that are nutritious, varied and affordable
-- Check the plan with a coordinator and improve it
-- Save the plan so the rest of the class can see it
+- Save the plan through the coordinator so the rest of the class can see it
 
 For this first step, build only the interface. Do not add AI, a backend, a database or connections to other services yet.
 
-Include:
-
-1. A number input:
-   “Maximum budget per person for five dinners”
-   - US dollars
-   - default: 15
-   - minimum: 1
-
-2. A text box:
-   “Dietary requirements”
-   Examples: “vegetarian only”, “no pork”, “no peanuts”
-   Explain that these are hard constraints.
-
-3. A text box:
-   “Preferences”
-   Examples: “we like spicy food”, “prefer quick dinners”
-   Explain that these are preferences, not hard requirements.
-
-4. A “Plan my week” button.
-
-5. A “What the Planner Agent is doing” panel. Leave it empty for now.
-
-6. A “The week” panel with five empty cards:
+Include the following items:
+- A number input for the maximum average budget per person per dinner, in US dollars (default: 15, minimum: 1)
+- A text box with “Dietary requirements” (Examples: “vegetarian only”, “no pork”, “no peanuts”). Explain that these are hard constraints.
+- A text box with “Preferences” (Examples: “we like spicy food”, “prefer quick dinners”). Explain that these are preferences, not hard requirements.
+- A “Plan my week” button.
+- A “What the Planner Agent is doing” panel. Leave it empty for now.
+- A “The week” panel with five empty cards:
    Monday, Tuesday, Wednesday, Thursday and Friday.
-
-7. An empty outcome area that will eventually show one of:
+- An empty outcome area that will eventually show one of:
    - Valid plan found
    - No feasible plan found
    - Run failed
