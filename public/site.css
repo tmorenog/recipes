@@ -783,3 +783,25 @@ details.trace > summary { cursor: pointer; padding: 8px 0; }
 .settings-grid { display: grid; gap: 0 24px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); }
 .settings-grid label { max-width: none; }
 .usage-table td.at-limit { color: var(--bad-ink); font-weight: 600; }
+
+/* Collapsible steps */
+.steps-bar { margin: 10px 0 0; color: var(--muted); }
+section.step { margin: 14px 0; padding: 14px 18px; border: 1px solid var(--line); border-radius: 12px; background: color-mix(in srgb, var(--surface) 55%, transparent); }
+section.step.collapsed { padding-block: 10px; }
+.step-title { margin: 0; }
+.step-toggle {
+  all: unset; box-sizing: border-box; display: grid; grid-template-columns: auto 1fr; column-gap: 12px; align-items: center;
+  width: 100%; cursor: pointer; font: inherit; color: inherit;
+}
+.step-toggle::before { content: "▸"; grid-row: 1 / span 2; font-size: 18px; color: var(--muted); transition: transform .15s ease; }
+.step-toggle[aria-expanded="true"]::before { transform: rotate(90deg); }
+.step-toggle .step-num { grid-column: 2; }
+.step-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 6px; }
+.step-toggle:hover { color: var(--accent); }
+.step-body { padding-top: 6px; }
+@media (prefers-reduced-motion: reduce) { .step-toggle::before { transition: none; } }
+
+/* Clamped sample prompts */
+.prompt-body.clamped { max-height: 11.5em; overflow: hidden; -webkit-mask-image: linear-gradient(#000 70%, transparent); mask-image: linear-gradient(#000 70%, transparent); }
+.prompt-head { flex-wrap: wrap; justify-content: flex-start; gap: 8px; }
+.prompt-head .prompt-kind { margin-right: auto; }

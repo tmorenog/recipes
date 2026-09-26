@@ -40,6 +40,76 @@
     );
   }
 
+  // Collapsible steps (Recipe Scout and Meal Planner pages): the step title
+  // opens and closes the step. The first step starts open; what a student
+  // opens is remembered in this browser, and a link to a step opens it.
+  const stepSections = [...document.querySelectorAll('section.step')];
+  if (stepSections.length) {
+    const memoryKey = `rc-steps:${location.pathname}`;
+    let remembered = {};
+    try { remembered = JSON.parse(localStorage.getItem(memoryKey)) || {}; } catch { /* storage unavailable */ }
+    const remember = () => { try { localStorage.setItem(memoryKey, JSON.stringify(remembered)); } catch { /* ignore */ } };
+    const setOpen = (sec, open) => {
+      sec.classList.toggle('collapsed', !open);
+      sec.querySelector(':scope > .step-title .step-toggle').setAttribute('aria-expanded', String(open));
+      sec.querySelector(':scope > .step-body').hidden = !open;
+    };
+    stepSections.forEach((sec, i) => {
+      const title = sec.querySelector(':scope > .step-title');
+      if (!title) return;
+      const body = document.createElement('div');
+      body.className = 'step-body';
+      body.id = `${sec.id || `step-${i}`}-body`;
+      while (title.nextSibling) body.append(title.nextSibling);
+      sec.append(body);
+      const toggle = Object.assign(document.createElement('button'), { type: 'button', className: 'step-toggle' });
+      toggle.setAttribute('aria-controls', body.id);
+      toggle.append(...title.childNodes);
+      title.append(toggle);
+      toggle.addEventListener('click', () => {
+        const open = sec.classList.contains('collapsed');
+        setOpen(sec, open);
+        remembered[sec.id] = open;
+        remember();
+      });
+      setOpen(sec, remembered[sec.id] ?? i === 0);
+    });
+    const all = (open) => { for (const sec of stepSections) { setOpen(sec, open); remembered[sec.id] = open; } remember(); };
+    const bar = document.createElement('p');
+    bar.className = 'steps-bar small';
+    bar.append(
+      Object.assign(document.createElement('button'), { type: 'button', className: 'linklike', textContent: 'Open all steps', onclick: () => all(true) }),
+      ' · ',
+      Object.assign(document.createElement('button'), { type: 'button', className: 'linklike', textContent: 'Close all', onclick: () => all(false) }),
+    );
+    stepSections[0].before(bar);
+    const openTarget = () => {
+      const id = decodeURIComponent(location.hash.slice(1));
+      const target = id ? document.getElementById(id) : null;
+      const sec = target?.closest('section.step');
+      if (sec?.classList.contains('collapsed')) {
+        setOpen(sec, true);
+        target.scrollIntoView();
+      }
+    };
+    window.addEventListener('hashchange', openTarget);
+    openTarget();
+  }
+
+  // Long sample prompts show their first lines; the whole prompt is always copied.
+  for (const body of document.querySelectorAll('.prompt-body[data-prompt]')) {
+    body.classList.add('clamped');
+    const more = Object.assign(document.createElement('button'), { type: 'button', className: 'btn prompt-more', textContent: 'Show whole prompt' });
+    more.setAttribute('aria-controls', body.id);
+    more.setAttribute('aria-expanded', 'false');
+    more.addEventListener('click', () => {
+      const clamped = body.classList.toggle('clamped');
+      more.textContent = clamped ? 'Show whole prompt' : 'Show less';
+      more.setAttribute('aria-expanded', String(!clamped));
+    });
+    body.closest('.prompt')?.querySelector('.prompt-head [data-copy]')?.before(more);
+  }
+
   // Fill in this site's address ({{SITE}}) and the group's name ({{GROUP}})
   // wherever a page uses them. The group name is typed into a .group-input box
   // and remembered in this browser.
@@ -238,7 +308,7 @@
   for (const btn of document.querySelectorAll('[data-copy]')) {
     btn.addEventListener('click', async () => {
       const source = document.getElementById(btn.dataset.copy);
-      const text = source.innerText.trim();
+      const text = source.textContent.trim(); // the whole text, even when collapsed
       const label = btn.textContent;
       try {
         await navigator.clipboard.writeText(text);
