@@ -7,6 +7,7 @@ import { setBackupForTests } from '../lib/backup-agents.js';
 import { getStore } from '../lib/store/index.js';
 import { BACKENDS, as, recipe, markPriced, closeDatabase } from './helpers.js';
 import * as rest from '../api/recipes.js';
+import * as plansApi from '../api/meal-plans.js';
 
 const ADMIN_KEY = 'admin-key-for-tests';
 process.env.ADMIN_KEY = ADMIN_KEY;
@@ -123,6 +124,58 @@ for (const backend of BACKENDS) {
       const list = (await api('GET')).body;
       assert.equal(list.runs[0].outcome, 'Valid plan found');
       assert.equal(list.problem, null);
+    });
+
+    test('the Shopper Agent compares plans, builds the week’s Kroger cart and saves the class’s choice', async () => {
+      const ids = [];
+      for (const [n, cuisine] of ['Indian', 'Italian', 'Thai', 'Mexican', 'Greek'].entries()) {
+        const res = await rest.POST(new Request('http://x/api/recipes', { method: 'POST', headers: { ...as(`team-${n}`), 'content-type': 'application/json' }, body: JSON.stringify(recipe({ cuisine, category: n < 2 ? 'Vegetarian' : ['Beef', 'Chicken', 'Pork'][n - 2] })) }));
+        ids.push((await res.json()).recipe.id);
+      }
+      const pool = getStore().pool;
+      await markPriced(pool, ids, () => 2);
+      // Every dinner uses half a bag of the same rice, plus its own item.
+      for (const [n, id] of ids.entries()) {
+        const basket = [
+          { line: 1, ingredient: 'rice', status: 'bought', product: { id: 'rice-1', description: 'Kroger Rice', size: '2 lb', price_usd: 3 }, fraction: 0.5, packages: 1, cost_used_usd: 1.5 },
+          { line: 2, ingredient: `item ${n}`, status: n === 4 ? 'estimated' : 'bought', product: { id: `p-${n}`, description: `Item ${n}`, size: '1 ea', price_usd: 4 }, fraction: 1, packages: 1, cost_used_usd: 4 },
+        ];
+        await pool.query('update pricings set basket = $2 where meal_id = (select meal_id from recipes where id = $1)', [id, JSON.stringify(basket)]);
+      }
+      const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+      const plan = { budget_usd: 3, summary: 'Five cheap dinners from five cuisines.', meals: ids.map((recipe_id, i) => ({ day: days[i], recipe_id, why: 'Cheap.' })) };
+      const saved = await plansApi.POST(new Request('http://x/api/meal-plans', { method: 'POST', headers: { ...as('team-9'), 'content-type': 'application/json' }, body: JSON.stringify(plan) }));
+      const planId = (await saved.json()).plan.id;
+
+      const reason = 'The only plan saved, and it passes every check at $2 a dinner.';
+      const { model } = scripted([
+        [['get_contract', {}], ['list_meal_plans', {}]],
+        [['save_choice', { plan_id: planId, reason }]], // no cart built yet: the app refuses
+        [['build_week_cart', { plan_id: planId }]],
+        [['save_choice', { plan_id: planId, reason }]],
+        [['save_choice', { plan_id: planId, reason }]], // a second choice: refused
+        [['finish', { summary: 'Chose team-9’s plan.' }]],
+      ]);
+      setBackupForTests({ model });
+      const started = await api('POST', { body: { agent: 'shopper' } });
+      assert.equal(started.status, 202, JSON.stringify(started.body));
+      const run = (await api('GET', { id: started.body.id })).body;
+      assert.equal(run.outcome, 'Plan chosen', JSON.stringify(run.steps.slice(-4)));
+      assert.equal(run.group_name, 'shopper');
+      assert.ok(run.steps.some((s) => /build this plan’s cart/.test(s.text || '')));
+      assert.ok(run.steps.some((s) => /already saved a choice/.test(s.text || '')));
+
+      const view = await (await plansApi.GET(new Request('http://x/api/meal-plans?choice=latest'))).json();
+      assert.equal(view.choice.plan_id, planId);
+      assert.equal(view.choice.reason, reason);
+      assert.equal(view.choice.plan.group_name, 'team-9');
+      const rice = view.choice.cart.lines.find((l) => l.product_id === 'rice-1');
+      assert.deepEqual([rice.packages, rice.cost_usd, rice.used_for.length], [3, 9, 5], 'five half bags: three bags, bought once');
+      assert.equal(view.choice.cart.lines.length, 6);
+      assert.equal(view.choice.cart.total_usd, 9 + 5 * 4);
+      assert.equal(view.choice.cart.estimated_lines, 1);
+      assert.equal(view.choice.cart.people, 50);
+      assert.equal(view.run.outcome, 'Plan chosen');
     });
 
     test('a model error ends the run as failed, with the reason', async () => {

@@ -20,6 +20,7 @@
         <li><a href="/scout"><span class="num">1</span>Recipe Scout</a></li>
         <li><a href="/pricer"><span class="num">2</span>Recipe Pricer</a></li>
         <li><a href="/planner"><span class="num">3</span>Meal Planner</a></li>
+        <li><a href="/shopper"><span class="num">4</span>Shopper</a></li>
         <li><a href="/coordinator">Coordinator</a></li>
         <li><a href="/faq">FAQ</a></li>
       </ul>
@@ -31,11 +32,11 @@
   <section class="intro">
     <h1>Welcome!</h1>
     <p class="lede">Today, you’ll work on an agent system that creates a nutritious, varied, and affordable five-day dinner plan.</p>
-    <p class="hero-more">You’ll build a series of AI agents in Lovable that collaborate to complete this task. The first agent, the Recipe Scout, researches and proposes recipes. The second agent, the Recipe Pricer, calculates the cost of each recipe; this agent has already been built. The third agent, the Meal Planner, creates a five-day plan using the priced recipes. A coordinator manages the interactions and handoffs among the agents.</p>
+    <p class="hero-more">You’ll build a series of AI agents in Lovable that collaborate to complete this task. The first agent, the Recipe Scout, researches and proposes recipes. The second agent, the Recipe Pricer, calculates the cost of each recipe; this agent has already been built. The third agent, the Meal Planner, creates a five-day plan using the priced recipes. The fourth agent, the Shopper, chooses the class’s best plan and builds its Kroger cart; it has also been built already. A coordinator manages the interactions and handoffs among the agents.</p>
   </section>
 
   <h2 id="system">The agent system</h2>
-  <div class="system" role="group" aria-label="Three agents and the coordinator that connects them">
+  <div class="system" role="group" aria-label="Four agents and the coordinator that connects them">
     <article class="sys-agent scout">
       <span class="sys-num">1</span>
       <h3>Recipe Scout</h3>
@@ -65,6 +66,16 @@
       <a class="btn" href="/planner">Build the Meal Planner</a>
     </article>
     <p class="sys-link planner" aria-hidden="true"><span>reads priced recipes, saves the plan</span></p>
+
+    <article class="sys-agent shopper">
+      <span class="sys-num">4</span>
+      <h3>Shopper</h3>
+      <p>Chooses the class’s best meal plan and builds its Kroger shopping cart for the week.</p>
+      <p class="sys-where">Already built · runs on the site at the end</p>
+      <p class="sys-handoff">With the coordinator: reads the plans, saves the class’s choice</p>
+      <a class="btn" href="/shopper">See the class’s plan</a>
+    </article>
+    <p class="sys-link shopper" aria-hidden="true"><span>reads the plans, saves the choice</span></p>
 
     <article class="sys-hub">
       <div>

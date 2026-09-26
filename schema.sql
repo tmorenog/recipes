@@ -357,3 +357,19 @@ where agent = 'planner' and step = 11 and text like '%followed by CLASS_KEY, and
 -- Meal Planner step 1: the instructor chose their own version with its typos
 -- fixed, which is now the file; the older saved copy goes.
 delete from prompt_overrides where agent = 'planner' and step = 10 and text like '%Scouting Agents%';
+
+-- The Shopper Agent (run on the site) chooses the class's plan and the
+-- coordinator builds its Kroger cart from the Pricer's carts. The newest
+-- choice is the class's; earlier ones stay as history.
+create table if not exists class_choices (
+  id          uuid primary key default gen_random_uuid(),
+  plan_id     uuid not null references plans (id) on delete cascade,
+  reason      text not null,
+  people      int,
+  cart        jsonb not null,
+  total_usd   numeric(10,2) not null,
+  created_at  timestamptz not null default now()
+);
+create index if not exists class_choices_created_idx on class_choices (created_at desc);
+alter table backup_runs drop constraint if exists backup_runs_agent_check;
+alter table backup_runs add constraint backup_runs_agent_check check (agent in ('scout', 'planner', 'shopper'));

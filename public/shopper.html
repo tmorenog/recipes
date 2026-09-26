@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Shopper · Meal Squad</title>
+<meta name="description" content="Agent 4, the Shopper: chooses the class’s best meal plan and builds its Kroger cart.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=JetBrains+Mono:wght@400;500&family=Source+Sans+3:wght@400;600&display=swap">
+<link rel="stylesheet" href="/site.css">
+</head>
+<body>
+<header class="site-head">
+  <div class="wrap">
+    <a class="brand" href="/"><span class="brand-mark" aria-hidden="true">MS</span>Meal Squad</a>
+    <nav aria-label="Sections">
+      <ul class="tabs">
+        <li><a href="/">Welcome</a></li>
+        <li><a href="/scout"><span class="num">1</span>Recipe Scout</a></li>
+        <li><a href="/pricer"><span class="num">2</span>Recipe Pricer</a></li>
+        <li><a href="/planner"><span class="num">3</span>Meal Planner</a></li>
+        <li><a href="/shopper" aria-current="page"><span class="num">4</span>Shopper</a></li>
+        <li><a href="/coordinator">Coordinator</a></li>
+        <li><a href="/faq">FAQ</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="page-head">
+    <span class="agent-tag shopper">Agent 4 · already built</span>
+    <h1>The Shopper Agent</h1>
+    <p class="lede">Compares the meal plans the Planner Agents saved, chooses the one the class will cook, and has the coordinator build its Kroger shopping cart for the week.</p>
+  </div>
+
+  <ol class="how-strip" aria-label="How the Shopper Agent works">
+    <li><strong>The Planner Agents save plans</strong><span>Each group’s plan goes to the coordinator.</span></li>
+    <li><strong>The Shopper Agent compares them</strong><span>Checks passed, cost, variety and popularity.</span></li>
+    <li><strong>The coordinator builds the cart</strong><span>From the Pricer Agent’s carts: each Kroger product once, in whole packages.</span></li>
+    <li><strong>The class’s plan appears here</strong><span>With the reason it was chosen.</span></li>
+  </ol>
+
+  <div class="panel instructor-only" id="run-panel" hidden>
+    <p style="margin-top:0"><strong>For the instructor:</strong> run the Shopper Agent once the Planner Agents have saved their plans. It uses the AI key the Pricer Agent uses, and takes a minute or two.</p>
+    <button class="btn primary" type="button" id="run">Run the Shopper Agent</button>
+    <p class="small" id="run-msg" aria-live="polite"></p>
+  </div>
+
+  <h2 id="plan"><span class="section-num">1</span>The class’s plan</h2>
+  <div id="choice" aria-live="polite"><p class="empty small">Loading…</p></div>
+
+  <h2 id="how"><span class="section-num">2</span>How the Shopper Agent chose</h2>
+  <div class="carts-layout">
+    <div><p class="outcome" id="outcome">No run yet.</p></div>
+    <aside class="agent-feed" aria-live="polite">
+      <h3>What the Shopper Agent is doing</h3>
+      <p class="agent-now" id="now"></p>
+      <ol class="feed" id="feed"></ol>
+    </aside>
+  </div>
+</main>
+
+<footer class="site-foot">
+  <div class="wrap">
+    <div><a href="/about" class="small">About</a> · <a href="/admin" class="small">Instructor admin</a></div>
+  </div>
+</footer>
+<script src="/site.js"></script>
+<script src="/shopper.js"></script>
+</body>
+</html>

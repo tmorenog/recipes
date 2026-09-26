@@ -6,7 +6,7 @@ import { json, guarded } from '../lib/http.js';
 
 const query = z.object({
   group: z.string().trim().min(1).max(40).optional(),
-  agent: z.enum(['scout', 'planner', 'pricer']).optional(),
+  agent: z.enum(['scout', 'planner', 'pricer', 'shopper']).optional(),
   after: z.coerce.number().int().min(0).optional(),
   limit: z.coerce.number().int().min(1).max(500).default(200),
 });

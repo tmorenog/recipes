@@ -30,7 +30,7 @@ export const BACKENDS = [
     skip: TEST_DB ? false : 'set TEST_DATABASE_URL to run the Postgres tests',
     async fresh() {
       pool ??= new pg.Pool({ ...poolConfig(TEST_DB), max: 3 });
-      await pool.query('drop table if exists backup_runs, coordinator_settings, exchanges, recipe_picks, pricer_tests, prompt_overrides, pricer_config, pricer_steps, pricer_cache, pricings, recipes, activity, plans cascade');
+      await pool.query('drop table if exists class_choices, backup_runs, coordinator_settings, exchanges, recipe_picks, pricer_tests, prompt_overrides, pricer_config, pricer_steps, pricer_cache, pricings, recipes, activity, plans cascade');
       await pool.query(await schema());
       setStore(postgresStore(pool));
       forgetSettings(); // the limits are cached for a few seconds

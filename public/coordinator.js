@@ -245,7 +245,7 @@
   }
 
   // ---------------------------------------------------------------- exchanges
-  const AGENT_NAME = { scout: 'Recipe Scout', planner: 'Meal Planner', pricer: 'Recipe Pricer' };
+  const AGENT_NAME = { scout: 'Recipe Scout', planner: 'Meal Planner', pricer: 'Recipe Pricer', shopper: 'Shopper' };
   const pretty = (v) => (v == null ? '(nothing)' : JSON.stringify(v, null, 2));
 
   function exchangeRow(x) {

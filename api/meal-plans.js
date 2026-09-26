@@ -1,13 +1,18 @@
 // Meal plans. Same rules as the save_meal_plan MCP tool.
 //
 //   GET  /api/meal-plans?group=&limit=   anyone can read
+//   GET  /api/meal-plans?choice=latest   the class's plan (the Shopper Agent's choice, with its
+//                                        Kroger cart) and the Shopper Agent's latest run: anyone
 //   POST /api/meal-plans                 save a plan (class key + X-Group required)
 //   POST /api/meal-plans?check=true      check a draft without saving it
 import { savePlan, checkPlan, listPlans } from '../lib/plans.js';
 import { json, guarded, requireGroup } from '../lib/http.js';
+import { shopperOverview } from '../lib/shopper.js';
 
 export const GET = guarded(async (request) => {
-  const res = await listPlans(Object.fromEntries(new URL(request.url).searchParams));
+  const params = Object.fromEntries(new URL(request.url).searchParams);
+  if (params.choice === 'latest') return json(200, await shopperOverview());
+  const res = await listPlans(params);
   return res.ok ? json(200, { count: res.count, plans: res.plans }) : json(res.status, { errors: res.errors });
 });
 
