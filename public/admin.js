@@ -300,6 +300,10 @@
     const res = await api('POST', 'clear-exchanges');
     if (res.ok) toast('Exchange log cleared.'); else toast(res.errors.join('; '), true);
   });
+  confirmClick($('clear-choices'), async () => {
+    const res = await api('POST', 'clear-choices');
+    if (res.ok) toast(res.body?.cleared ? 'The class’s plan is cleared.' : 'There was no class plan to clear.'); else toast(res.errors.join('; '), true);
+  });
   confirmClick($('clear-activity'), async () => {
     const res = await api('POST', 'clear-activity');
     if (res.ok) toast('Activity log cleared.'); else toast(res.errors.join('; '), true);

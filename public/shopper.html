@@ -36,7 +36,7 @@
   </div>
 
   <ol class="how-strip" aria-label="How the Shopper Agent works">
-    <li><strong>The Planner Agents save plans</strong><span>Each group’s plan goes to the coordinator.</span></li>
+    <li><strong>The Meal Planner Agents save plans</strong><span>All plans go to the coordinator.</span></li>
     <li><strong>The Shopper Agent compares them</strong><span>Checks passed, cost, variety and popularity.</span></li>
     <li><strong>The coordinator builds the cart</strong><span>The plan is priced per person; the cart scales it to the number of people shopping, in whole packages.</span></li>
     <li><strong>The class’s plan appears here</strong><span>With the reason it was chosen.</span></li>
@@ -45,16 +45,18 @@
   <div class="panel instructor-only" id="run-panel" hidden>
     <p style="margin-top:0"><strong>For the instructor:</strong> run the Shopper Agent once the Planner Agents have saved their plans. It uses the AI key the Pricer Agent uses, and takes a minute or two.</p>
     <p class="row-actions"><label class="people-field">People to shop for <input type="number" id="people" min="1" max="1000" value="50"></label>
-    <button class="btn primary" type="button" id="run">Run the Shopper Agent</button></p>
+    <button class="btn primary" type="button" id="run">Run the Shopper Agent</button>
+    <button class="btn danger" type="button" id="clear" data-confirm="Click again to clear the class’s plan">Clear the class’s plan</button></p>
+    <p class="small muted" style="margin:0">Clearing removes the chosen plan, the earlier choices and the Shopper Agent’s past runs (the meal plans stay), e.g. before class starts.</p>
     <p class="small" id="run-msg" aria-live="polite"></p>
   </div>
 
-  <h2 id="plan"><span class="section-num">1</span>The class’s plan</h2>
-  <div id="choice" aria-live="polite"><p class="empty small">Loading…</p></div>
-
-  <h2 id="how"><span class="section-num">2</span>How the Shopper Agent chose</h2>
+  <h2 id="plan">The class’s plan</h2>
   <div class="carts-layout">
-    <div><p class="outcome" id="outcome">No run yet.</p></div>
+    <div>
+      <p class="outcome" id="outcome" hidden></p>
+      <div id="choice" aria-live="polite"><p class="empty small">Loading…</p></div>
+    </div>
     <aside class="agent-feed" aria-live="polite">
       <h3>What the Shopper Agent is doing</h3>
       <p class="agent-now" id="now"></p>

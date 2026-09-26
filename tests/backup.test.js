@@ -194,6 +194,13 @@ for (const backend of BACKENDS) {
       assert.equal(again.choice.reason, 'Chosen again after the class discussed it.');
       assert.deepEqual(again.history.map((c) => [c.reason, c.status]), [[reason, 'historical']]);
       assert.equal(again.history[0].plan.group_name, 'team-9');
+
+      // Before class: the instructor clears the class's plan; the meal plans stay.
+      const cleared = await adminApi.POST(new Request('http://x/api/admin?action=clear-choices', { method: 'POST', headers: { authorization: `Bearer ${process.env.ADMIN_KEY}` } }));
+      assert.equal((await cleared.json()).cleared, 2);
+      const empty = await (await plansApi.GET(new Request('http://x/api/meal-plans?choice=latest'))).json();
+      assert.deepEqual([empty.choice, empty.history, empty.run], [null, [], null]);
+      assert.equal((await (await plansApi.GET(new Request('http://x/api/meal-plans'))).json()).count, 1);
     });
 
     test('a model error ends the run as failed, with the reason', async () => {

@@ -33,6 +33,7 @@
     return s.text;
   }
   function renderRun(run) {
+    $('outcome').hidden = !run;
     if (!run) {
       $('now').replaceChildren(el('span', { className: 'dot' }), 'Idle: not run yet.');
       $('feed').replaceChildren(el('li', { className: 'muted small', textContent: 'The Shopper Agent’s steps appear here while it runs.' }));
@@ -67,6 +68,22 @@
   // ---------------------------------------------------------------- the instructor
   if (key) {
     $('run-panel').hidden = false;
+    const clear = $('clear');
+    const label = clear.textContent;
+    clear.addEventListener('click', async () => {
+      if (!clear.dataset.armed) {
+        clear.dataset.armed = '1';
+        clear.textContent = clear.dataset.confirm;
+        setTimeout(() => { delete clear.dataset.armed; clear.textContent = label; }, 4000);
+        return;
+      }
+      delete clear.dataset.armed;
+      clear.textContent = label;
+      const res = await fetch('/api/admin/clear-choices', { method: 'POST', headers: { authorization: `Bearer ${key}` } });
+      const body = await res.json().catch(() => ({}));
+      $('run-msg').textContent = res.ok ? 'The class’s plan is cleared.' : (body.errors || [`HTTP ${res.status}`]).join(' ');
+      load();
+    });
     $('run').addEventListener('click', async () => {
       $('run').disabled = true;
       $('run-msg').textContent = 'Starting…';

@@ -92,6 +92,7 @@ export const POST = guarded(async (request) => {
     case 'delete-plan': return reply(await admin.deletePlan(id));
     case 'clear-activity': return reply(await admin.clearActivity());
     case 'clear-exchanges': return reply(await admin.clearExchanges());
+    case 'clear-choices': return reply(await admin.clearChoices());
     case 'notes': {
       const input = await body();
       const text = typeof input?.text === 'string' ? input.text.trim() : null;
