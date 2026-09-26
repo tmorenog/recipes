@@ -15,6 +15,7 @@
 //   POST /api/admin/delete-plan?id=…
 //   POST /api/admin/clear-activity
 //   POST /api/admin/clear-exchanges
+//   POST /api/admin/notes                      body {"text": "…"}: the notes for the class, shown on the FAQ page
 //   GET  /api/admin/agent-runs[?id=…]          the backup agents: the latest runs, or one run with every step
 //   POST /api/admin/agent-runs                 start one: {"agent":"scout","group":…,"theme":…}
 //                                              or {"agent":"planner","group":…,"budget_usd":…,"requirements":…,"preferences":…}
@@ -22,6 +23,7 @@
 //
 // vercel.json rewrites /api/admin/{action} to this function with ?action=.
 import * as admin from '../lib/admin.js';
+import { getStore } from '../lib/store/index.js';
 import { json, guarded } from '../lib/http.js';
 import { checkKroger } from '../lib/kroger.js';
 import { getSettings, saveSettings, DEFAULTS } from '../lib/settings.js';
@@ -90,6 +92,15 @@ export const POST = guarded(async (request) => {
     case 'delete-plan': return reply(await admin.deletePlan(id));
     case 'clear-activity': return reply(await admin.clearActivity());
     case 'clear-exchanges': return reply(await admin.clearExchanges());
+    case 'notes': {
+      const input = await body();
+      const text = typeof input?.text === 'string' ? input.text.trim() : null;
+      if (text == null) return json(400, { errors: ['send {"text": "…"} (an empty text removes the notes)'] });
+      if (text.length > 10000) return json(400, { errors: ['the notes are too long (at most 10,000 characters)'] });
+      const saved = await getStore().setNotes(text);
+      await admin.logAdmin('admin_notes', `${text.length} characters`);
+      return json(200, { ok: true, notes: saved });
+    }
     case 'agent-runs': {
       const input = await body();
       if (input === undefined) return json(400, { errors: ['send the run as JSON'] });

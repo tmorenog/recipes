@@ -78,7 +78,7 @@
     const bar = document.createElement('p');
     bar.className = 'steps-bar small';
     bar.append(
-      Object.assign(document.createElement('button'), { type: 'button', className: 'linklike', textContent: 'Open all steps', onclick: () => all(true) }),
+      Object.assign(document.createElement('button'), { type: 'button', className: 'linklike', textContent: stepSections[0].classList.contains('admin-part') ? 'Open all' : 'Open all steps', onclick: () => all(true) }),
       ' · ',
       Object.assign(document.createElement('button'), { type: 'button', className: 'linklike', textContent: 'Close all', onclick: () => all(false) }),
     );
@@ -200,6 +200,33 @@
     }
   };
   const promptsLoaded = Promise.all(boxes.map(loadPrompt));
+
+  // An edit the instructor saves reaches open pages within a minute: check
+  // for changed prompts, and swap in any that changed (never one being edited).
+  if (agents.length) {
+    setInterval(async () => {
+      if (document.hidden) return;
+      for (const a of agents) {
+        let steps;
+        try {
+          const res = await fetch(`/api/prompts?agent=${a}`, { cache: 'no-store' });
+          if (!res.ok) continue;
+          steps = (await res.json()).steps || {};
+        } catch { continue; }
+        for (const p of boxes.filter((b) => b.agent === a && b.step && b.template != null)) {
+          if (p.box.closest('.prompt')?.querySelector('.prompt-editor')?.dataset.editing === '1') continue;
+          const edit = steps[p.step]?.trim();
+          if (edit && edit !== p.template) { p.edited = true; setPrompt(p, edit); }
+          if (!edit && p.edited) {
+            try {
+              const res = await fetch(p.file, { cache: 'no-cache' });
+              if (res.ok) { p.edited = false; setPrompt(p, (await res.text()).trim()); }
+            } catch { /* tried again next minute */ }
+          }
+        }
+      }
+    }, 60_000);
+  }
 
   // The instructor, signed in with the admin key (on the Admin or Pricer page,
   // kept for this browser tab), can edit each step's prompt here.
@@ -400,6 +427,47 @@
         if (note) note.textContent = limits.length ? `Limits set by the instructor: ${limits.join('; ')}. Checking a draft is never limited.` : '';
       })
       .catch(() => {});
+  }
+
+  // The instructor's notes for the class (FAQ page), checked every 20 seconds.
+  // Plain text: a blank line starts a paragraph, "- " a bullet; links are made clickable.
+  const notesBox = document.getElementById('class-notes');
+  if (notesBox) {
+    const linked = (line) => {
+      const out = [];
+      let last = 0;
+      for (const m of line.matchAll(/https?:\/\/[^\s<>"]+[^\s<>".,;:!?)]/g)) {
+        out.push(line.slice(last, m.index), Object.assign(document.createElement('a'), { href: m[0], textContent: m[0], rel: 'noopener' }));
+        last = m.index + m[0].length;
+      }
+      out.push(line.slice(last));
+      return out;
+    };
+    const render = (text) => text.split(/\n\s*\n/).map((block) => {
+      const lines = block.split('\n').filter((l) => l.trim());
+      if (lines.every((l) => /^\s*[-*•]\s+/.test(l))) {
+        const ul = document.createElement('ul');
+        for (const l of lines) { const li = document.createElement('li'); li.append(...linked(l.replace(/^\s*[-*•]\s+/, ''))); ul.append(li); }
+        return ul;
+      }
+      const para = document.createElement('p');
+      lines.forEach((l, i) => { if (i) para.append(document.createElement('br')); para.append(...linked(l)); });
+      return para;
+    });
+    let shown = null;
+    const refreshNotes = async () => {
+      try {
+        const { notes } = await (await fetch('/api/settings?notes', { cache: 'no-store' })).json();
+        const text = (notes?.text || '').trim();
+        if (text === shown) return;
+        shown = text;
+        notesBox.hidden = !text;
+        document.getElementById('class-notes-body').replaceChildren(...(text ? render(text) : []));
+        document.getElementById('class-notes-time').textContent = notes.updated_at ? `· updated ${new Date(notes.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : '';
+      } catch { /* tried again shortly */ }
+    };
+    refreshNotes();
+    setInterval(() => { if (!document.hidden) refreshNotes(); }, 20_000);
   }
 
   // Setup status line in the footer, mostly for the instructor.

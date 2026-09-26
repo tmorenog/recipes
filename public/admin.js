@@ -11,8 +11,10 @@
   let editing = null; // id of the recipe being edited
 
   // ---------------------------------------------------------------- helpers
+  // Props with a dash (aria-live, aria-label) are attributes; the rest are properties.
   const el = (tag, { dataset, ...props } = {}, ...children) => {
-    const node = Object.assign(document.createElement(tag), props);
+    const node = document.createElement(tag);
+    for (const [k, v] of Object.entries(props)) if (k.includes('-')) node.setAttribute(k, v); else node[k] = v;
     if (dataset) Object.assign(node.dataset, dataset);
     node.append(...children.filter((c) => c != null && c !== false));
     return node;
@@ -87,6 +89,8 @@
     $('admin').hidden = false;
     describeSample();
     loadSettings();
+    loadNotes();
+    loadPrompts();
     await load();
   }
 
@@ -389,6 +393,112 @@
   async function describeSample() {
     const r = await api('GET', 'sample');
     if (r.ok) $('sample-what').textContent = `${r.body.recipes} real TheMealDB recipes picked by ${r.body.groups.length} groups (${r.body.groups.join(', ')}), ${r.body.picks - r.body.recipes} of them by two groups`;
+  }
+
+  // ---------------------------------------------------------------- class notes (shown on the FAQ page)
+  async function loadNotes() {
+    try {
+      const { notes } = await (await fetch('/api/settings?notes', { cache: 'no-store' })).json();
+      $('notes-text').value = notes.text || '';
+      $('notes-updated').textContent = notes.updated_at && notes.text ? `· published ${when(notes.updated_at)}` : '· none published';
+    } catch { /* shown as empty */ }
+  }
+  async function publishNotes(text) {
+    const r = await api('POST', 'notes', { body: { text } });
+    $('notes-result').textContent = r.ok ? (text ? 'Published: students see it on the FAQ page within half a minute.' : 'Removed.') : r.errors.join(' ');
+    $('notes-result').className = `small ${r.ok ? 'good' : 'bad'}`;
+    if (r.ok) loadNotes();
+  }
+  $('notes-form').addEventListener('submit', (e) => { e.preventDefault(); publishNotes($('notes-text').value); });
+  confirmClick($('notes-clear'), () => { $('notes-text').value = ''; return publishNotes(''); });
+
+  // ---------------------------------------------------------------- every prompt, in one place
+  // Students' steps default to their text files; the site agents' to the code.
+  // Edits are stored in the database and replace the default for everyone.
+  const PROMPTS = [
+    { group: 'Recipe Scout (students’ sample prompts)', items: [
+      ['scout', 10, 'Step 0 · Build your first page', '/prompts/scout/step-0.txt'],
+      ['scout', 11, 'Step 1 · Connect to real recipe information', '/prompts/scout/step-1.txt'],
+      ['scout', 12, 'Step 2 · Add the Recipe Scout agent', '/prompts/scout/step-2.txt'],
+      ['scout', 13, 'Step 3a · Connect to the coordinator', '/prompts/scout/step-3a.txt'],
+      ['scout', 14, 'Step 3b · Let the Scout Agent use the coordinator', '/prompts/scout/step-3b.txt'],
+    ] },
+    { group: 'Meal Planner (students’ sample prompts)', items: [
+      ['planner', 10, 'Step 1 · Build the interface', '/prompts/planner/step-1.txt'],
+      ['planner', 11, 'Step 2 · Connect to the coordinator', '/prompts/planner/step-2.txt'],
+      ['planner', 12, 'Step 3 · Add the Planner Agent', '/prompts/planner/step-3.txt'],
+    ] },
+    { group: 'Agents that run on the site (their instructions)', items: [
+      ['pricer', 1, 'Recipe Pricer', null],
+      ['shopper', 1, 'Shopper Agent', null],
+      ['backup_scout', 1, 'Backup Scout Agent', null],
+      ['backup_planner', 1, 'Backup Planner Agent', null],
+    ] },
+  ];
+
+  async function promptState(agent, step, file) {
+    if (agent === 'pricer') {
+      const b = await (await fetch('/api/pricer', { cache: 'no-store' })).json();
+      return { text: b.prompt, fallback: b.default_prompt, edited: !b.prompt_is_default, updated: null };
+    }
+    const b = await (await fetch(`/api/prompts?agent=${agent}`, { cache: 'no-store' })).json();
+    const fallback = file ? (await (await fetch(file, { cache: 'no-cache' })).text()).trim() : b.defaults?.[step] ?? '';
+    const edit = b.steps?.[step];
+    return { text: edit ?? fallback, fallback, edited: edit != null, updated: b.updated_at?.[step] ?? null };
+  }
+
+  async function savePrompt(agent, step, text) {
+    const reset = text == null;
+    const res = agent === 'pricer'
+      ? await fetch('/api/pricer?action=prompt', { method: 'POST', headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' }, body: JSON.stringify(reset ? { reset: true } : { prompt: text }) })
+      : await fetch('/api/prompts', { method: 'POST', headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' }, body: JSON.stringify(reset ? { agent, step, reset: true } : { agent, step, text }) });
+    const out = await res.json().catch(() => ({}));
+    return { ok: res.ok, errors: out.errors || (res.ok ? [] : [`HTTP ${res.status}`]) };
+  }
+
+  function promptEditor([agent, step, label, file]) {
+    const status = el('span', { className: 'small muted' });
+    const area = el('textarea', { rows: 16, spellcheck: true, className: 'prompt-edit' });
+    area.setAttribute('aria-label', `${label} prompt`);
+    const msg = el('span', { className: 'small', 'aria-live': 'polite' });
+    const save = el('button', { type: 'button', className: 'btn primary', textContent: 'Save' });
+    const reset = el('button', { type: 'button', className: 'btn', textContent: 'Back to the default', dataset: { confirm: 'Click again to go back to the default' } });
+    const badge = el('span', { className: 'pill' });
+    const item = el('details', { className: 'prompt-item' },
+      el('summary', {}, el('strong', { textContent: label }), ' ', badge),
+      el('div', { className: 'prompt-item-body' }, area, el('div', { className: 'row-actions' }, save, reset, msg, status)));
+    let loaded = false;
+    const refresh = async () => {
+      const st = await promptState(agent, step, file);
+      area.value = st.text;
+      badge.textContent = st.edited ? 'Edited' : 'Default';
+      badge.className = `pill ${st.edited ? 'prompt-edited' : 'prompt-default'}`;
+      status.textContent = st.edited && st.updated ? `Saved ${when(st.updated)}` : '';
+      reset.hidden = !st.edited;
+      loaded = true;
+    };
+    item.addEventListener('toggle', () => { if (item.open && !loaded) refresh().catch((e) => { msg.textContent = `Couldn’t load: ${e.message}`; }); });
+    save.addEventListener('click', async () => {
+      msg.textContent = 'Saving…';
+      const r = await savePrompt(agent, step, area.value);
+      msg.textContent = r.ok ? 'Saved: everyone gets this version now.' : r.errors.join(' ');
+      msg.className = `small ${r.ok ? 'good' : 'bad'}`;
+      if (r.ok) await refresh();
+    });
+    confirmClick(reset, async () => {
+      const r = await savePrompt(agent, step, null);
+      msg.textContent = r.ok ? 'Back to the default.' : r.errors.join(' ');
+      msg.className = `small ${r.ok ? 'good' : 'bad'}`;
+      if (r.ok) await refresh();
+    });
+    // The badge is known without opening: load it in the background.
+    refresh().catch(() => { badge.textContent = ''; });
+    return item;
+  }
+
+  function loadPrompts() {
+    $('prompt-editors').replaceChildren(...PROMPTS.map((g) => el('div', { className: 'prompt-group' },
+      el('h4', { textContent: g.group }), ...g.items.map(promptEditor))));
   }
 
   if (key) signIn(key);

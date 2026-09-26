@@ -387,3 +387,7 @@ update prompt_overrides set
     'If five recipes cannot be accepted', 'If four recipes cannot be accepted'),
   updated_at = now()
 where agent = 'scout' and text ~ '(find five real recipes|five suitable recipes|than five recipes|Find five recipes|five recipes have been accepted|If five recipes)';
+
+-- The site agents' instructions can be edited on the Admin page too.
+alter table prompt_overrides drop constraint if exists prompt_overrides_agent_check;
+alter table prompt_overrides add constraint prompt_overrides_agent_check check (agent in ('scout', 'planner', 'backup_scout', 'backup_planner', 'shopper'));
