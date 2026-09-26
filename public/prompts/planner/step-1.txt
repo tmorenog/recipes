@@ -7,7 +7,7 @@ The goal of Meal Planner is to plan five dinners, Monday through Friday, using r
 - Choose five dinners that are nutritious, varied and affordable
 - Save the plan through the coordinator so the rest of the class can see it
 
-For this first step, build only the interface. Do not add AI, a backend, a database or connections to other services yet.
+For now, build only the interface. Do not add AI, a backend, a database or connections to other services yet.
 
 Include the following items:
 - A number input for the maximum average budget per person per dinner, in US dollars (default: 4, minimum: 1)

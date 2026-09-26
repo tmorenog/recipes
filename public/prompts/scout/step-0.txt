@@ -8,7 +8,7 @@ The goal of Recipe Scout is to scout potential recipes that will be used to buil
 - Examine each recipe before selecting it
 - Send the selected recipes to a coordinator so other agents can price them and use them in a meal plan
 
-For this first step, build only the interface. Do not add AI, a backend, a database or connections to other services yet.
+For now, build only the interface. Do not add AI, a backend, a database or connections to other services yet.
 
 Include:
 

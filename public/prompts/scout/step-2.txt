@@ -1,6 +1,6 @@
 Now turn the app into an AI Recipe Scout using Lovable’s built-in AI.
 
-Give the Scout Agent all the recipe actions created in the previous step so it can decide which ones to use and in what order.
+Give the Scout Agent all the recipe actions you already created (the ones in the Recipe Tool Lab) so it can decide which ones to use and in what order.
 
 Also give it a way to:
 

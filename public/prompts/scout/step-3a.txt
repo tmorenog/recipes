@@ -1,6 +1,6 @@
 Connect Recipe Scout’s backend to the coordinator using MCP. The MCP server is at this address: {{SITE}}/api/mcp?agent=scout
 
-For this step, only establish the connection and discover the tools offered by the coordinator. Do not give the tools to the Scout Agent yet, and do not change how it works.
+For now, only establish the connection and discover the tools offered by the coordinator. Do not give the tools to the Scout Agent yet, and do not change how it works.
 
 The coordinator requires two things on every request: our class key and our group name. All requests to the coordinator must be made from the backend.
 
