@@ -46,7 +46,7 @@ Each group picks its own group name (like `team-3`) and sends it with every requ
 
 ## The Pricer agent
 
-The Recipe Pricer (agent 2) is already built and only prices. It is a separate agent from the coordinator, deployed with this site for convenience. When a Scout saves a recipe, the Pricer builds the Kroger shopping cart needed to cook it (for 50 people by default): the AI chooses products and amounts, and code works out packages, the cart total and the cost per serving. Each TheMealDB recipe is priced once for the whole class, and Kroger searches are remembered.
+The Recipe Pricer (agent 2) is already built and only prices. It is a separate agent from the coordinator, deployed with this site for convenience. When a Scout Agent saves a recipe, the Pricer builds the Kroger shopping cart needed to cook it (for 50 people by default): the AI chooses products and amounts, and code works out packages, the cart total and the cost per serving. Each TheMealDB recipe is priced once for the whole class, and Kroger searches are remembered.
 
 The **Pricer page** (`/pricer`) has three parts:
 

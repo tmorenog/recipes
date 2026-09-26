@@ -98,7 +98,7 @@
     <p class="step-note"><strong>Notice the difference between an action and an agent.</strong> An action performs one specific task. An agent decides which actions to use and in what order.</p>
   </section>
   <section class="step" id="step-2">
-    <h3 class="step-title"><span class="step-num">Step 2</span>Add the Recipe Scout agent</h3>
+    <h3 class="step-title"><span class="step-num">Step 2</span>Add the Scout Agent</h3>
     <div class="step-goal"><p class="step-label">Goal</p><p>Add an AI agent that decides how to search, examines the results and selects four recipes. This is the first step with a “What the Scout Agent is doing” panel.</p></div>
     <div class="prompt scout">
       <div class="prompt-head">
@@ -123,8 +123,8 @@
       <span class="handoff-arrow" aria-hidden="true">→</span>
       <span class="handoff-node pricer">Recipe Pricer</span>
     </div>
-    <p>The Scout does not send recipes directly to the Recipe Pricer. It sends them to the coordinator. The coordinator checks each recipe, saves accepted recipes and makes them available to the next agent.</p>
-    <p>The Scout talks to the coordinator through MCP, a standard way for an app to ask another system what actions it offers and then use them.</p>
+    <p>The Scout Agent does not send recipes directly to the Recipe Pricer. It sends them to the coordinator. The coordinator checks each recipe, saves accepted recipes and makes them available to the next agent.</p>
+    <p>The Scout Agent talks to the coordinator through MCP, a standard way for an app to ask another system what actions it offers and then use them.</p>
   </section>
 
   <section class="step" id="step-3a">
@@ -139,8 +139,8 @@
       <div class="prompt-body" id="p3a" data-prompt="/prompts/scout/step-3a.txt" data-step="13"></div>
     </div>
     <div class="step-after">
-      <div><p class="step-label">What you should see</p><ul><li>A successful connection message</li><li>The tools provided by the coordinator and a description of what each tool does</li><li>No change to the Scout’s behavior yet</li></ul></div>
-      <div><p class="step-label">Things you can try</p><ul><li>Read the description of each coordinator tool, and the information each one requires.</li><li>Look for your connection on the <a href="/coordinator">Coordinator page</a>.</li><li>Discuss which tool the Scout should use first.</li><li>Discuss which tool it would use to hand off a recipe.</li></ul></div>
+      <div><p class="step-label">What you should see</p><ul><li>A successful connection message</li><li>The tools provided by the coordinator and a description of what each tool does</li><li>No change to the Scout Agent’s behavior yet</li></ul></div>
+      <div><p class="step-label">Things you can try</p><ul><li>Read the description of each coordinator tool, and the information each one requires.</li><li>Look for your connection on the <a href="/coordinator">Coordinator page</a>.</li><li>Discuss which tool the Scout Agent should use first.</li><li>Discuss which tool it would use to hand off a recipe.</li></ul></div>
     </div>
     <p class="step-note"><strong>MCP allows an application to discover what another system can do.</strong> The coordinator describes its tools, so Recipe Scout does not need to have their names and input formats written into its code.</p>
   </section>
@@ -156,7 +156,7 @@
     </div>
     <div class="step-after">
       <div><p class="step-label">What you should see</p><ul><li>The Scout Agent discovers the coordinator tools at the beginning of the run and learns how to work with the coordinator.</li><li>The Scout Agent follows the formats, rules and limits returned by the coordinator.</li><li>It searches and examines real recipes through TheMealDB and submits recipes to the coordinator.</li><li>Accepted and rejected submissions are clearly identified and the Scout Agent tries to correct rejected recipes.</li><li>Four accepted recipes appear on the <a href="/coordinator">Coordinator page</a> and the <a href="/pricer">Recipe Pricer</a> queues or begins processing the accepted recipes.</li></ul></div>
-      <div><p class="step-label">Things you can try</p><ul><li>Run the same theme twice and observe duplicate handling.</li><li>Try a contradictory theme.</li><li>Open a rejected exchange on the Coordinator page and compare it with an accepted one.</li><li>Change one Scout instruction and compare its behavior.</li></ul></div>
+      <div><p class="step-label">Things you can try</p><ul><li>Run the same theme twice and observe duplicate handling.</li><li>Try a contradictory theme.</li><li>Open a rejected exchange on the Coordinator page and compare it with an accepted one.</li><li>Change one Scout Agent instruction and compare its behavior.</li></ul></div>
     </div>
     <p class="step-note">Each group can save a limited number of recipes in total (the coordinator tells your agent how many), so plan your runs: once the limit is reached, further saves are rejected.</p>
 

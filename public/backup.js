@@ -1,4 +1,4 @@
-// Backup agents page: sign in with ADMIN_KEY, start a Scout or Meal Planner Agent
+// Backup agents page: sign in with ADMIN_KEY, start a Scout Agent or Meal Planner Agent
 // run, and follow it step by step. Runs happen on the server (/api/admin/agent-runs).
 (() => {
   'use strict';

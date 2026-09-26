@@ -425,7 +425,7 @@
     { group: 'Recipe Scout (students’ sample prompts)', items: [
       ['scout', 10, 'Step 0 · Build your first page', '/prompts/scout/step-0.txt', 'scout-step-0.txt'],
       ['scout', 11, 'Step 1 · Connect to real recipe information', '/prompts/scout/step-1.txt', 'scout-step-1.txt'],
-      ['scout', 12, 'Step 2 · Add the Recipe Scout agent', '/prompts/scout/step-2.txt', 'scout-step-2.txt'],
+      ['scout', 12, 'Step 2 · Add the Scout Agent', '/prompts/scout/step-2.txt', 'scout-step-2.txt'],
       ['scout', 13, 'Step 3a · Connect to the coordinator', '/prompts/scout/step-3a.txt', 'scout-step-3a.txt'],
       ['scout', 14, 'Step 3b · Let the Scout Agent use the coordinator', '/prompts/scout/step-3b.txt', 'scout-step-3b.txt'],
     ] },
