@@ -47,17 +47,18 @@
     <p class="callout warn" id="problem" hidden></p>
 
     <div class="grid-2 backup-forms">
+      <datalist id="class-groups"></datalist>
       <form class="panel" id="scout-form" autocomplete="off">
         <h2 style="margin-top:0"><span class="agent-tag scout">Agent 1</span> Scout Agent</h2>
         <p class="small muted">Finds four real recipes on TheMealDB for a theme and saves them to the coordinator. The Pricer Agent then prices them.</p>
-        <label>Group <input name="group" required maxlength="40" value="instructor" spellcheck="false"></label>
+        <label>Group <span class="group-pick"><input name="group" required maxlength="40" value="instructor" spellcheck="false" list="class-groups" title="A group already in the class, or any new name"><button class="btn small-btn" type="button" data-random-group>Random name</button></span></label>
         <label>Dinner theme <input name="theme" required maxlength="200" value="Cheap vegetarian weeknight dinners"></label>
         <button class="btn primary" type="submit">Run the Scout Agent</button>
       </form>
       <form class="panel" id="planner-form" autocomplete="off">
         <h2 style="margin-top:0"><span class="agent-tag planner">Agent 3</span> Meal Planner Agent</h2>
         <p class="small muted">Plans five dinners, Monday to Friday, from the priced recipes, checks the plan with the coordinator and saves it.</p>
-        <label>Group <input name="group" required maxlength="40" value="instructor" spellcheck="false"></label>
+        <label>Group <span class="group-pick"><input name="group" required maxlength="40" value="instructor" spellcheck="false" list="class-groups" title="A group already in the class, or any new name"><button class="btn small-btn" type="button" data-random-group>Random name</button></span></label>
         <label>Budget per person per dinner, on average ($) <input name="budget_usd" type="number" min="0.5" max="1000" step="0.5" value="3" required></label>
         <label>Dietary requirements <input name="requirements" maxlength="500" placeholder="e.g. no pork"></label>
         <label>Preferences <input name="preferences" maxlength="500" placeholder="e.g. we like spicy food"></label>

@@ -67,6 +67,33 @@
       el('span', { className: `small ${r.status === 'failed' ? 'bad' : 'muted'}`, textContent: ` ${r.status === 'running' ? 'running…' : r.outcome || r.status}` })))
       : [el('li', { className: 'muted small', textContent: 'No runs yet.' })]));
   }
+  // The group a run works for: a group already in the class (suggested as you
+  // type), any new name, or a random one.
+  const ADJECTIVES = ['sunny', 'brave', 'spicy', 'calm', 'lucky', 'zesty', 'cozy', 'swift', 'bright', 'jolly', 'tidy', 'bold'];
+  const ANIMALS = ['otter', 'falcon', 'panda', 'koala', 'heron', 'lynx', 'badger', 'gecko', 'puffin', 'walrus', 'marmot', 'ibex'];
+  const pick = (list) => list[Math.floor(Math.random() * list.length)];
+  let classGroups = new Set();
+  async function loadGroups() {
+    try {
+      const [r, p] = await Promise.all([
+        fetch('/api/recipes?status=all&limit=500', { cache: 'no-store' }).then((x) => x.json()),
+        fetch('/api/meal-plans?limit=200', { cache: 'no-store' }).then((x) => x.json()),
+      ]);
+      classGroups = new Set([...(r.recipes || []).flatMap((x) => x.picked_by || [x.group]), ...(p.plans || []).map((x) => x.group_name)].filter(Boolean));
+      $('class-groups').replaceChildren(...[...classGroups].sort().map((g) => el('option', { value: g })));
+    } catch { /* suggestions are optional */ }
+  }
+  for (const btn of document.querySelectorAll('[data-random-group]')) {
+    btn.addEventListener('click', () => {
+      let name;
+      do name = `${pick(ADJECTIVES)}-${pick(ANIMALS)}`; while (classGroups.has(name) && classGroups.size < 100);
+      const input = btn.closest('.group-pick').querySelector('input');
+      input.value = name;
+      input.focus();
+    });
+  }
+  loadGroups();
+
   const refreshOverview = async () => { const res = await api('GET'); if (res.ok) showOverview(res.body); };
 
   // ---------------------------------------------------------------- one run
