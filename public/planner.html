@@ -33,7 +33,6 @@
     <p class="lede">An agent that takes a budget, reads the recipes the class has found, and plans five dinners, Monday to Friday, that are nutritious, varied and cheap. It shows the week and saves the plan to the coordinator.</p>
   </div>
 
-  <section data-ready="planner"></section>
 
   <h2 id="goal">The goal</h2>
   <div class="panel narrow">
@@ -81,7 +80,7 @@
     </ol>
     <figcaption class="small muted">Every request carries two headers: <code>Authorization: Bearer</code> + the class key (from the Lovable secret), and <code>X-Group: {{GROUP}}</code>. The AI model decides which tool to call; your backend sends the request and hands the answer back to the model.</figcaption>
   </figure>
-  <div class="callout warn"><p><strong>The class key never goes in a prompt.</strong> Step 2 asks Lovable to create a secret. Lovable then shows a secure box where you paste the key. The prompts use your group name from <a href="#before-you-start">Before you start</a>: <code>{{GROUP}}</code>.</p></div>
+  <div class="callout warn"><p><strong>The class key never goes in a prompt.</strong> Step 2 asks Lovable to create a secret. Lovable then shows a secure box where you paste the key. The prompts use your group name from <a href="/#before-you-start">Before you start</a> on the Welcome page: <code>{{GROUP}}</code>.</p></div>
 
   <section class="step" id="step-2">
     <h3 class="step-title"><span class="step-num">Step 2 of 5</span>Connect to the coordinator</h3>
