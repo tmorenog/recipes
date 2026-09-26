@@ -1,36 +1,21 @@
-Now let the Scout Agent use the coordinator tools you discovered when connecting to the coordinator.
+Now let the Scout Agent save its recipes to the coordinator, using the tools you discovered when connecting.
 
-At the start of every run, ask the coordinator which tools it offers, and give them to the Scout Agent as the coordinator describes them, with the same names, descriptions and inputs.
-
-Let the coordinator describe its own formats, rules and limits: don’t copy them into the app.
+At the start of every run, the app asks the coordinator which tools it offers, and gives them to the Scout Agent as the coordinator describes them, with the same names, descriptions and inputs. Let the coordinator describe its own formats, rules and limits, every time the agent is run.
 
 Instead of adding recipes to its own list, the Scout Agent now saves them to the coordinator. Keep the actions that search TheMealDB and the action that ends the run.
 
-Keep the app’s existing checks: before sending a recipe to the coordinator, the app confirms its complete details were retrieved during this run, and stops the Scout Agent once four recipes have been accepted. Raise the limit to 35 actions.
+Goals for the Scout Agent:
 
-These are the goals and rules for the Scout Agent:
+- First use the coordinator tool that explains how to work with the coordinator, and follow what it says.
+- Find real recipes on TheMealDB that fit the theme, and save them to the coordinator.
+- If the coordinator rejects a recipe, read its feedback, correct the recipe and try again.
+- Never invent recipe information. Finish once four recipes have been accepted; if that isn’t possible, explain why.
 
-- Begin each run by using the coordinator tool that explains how to work with the coordinator.
-- Follow the formats, rules and limits returned by the coordinator.
-- Use TheMealDB to find and examine real recipes.
-- Save selected recipes through the coordinator so the next agent can use them.
-- If the coordinator rejects a recipe, read all its feedback, correct the recipe and try again.
-- If the coordinator says to wait or that a limit has been reached, stop and explain instead of retrying.
-- Treat a rejection as useful feedback, not as an application failure.
-- Never invent recipe information.
-- Finish after four recipes have been accepted.
-- If four recipes cannot be accepted, explain why.
-
-Run every tool requested by the Scout Agent and return the complete result to it, including rejections, so it can correct its work.
+Run every tool the Scout Agent asks for and return the complete result to it, including rejections: a rejection is feedback, not a crash. Keep the app’s existing checks (a recipe’s complete details must be retrieved during this run before it’s sent; stop once four are accepted), and raise the limit to 35 actions.
 
 Update the page:
 
-- Rename the recipe results area “Saved recipes” and show only the recipes the coordinator accepted
-- Show coordinator requests and responses in “What the Scout Agent is doing”
-- Make acceptances and rejections easy to distinguish
-- Highlight rejection feedback without presenting it as a technical failure
-- Show how many of the 35 available actions the Scout Agent has used
-- Add a link to the class Coordinator page: {{SITE}}/coordinator
-- Keep a history of completed runs that can be reopened
-
-The “Coordinator connection” section can remain available as a collapsible technical-details section.
+- Rename the results area “Saved recipes” and show only the recipes the coordinator accepted
+- In “What the Scout Agent is doing”, show the coordinator’s requests and answers, and make acceptances and rejections easy to tell apart, without showing rejections as crashes
+- A link to the class Coordinator page ({{SITE}}/coordinator)
+- Keep the “Coordinator connection” section, collapsed

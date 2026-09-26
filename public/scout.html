@@ -117,7 +117,7 @@
     </div>
     <div class="step-after">
       <div><p class="step-label">What you should see</p><ul><li>The Scout Agent decides how to search and leaves traces of its behavior</li><li>Four selected recipes with photos and explanations</li><li>A clear explanation if the Scout Agent cannot finish</li></ul></div>
-      <div><p class="step-label">Things you can try</p><ul><li><em>Comfort food</em></li><li><em>20-minute vegetarian dinners</em></li><li><em>Vegan dinners with beef</em></li><li><em>Antarctic street food</em></li></ul></div>
+      <div><p class="step-label">Things you can try</p><ul><li>Try themes like <em>Comfort food</em>, <em>20-minute vegetarian dinners</em>, <em>Vegan dinners with beef</em> or <em>Antarctic street food</em>. Does it explain honestly when a theme can’t work?</li><li>Which searches does it try first? Watch the actions.</li><li>Change one Scout Agent goal, e.g. five different cuisines, and compare.</li></ul></div>
     </div>
     <p class="step-note">The important question is not only “Did it find four recipes?” Also ask: “What did it try, and did its choices make sense?”</p>
   </section>
@@ -147,7 +147,7 @@
       <div class="prompt-body" id="p3a" data-prompt="/prompts/scout/step-3a.txt" data-step="13"></div>
     </div>
     <div class="step-after">
-      <div><p class="step-label">What you should see</p><ul><li>A successful connection message, with your group name as the coordinator confirms it</li><li>The tools provided by the coordinator and a description of what each tool does</li><li>No change to the Scout Agent’s behavior yet</li></ul></div>
+      <div><p class="step-label">What you should see</p><ul><li>A successful connection message</li><li>The coordinator confirms your group name, e.g. “You’re connected as group team-3”. If it isn’t your group’s name, fix it before going on.</li><li>The tools provided by the coordinator and a description of what each tool does</li><li>No change to the Scout Agent’s behavior yet</li></ul></div>
       <div><p class="step-label">Things you can try</p><ul><li>Read the description of each coordinator tool, and the information each one requires.</li><li>Look for your connection on the <a href="/coordinator">Coordinator page</a>.</li><li>Discuss which tool the Scout Agent should use first.</li><li>Discuss which tool it would use to hand off a recipe.</li></ul></div>
     </div>
     <p class="step-note"><strong>MCP allows an application to discover what another system can do.</strong> The coordinator describes its tools, so Recipe Scout does not need to have their names and input formats written into its code.</p>
@@ -163,8 +163,8 @@
       <div class="prompt-body" id="p3b" data-prompt="/prompts/scout/step-3b.txt" data-step="14"></div>
     </div>
     <div class="step-after">
-      <div><p class="step-label">What you should see</p><ul><li>The Scout Agent follows the formats, rules and limits returned by the coordinator.</li><li>It searches and examines real recipes through TheMealDB and submits recipes to the coordinator.</li><li>Accepted and rejected submissions are clearly identified and the Scout Agent tries to correct rejected recipes.</li><li>Four accepted recipes appear on the <a href="/coordinator">Coordinator page</a> and the <a href="/pricer">Recipe Pricer</a> queues or begins processing the accepted recipes.</li></ul></div>
-      <div><p class="step-label">Things you can try</p><ul><li>Run the same theme twice and observe duplicate handling.</li><li>Try a contradictory theme.</li><li>Open a rejected exchange on the Coordinator page and compare it with an accepted one.</li><li>Change one Scout Agent instruction and compare its behavior.</li></ul></div>
+      <div><p class="step-label">What you should see</p><ul><li>Its searches, lookups and saves appear in “What the Scout Agent is doing”.</li><li>It searches and examines real recipes through TheMealDB and submits recipes to the coordinator.</li><li>Accepted and rejected submissions are clearly identified and the Scout Agent tries to correct rejected recipes.</li><li>Four accepted recipes appear on the <a href="/coordinator">Coordinator page</a> under your group.</li><li>The Recipe Pricer starts pricing them: see the <a href="/pricer">Recipe Pricer</a> page.</li></ul></div>
+      <div><p class="step-label">Things you can try</p><ul><li>Run the same theme twice and observe duplicate handling.</li><li>Try a contradictory theme.</li><li>Open a rejected exchange on the Coordinator page and compare it with an accepted one.</li><li>Change one Scout Agent instruction and compare its behavior.</li><li>Ask Lovable to keep a history of past runs you can reopen.</li><li>Ask Lovable to test the app.</li></ul></div>
     </div>
     <p class="step-note">Each group can save a limited number of recipes in total (the coordinator tells your agent how many), so plan your runs: once the limit is reached, further saves are rejected.</p>
 
