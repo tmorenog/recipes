@@ -190,3 +190,19 @@ test('the site stays within Vercel’s 12-function limit (each file in api/ is o
   const functions = (await readdir(new URL('../api/', import.meta.url))).filter((f) => f.endsWith('.js'));
   assert.ok(functions.length <= 12, `api/ has ${functions.length} functions: ${functions.join(', ')}`);
 });
+
+test('a long agent run is kept within a small model’s context window', async () => {
+  const { fitContext, backupModel } = await import('../lib/backup-agents.js');
+  assert.equal(backupModel({}), 'claude-haiku-4-5');
+  const big = 'x'.repeat(30_000);
+  const messages = [{ role: 'user', content: 'start' }];
+  for (let i = 0; i < 30; i += 1) {
+    messages.push({ role: 'assistant', content: [{ type: 'tool_use', id: `t${i}`, name: 'look', input: {} }] });
+    messages.push({ role: 'user', content: [{ type: 'tool_result', tool_use_id: `t${i}`, content: big }] });
+  }
+  fitContext(messages, { max: 300_000 });
+  assert.ok(JSON.stringify(messages).length <= 300_000);
+  assert.equal(messages.at(-1).content[0].content, big, 'the latest results stay whole');
+  assert.match(messages[2].content[0].content, /earlier result shortened/);
+  assert.equal(messages[2].content[0].tool_use_id, 't0', 'tool results stay paired with their calls');
+});
