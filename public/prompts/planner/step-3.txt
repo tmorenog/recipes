@@ -8,24 +8,19 @@ Goals and rules for the Meal Planner Agent:
 
 - Plan five dinners, Monday to Friday, that meet the dietary requirements, follow the preferences where possible, and are varied and as cheap as possible within the budget.
 - Spread similar dishes across the week: avoid the same type of food (the same cuisine, category or main ingredient) on consecutive days, and never three days in a row.
+- Prefer recipes more groups chose: popularity shows what the class likes.
 - First use the coordinator tool that explains how to work with the coordinator, and follow what it says.
-- Use only recipes from the coordinator that have a price.
-- Take popularity into account: the more groups chose a recipe, the more the class likes it. Prefer popular recipes when they fit the other goals, and say how popular each dinner is.
-- Let the coordinator add up the costs. Never invent a recipe, a price or a number.
+- Never invent a recipe or a price.
 - Check a draft with the coordinator before saving it. If a check fails, improve the plan and check again.
-- Save the best plan once, then end the run. If no plan passes every check, save the closest one and explain why. If the dietary requirements can’t be met, save nothing and explain why.
-- If the coordinator rejects something, fix it and try again. If it says to wait or that a limit has been reached, stop and explain.
+- Save the best plan once, then end the run. If no plan passes every check, save the closest one and explain why.
 
-Run every tool the Meal Planner Agent asks for and return the complete result to it, including rejections: a rejection is feedback, not a crash. Stop when the Meal Planner Agent ends the run, after 30 actions or after three minutes, and record why. The app must not save a plan the coordinator hasn’t checked during this run, or more than one plan per run.
+Run every tool the Meal Planner Agent asks for and return the complete result to it, including rejections: a rejection is feedback, not a crash. Stop when the agent ends the run, after 30 actions or after three minutes. The app must not save a plan the coordinator hasn’t checked during this run, or more than one plan per run.
 
 Update the page:
 
 - “Plan my week” starts the Meal Planner Agent and is disabled while it works
-- “What the Meal Planner Agent is doing” shows its actions, the coordinator’s answers and errors as they happen, with the actions used and the time left; make failed checks and rejections easy to spot without showing them as crashes
-- “The week” shows the saved plan: for each day the photo, name, cost per serving, the groups that picked it (and how many), why it was chosen and a link to the recipe on TheMealDB (https://www.themealdb.com/meal/MEAL_ID); below the days, the average cost of a dinner against the budget and each check with ✓ or ✗
-- A “Shopping list”: the ingredients of the five dinners, taken from their recipes, each listed once, with the week’s cost per person from the coordinator’s check
-- The outcome area, with the explanation: “Valid plan found” when the saved plan passes every check; “No feasible plan found” when the closest plan was saved or nothing could be saved; “Run failed” when the run stopped on an error or a limit
-- A link to the class Coordinator page ({{SITE}}/coordinator), credit to TheMealDB for the photos, and a history of past runs that can be reopened
+- “What the Meal Planner Agent is doing” shows its actions and the coordinator’s answers as they happen; make failed checks and rejections easy to spot without showing them as crashes
+- “The week” shows the saved plan: for each day the photo, name, cost per serving, the groups that picked it and why it was chosen; below the days, the average cost of a dinner against the budget and each check with ✓ or ✗
+- The outcome: “Valid plan found” when the saved plan passes every check, “No feasible plan found” otherwise, or “Run failed” when the run stopped on an error or a limit, with the agent’s summary
+- A link to the class Coordinator page ({{SITE}}/coordinator) and credit to TheMealDB for the photos
 - Keep “How the coordinator works” and “Available recipes” as collapsible sections
-
-Save what happens (actions, results, errors): what the agent does, not its private thinking.

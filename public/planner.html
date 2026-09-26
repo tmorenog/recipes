@@ -32,7 +32,7 @@
   <div class="page-head">
     <span class="agent-tag planner">Agent 3</span>
     <h1>Build the Meal Planner</h1>
-    <p class="lede">An agent that takes a budget, reads the recipes the Scout Agents found and the Pricer Agent priced, and plans five dinners, Monday to Friday, that are varied and cheap. It shows the week, lists the ingredients to buy and the total price and saves the plan to the coordinator.</p>
+    <p class="lede">An agent that takes a budget, reads the recipes the Scout Agents found and the Pricer Agent priced, and plans five dinners, Monday to Friday, that are varied and cheap. It shows the week and what it costs, and saves the plan to the coordinator.</p>
   </div>
 
   <figure class="agent-flow planner" aria-label="What the Meal Planner Agent does: you give it a budget and requirements; it reads the priced recipes, drafts five dinners, asks the coordinator to check them and fixes what fails, in a loop until the checks pass; then it saves the week for the Shopper Agent.">
@@ -130,8 +130,8 @@
       <div class="prompt-body" id="q3" data-prompt="/prompts/planner/step-3.txt" data-step="12"></div>
     </div>
     <div class="step-after">
-      <div><p class="step-label">What you should see</p><ul><li>The Meal Planner Agent learns how to work with the coordinator at the beginning of the run.</li><li>It drafts a plan, asks the coordinator to check it and changes dinners when a check fails.</li><li>Five dinners fill Monday to Friday, each showing which groups picked it, with a shopping list, the average cost of a dinner against the budget and each check marked ✓ or ✗.</li><li>The outcome: valid plan found, no feasible plan found, or run failed, with an explanation.</li><li>The saved plan appears on the <a href="/coordinator">Coordinator page</a> under your group.</li></ul></div>
-      <div><p class="step-label">Things you can try</p><ul><li>A tiny budget, such as $1 a dinner. Does it explain that it can’t be done, or pretend?</li><li>A rule of your own, such as <em>no dinner over 45 minutes</em>.</li><li>Change one Meal Planner Agent instruction and compare its behavior.</li><li>Experiment with different instructions and goals, such as food from a different continent every day.</li><li>Ask Lovable to test the app.</li></ul></div>
+      <div><p class="step-label">What you should see</p><ul><li>The Meal Planner Agent learns how to work with the coordinator at the beginning of the run.</li><li>It drafts a plan, asks the coordinator to check it and changes dinners when a check fails.</li><li>Five dinners fill Monday to Friday, each showing which groups picked it, with the average cost of a dinner against the budget and each check marked ✓ or ✗.</li><li>The outcome: valid plan found, no feasible plan found, or run failed, with an explanation.</li><li>The saved plan appears on the <a href="/coordinator">Coordinator page</a> under your group.</li></ul></div>
+      <div><p class="step-label">Things you can try</p><ul><li>A tiny budget, such as $1 a dinner. Does it explain that it can’t be done, or pretend?</li><li>A rule of your own, such as <em>no dinner over 45 minutes</em>.</li><li>Change one Meal Planner Agent instruction and compare its behavior.</li><li>Experiment with different instructions and goals, such as food from a different continent every day.</li><li>Ask Lovable to add a shopping list: the ingredients of the five dinners, each listed once.</li><li>Ask Lovable to keep a history of past runs you can reopen.</li><li>Ask Lovable to test the app.</li></ul></div>
     </div>
     <p class="step-note">The important question is not only “Did it save a plan?” Also ask: “Did it fix the checks that failed, and are its explanations honest?”</p>
     <details class="panel" id="rules">
