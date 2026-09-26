@@ -402,3 +402,16 @@ create table if not exists prompt_defaults (
   updated_at  timestamptz not null default now(),
   primary key (agent, step)
 );
+
+-- Once (September 2026): the students' prompt files, tested end to end, become
+-- both the live prompts and the safe copies. Edits saved on the site before
+-- then are dropped. A marker row makes sure this runs only once, so later
+-- edits made on the site are kept.
+do $$
+begin
+  if not exists (select 1 from coordinator_settings where key = 'migration:student-prompts-from-files') then
+    delete from prompt_overrides where agent in ('scout', 'planner');
+    delete from prompt_defaults where agent in ('scout', 'planner');
+    insert into coordinator_settings (key, value) values ('migration:student-prompts-from-files', to_jsonb(now()::text));
+  end if;
+end $$;
