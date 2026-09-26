@@ -40,7 +40,7 @@
     <p>You will change and rework parts of the app as you go. That is intentional. The goal is to understand how the system develops—not to build the perfect application on the first attempt.</p>
     <p class="action-def">In this exercise, an <strong>action</strong> is something the agent can do, such as searching for a recipe or saving one. These actions are sometimes called <strong>tools</strong>.</p>
   </div>
-  <p class="small muted">Each step has a goal, a <strong>sample prompt</strong> to copy into Lovable (use it as it is or change it), what you should see, and things to try before moving on.</p>
+  <p class="small muted">Each step has a goal, a <strong>sample prompt</strong> to copy into Lovable (use it as it is or change it), what you should see, and things you can try before moving on.</p>
 
   <section class="step" id="step-0">
     <h3 class="step-title"><span class="step-num">Step 0 · warm-up</span>Build your first page</h3>
@@ -54,7 +54,7 @@
     </div>
     <div class="step-after">
       <div><p class="step-label">What you should see</p><p>A finished-looking page with a theme input, example themes, a button and an empty results area. It is normal that the button does nothing.</p></div>
-      <div><p class="step-label">Things to try</p><ul><li>Ask Lovable to change the colors or visual style.</li><li>Add another example dinner theme.</li><li>Change the title or button text.</li><li>Ask Lovable to make one small layout improvement.</li></ul></div>
+      <div><p class="step-label">Things you can try</p><ul><li>Ask Lovable to change the colors or visual style.</li><li>Add another example dinner theme.</li><li>Change the title or button text.</li><li>Ask Lovable to make one small layout improvement.</li></ul></div>
     </div>
     <p class="step-note">Don’t spend too long polishing. You will change the interface as the agent develops.</p>
   </section>
@@ -70,7 +70,7 @@
     </div>
     <div class="step-after">
       <div><p class="step-label">What you should see</p><ul><li>The original Recipe Scout page</li><li>A temporary Recipe Tool Lab</li><li>Real recipes returned from TheMealDB</li><li>Short summaries from searches</li><li>Ingredients and instructions when retrieving a complete recipe</li><li>No AI agent yet</li></ul></div>
-      <div><p class="step-label">Things to try</p><ul><li>Search by name for <em>Arrabiata</em>.</li><li>Search using the ingredient <em>chicken</em>.</li><li>Browse the category <em>Vegetarian</em>.</li><li>Browse the cuisine <em>Italian</em>.</li><li>Search for something that probably does not exist.</li></ul></div>
+      <div><p class="step-label">Things you can try</p><ul><li>Search by name for <em>Arrabiata</em>.</li><li>Search using the ingredient <em>chicken</em>.</li><li>Browse the category <em>Vegetarian</em> or the cuisine <em>Italian</em>.</li><li>Search for something that probably does not exist.</li></ul></div>
     </div>
     <p class="step-note"><strong>Notice the difference between an action and an agent.</strong> An action performs one specific task. An agent decides which actions to use and in what order.</p>
   </section>
@@ -86,7 +86,7 @@
     </div>
     <div class="step-after">
       <div><p class="step-label">What you should see</p><ul><li>The Scout deciding how to search</li><li>Searches and complete recipe lookups appearing one at a time</li><li>Five selected recipes with photos and explanations</li><li>Evidence that each selected recipe was examined first</li><li>A clear explanation if the Scout cannot finish</li></ul></div>
-      <div><p class="step-label">Things to try</p><ul><li><em>Comfort food</em></li><li><em>20-minute vegetarian dinners</em></li><li><em>Vegan dinners with beef</em></li><li><em>Antarctic street food</em></li></ul></div>
+      <div><p class="step-label">Things you can try</p><ul><li><em>Comfort food</em></li><li><em>20-minute vegetarian dinners</em></li><li><em>Vegan dinners with beef</em></li><li><em>Antarctic street food</em></li></ul></div>
     </div>
     <p class="step-note">The important question is not only “Did it find five recipes?” Also ask: “What did it try, and did its choices make sense?”</p>
   </section>
@@ -130,7 +130,7 @@
     </div>
     <div class="step-after">
       <div><p class="step-label">What you should see</p><ul><li>A Coordinator connection section</li><li>A successful connection message</li><li>The tools provided by the coordinator</li><li>A plain-language description of what each tool does</li><li>The information required to use each tool</li><li>No change to the Scout’s behavior yet</li></ul></div>
-      <div><p class="step-label">Things to try</p><ul><li>Read the description of each coordinator tool.</li><li>Compare the information required by different tools.</li><li>Look for your connection on the <a href="/coordinator">Coordinator page</a>.</li><li>Discuss which tool the Scout should use first.</li><li>Discuss which tool it would use to hand off a recipe.</li></ul></div>
+      <div><p class="step-label">Things you can try</p><ul><li>Read the description of each coordinator tool, and the information each one requires.</li><li>Look for your connection on the <a href="/coordinator">Coordinator page</a>.</li><li>Discuss which tool the Scout should use first.</li><li>Discuss which tool it would use to hand off a recipe.</li></ul></div>
     </div>
     <p class="step-note"><strong>MCP allows an application to discover what another system can do.</strong> The coordinator describes its tools, so Recipe Scout does not need to have their names and input formats written into its code.</p>
   </section>
@@ -146,7 +146,7 @@
     </div>
     <div class="step-after">
       <div><p class="step-label">What you should see</p><ul><li>The Scout discovers the coordinator tools at the beginning of the run.</li><li>It uses the appropriate tool to learn how to work with the coordinator.</li><li>It follows the formats, rules and limits returned by the coordinator.</li><li>It searches and examines real recipes through TheMealDB.</li><li>It submits recipes to the coordinator.</li><li>Accepted and rejected submissions are clearly identified.</li><li>The Scout tries to correct rejected recipes.</li><li>Five accepted recipes appear on the <a href="/coordinator">Coordinator page</a>.</li><li>The <a href="/pricer">Recipe Pricer</a> queues or begins processing the accepted recipes.</li></ul></div>
-      <div><p class="step-label">Things to try</p><ul><li>Run the same theme twice and observe duplicate handling.</li><li>Try a contradictory theme.</li><li>Reduce the maximum number of actions.</li><li>Open a rejected exchange on the Coordinator page.</li><li>Compare an accepted submission with a rejected one.</li><li>Change one Scout instruction and compare its behavior.</li><li>Ask for more recipes than the class limit allows, and see how the coordinator answers.</li></ul></div>
+      <div><p class="step-label">Things you can try</p><ul><li>Run the same theme twice and observe duplicate handling.</li><li>Try a contradictory theme.</li><li>Open a rejected exchange on the Coordinator page and compare it with an accepted one.</li><li>Change one Scout instruction and compare its behavior.</li></ul></div>
     </div>
 
   </section>

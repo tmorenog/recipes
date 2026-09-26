@@ -19,4 +19,4 @@ Two placeholders are filled in on the page:
 - `{{SITE}}`: this site's address, e.g. `https://recipes-delta-red.vercel.app`
 - `{{GROUP}}`: the group name the student typed on the page (`YOUR-GROUP-NAME` until they do)
 
-A step's title, goal, "What you should see" and "Things to try" live in `public/scout.html` and `public/planner.html`. If you change what a step does, update those too.
+A step's title, goal, "What you should see" and "Things you can try" live in `public/scout.html` and `public/planner.html`. If you change what a step does, update those too.
