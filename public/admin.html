@@ -100,12 +100,12 @@
 
     <h2>Prompts</h2>
     <div class="panel">
-      <p class="small" style="margin-top:0">While you’re signed in here, every step on the <a href="/scout">Recipe Scout</a> and <a href="/planner">Meal Planner</a> pages has an <strong>Edit</strong> button: change a sample prompt, save it, and every student sees the new version. <strong>Back to the default</strong> returns a step to its original text. The Pricer agent’s own instructions are on the <a href="/pricer">Pricer page</a>.</p>
+      <p class="small" style="margin-top:0">While you’re signed in here, every step on the <a href="/scout">Recipe Scout</a> and <a href="/planner">Meal Planner</a> pages has an <strong>Edit</strong> button: change a sample prompt, save it, and every student sees the new version. <strong>Back to the default</strong> returns a step to its original text. The Pricer Agent’s own instructions are on the <a href="/pricer">Pricer page</a>.</p>
     </div>
 
     <h2>Kroger</h2>
     <div class="panel">
-      <p class="small" style="margin-top:0">The Pricer signs in to Kroger with <code>KROGER_CLIENT_ID</code> and <code>KROGER_CLIENT_SECRET</code>. This checks that they work and that Kroger finds a store.</p>
+      <p class="small" style="margin-top:0">The Pricer Agent signs in to Kroger with <code>KROGER_CLIENT_ID</code> and <code>KROGER_CLIENT_SECRET</code>. This checks that they work and that Kroger finds a store.</p>
       <button class="btn" type="button" id="kroger-check">Test Kroger</button>
       <p class="small" id="kroger-result" aria-live="polite"></p>
     </div>
@@ -133,7 +133,7 @@
     <div class="panel sample-panel" id="sample">
       <h3 style="margin-top:0">Load the sample database</h3>
       <p class="small">If something goes wrong in class, replace <strong>everything</strong> with a ready-made database, always the same: <span id="sample-what">20 real TheMealDB recipes picked by five groups</span>. No meal plans or activity. Download a backup first if you want to keep what’s there.</p>
-      <label class="small check"><input type="checkbox" id="sample-prices" checked> Include ready-made prices, so the Meal Planners can start at once. They’re labelled as estimates, not Kroger prices; unticked, the Pricer prices the recipes with Kroger in the next few minutes.</label>
+      <label class="small check"><input type="checkbox" id="sample-prices" checked> Include ready-made prices, so the Planner Agents can start at once. They’re labelled as estimates, not Kroger prices; unticked, the Pricer Agent prices the recipes with Kroger in the next few minutes.</label>
       <div class="confirm-row">
         <label class="small" for="sample-word">Type <code>SAMPLE</code> to confirm</label>
         <input id="sample-word" type="text" autocomplete="off" spellcheck="false">

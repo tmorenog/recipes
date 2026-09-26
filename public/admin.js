@@ -278,6 +278,7 @@
     const res = await api('POST', 'restore', { body: backupFile });
     if (!res.ok) {
       $('restore-errors').replaceChildren(el('li', { textContent: 'Nothing was changed. Problems in the file:' }), ...res.errors.map((t) => el('li', { textContent: t })));
+      $('restore').disabled = false;
       return;
     }
     const c = res.body.counts;
@@ -379,7 +380,7 @@
     const res = await api('POST', 'load-sample', { body: { confirm: 'SAMPLE', prices } });
     $('sample-word').value = '';
     if (res.ok) {
-      toast(`Loaded the sample database: ${res.body.counts.recipes} recipes, ${prices ? 'with ready-made (estimated) prices' : 'queued for the Pricer'}.`);
+      toast(`Loaded the sample database: ${res.body.counts.recipes} recipes, ${prices ? 'with ready-made (estimated) prices' : 'queued for the Pricer Agent'}.`);
     } else {
       toast(res.errors.join('; '), true);
     }

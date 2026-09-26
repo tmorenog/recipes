@@ -26,8 +26,10 @@
   let lastOk = null;
 
   // ---------------------------------------------------------------- helpers
+  // Props with a dash (aria-expanded, aria-label) are attributes; the rest are properties.
   const el = (tag, props = {}, ...children) => {
-    const node = Object.assign(document.createElement(tag), props);
+    const node = document.createElement(tag);
+    for (const [k, v] of Object.entries(props)) if (k.includes('-')) node.setAttribute(k, v); else node[k] = v;
     node.append(...children.filter((c) => c != null && c !== false));
     return node;
   };
@@ -158,7 +160,7 @@
     const nPriced = data.recipes.filter(priced).length;
     $('shown').textContent = `${shown.length} of ${data.recipes.length} recipes · ${nPriced} priced · ${fresh} new`;
     document.querySelector('.db-head').hidden = !shown.length;
-    return [shown.length, data.recipes.length ? 'No recipes match these filters.' : 'No recipes yet. They appear here as soon as a Scout saves one.'];
+    return [shown.length, data.recipes.length ? 'No recipes match these filters.' : 'No recipes yet. They appear here as soon as a Scout Agent saves one.'];
   }
 
   // ---------------------------------------------------------------- plans
@@ -168,11 +170,14 @@
   function planCard(p, recipesById) {
     // Plans store the week's cost per person (older plans: the shopping list total).
     const perPerson = p.meals.some((m) => typeof m.day === 'string');
-    // The budget is the most a dinner may cost on average, per person.
+    // The budget is the most a dinner may cost on average, per person (plans
+    // checked before that change had a budget for the whole week).
     const perDinner = perPerson && p.meals.length ? p.total_cost_usd / p.meals.length : null;
-    const over = p.budget_usd != null && perDinner != null && perDinner > p.budget_usd + 0.005;
+    const weekly = (p.rule_checks || []).some((c) => /^The week costs/.test(c.rule));
+    const over = p.budget_usd != null && perDinner != null && (weekly ? p.total_cost_usd : perDinner) > p.budget_usd + 0.005;
+    const budget = p.budget_usd != null && perPerson ? `budget ${money(p.budget_usd)} ${weekly ? 'for the week' : 'a dinner'}${over ? ', over' : ''}` : null;
     const total = el('span', { className: `plan-total${over ? ' over' : ''}` }, money(p.total_cost_usd),
-      el('small', { textContent: [perPerson ? 'per person for the week' : 'total', perDinner != null ? `${money(perDinner)} a dinner` : null, p.budget_usd != null && perPerson ? `budget ${money(p.budget_usd)} a dinner${over ? ', over' : ''}` : null].filter(Boolean).join(' · ') }));
+      el('small', { textContent: [perPerson ? 'per person for the week' : 'total', perDinner != null ? `${money(perDinner)} a dinner` : null, budget].filter(Boolean).join(' · ') }));
 
     const meals = el('ul', { className: 'meals' },
       ...[...p.meals].sort((a, b) => dayIndex(a.day) - dayIndex(b.day)).map((m) => {
@@ -193,7 +198,8 @@
       }));
 
     const rules = (p.rule_checks || []).length
-      ? el('ul', { className: 'rules' }, ...p.rule_checks.map((c) => el('li', { className: c.passed ? 'pass' : 'fail', textContent: `${c.passed ? '✓' : '✗'} ${c.rule}`, title: c.detail || '' })))
+      ? el('ul', { className: 'rules' }, ...p.rule_checks.map((c) => el('li', { className: c.passed ? 'pass' : 'fail', title: c.detail || '' },
+        `${c.passed ? '✓' : '✗'} ${c.rule}`, !c.passed && c.detail ? el('span', { className: 'rule-detail', textContent: `: ${c.detail}` }) : null)))
       : null;
 
     const list = p.shopping_list || [];
@@ -369,8 +375,11 @@
     try {
       const after = data.exchanges[0]?.id ?? 0;
       const x = await getJson(`/api/exchanges?after=${after}&limit=200`);
-      if (!x.exchanges.length) return;
-      data.exchanges = [...x.exchanges, ...data.exchanges].slice(0, 300);
+      // A full refresh may have brought some of these in already.
+      const known = new Set(data.exchanges.map((e) => e.id));
+      const fresh = x.exchanges.filter((e) => !known.has(e.id));
+      if (!fresh.length) return;
+      data.exchanges = [...fresh, ...data.exchanges].slice(0, 300);
       render();
     } catch { /* the full refresh reports problems */ }
   }

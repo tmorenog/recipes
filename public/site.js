@@ -4,8 +4,8 @@
   'use strict';
   const SITE = location.origin;
 
-  // "Before you start": the numbered list at the top of the Welcome, Recipe
-  // Scout and Meal Planner pages (<section data-ready="welcome|scout|planner">).
+  // "Before you start": the numbered list at the top of the Welcome page
+  // (<section data-ready="welcome">).
   // Rendered first so the group box and key check below are wired up like any other.
   for (const box of document.querySelectorAll('[data-ready]')) {
     const page = ['welcome', 'scout', 'planner'].includes(box.dataset.ready) ? box.dataset.ready : 'welcome';
@@ -84,7 +84,8 @@
     );
     stepSections[0].before(bar);
     const openTarget = () => {
-      const id = decodeURIComponent(location.hash.slice(1));
+      let id = '';
+      try { id = decodeURIComponent(location.hash.slice(1)); } catch { /* a malformed link */ }
       const target = id ? document.getElementById(id) : null;
       const sec = target?.closest('section.step');
       if (sec?.classList.contains('collapsed')) {
@@ -110,10 +111,14 @@
     toggle.setAttribute('aria-controls', body.id);
     toggle.append(...label.childNodes);
     label.append(toggle);
+    // While the instructor edits the prompt, its editor stands in for the text.
     const setOpen = (open) => {
       frame.classList.toggle('collapsed', !open);
       toggle.setAttribute('aria-expanded', String(open));
-      body.hidden = !open;
+      const editor = frame.querySelector('.prompt-editor');
+      const editing = editor?.dataset.editing === '1';
+      body.hidden = !open || editing;
+      if (editor) editor.hidden = !open || !editing;
     };
     toggle.addEventListener('click', () => {
       const open = frame.classList.contains('collapsed');
@@ -151,6 +156,12 @@
     }
   };
   fill();
+  // A name typed on the Welcome page in another tab reaches this one too.
+  window.addEventListener('storage', (e) => {
+    if (e.key !== GROUP_KEY) return;
+    group = normalize(e.newValue);
+    fill();
+  });
 
   // Sample prompts: the text files under /prompts/ (<div data-prompt="/prompts/scout/step-2.txt" data-step="12">),
   // unless the instructor edited a step on the page; edits come from /api/prompts.
@@ -226,6 +237,7 @@
     p.box.after(editor);
 
     const open = (on) => {
+      editor.dataset.editing = on ? '1' : '';
       editor.hidden = !on;
       p.box.hidden = on || Boolean(frame?.classList.contains('collapsed'));
       editBtn.hidden = on;

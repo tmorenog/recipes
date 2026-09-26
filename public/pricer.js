@@ -5,19 +5,22 @@
   'use strict';
   const $ = (id) => document.getElementById(id);
   const STORE = 'rc-admin-key';
+  const hashId = () => { try { return decodeURIComponent(location.hash.slice(1)); } catch { return ''; } };
   let key = '';
   try { key = sessionStorage.getItem(STORE) || ''; } catch { /* storage unavailable */ }
 
   let overview = null;
-  let selected = decodeURIComponent(location.hash.slice(1)) || null;
+  let selected = hashId() || null;
   let detail = null;
   let test = null;
   let promptDirty = false;
   let timer = null;
 
   // ---------------------------------------------------------------- helpers
+  // Props with a dash (aria-expanded, aria-label) are attributes; the rest are properties.
   const el = (tag, { dataset, ...props } = {}, ...children) => {
-    const node = Object.assign(document.createElement(tag), props);
+    const node = document.createElement(tag);
+    for (const [k, v] of Object.entries(props)) if (k.includes('-')) node.setAttribute(k, v); else node[k] = v;
     if (dataset) Object.assign(node.dataset, dataset);
     node.append(...children.flat().filter((c) => c != null && c !== false));
     return node;
@@ -34,13 +37,9 @@
     return new Date(iso).toLocaleDateString();
   };
   const safeUrl = (u) => (typeof u === 'string' && /^https:\/\//i.test(u) ? u : null);
-  const STAGES = [
-    ['pricing', 'Being priced now'],
-    ['pending', 'Waiting'],
-    ['priced', 'Priced'],
-    ['failed', 'Couldn’t price'],
-  ];
-  const STATUS = { pending: 'Waiting', pricing: 'Being priced', priced: 'Priced', failed: 'Couldn’t price' };
+  const STATUS = { unpriced: 'Not priced', pending: 'Waiting', pricing: 'Being priced', priced: 'Priced', failed: 'Couldn’t price' };
+  // TheMealDB serves a small thumbnail at <image>/small; other images are shown as they are.
+  const thumb = (u) => (/^https:\/\/www\.themealdb\.com\/images\//i.test(u) ? `${u}/small` : u);
   const pill = (status) => el('span', { className: `pill price-${status}`, textContent: STATUS[status] || status });
 
   async function getJson(url) {
@@ -298,8 +297,6 @@
     renderFeed();
   }
 
-  const STATUS_TEXT = { unpriced: 'Not priced', pending: 'Waiting', pricing: 'Being priced', priced: 'Priced', failed: 'Couldn’t price' };
-
   function renderQueue() {
     const o = overview;
     if (!o) return;
@@ -308,7 +305,7 @@
       return;
     }
     $('queue').replaceChildren(...o.pricings.map((p) => {
-      const img = safeUrl(p.image_url) ? el('img', { src: `${p.image_url}/small`, alt: '', loading: 'lazy' }) : el('span', { className: 'thumb-blank' });
+      const img = safeUrl(p.image_url) ? el('img', { src: thumb(p.image_url), alt: '', loading: 'lazy' }) : el('span', { className: 'thumb-blank' });
       const per = p.status === 'priced' && p.people ? p.total_cost_usd / p.people : null;
       const price = p.status === 'priced'
         ? el('div', { className: 'rl-price' }, el('strong', { textContent: `${money(per)}` }), el('span', { textContent: ' a serving' }),
@@ -399,7 +396,7 @@
     }
     if (d.status === 'pricing') return `Being priced now: ${done} of ${lines} ingredients done.`;
     if (d.status === 'pending') return 'In the queue: the agent will price it within a few minutes.';
-    if (d.status === 'unpriced') return 'Not priced. Press Price to add it to the queue.';
+    if (d.status === 'unpriced') return key ? 'Not priced. Press Price to add it to the queue.' : 'Not priced yet: the instructor has paused automatic pricing.';
     return `Couldn’t be priced: ${(d.error || 'unknown reason').replace(/\.$/, '')}.`;
   }
 
@@ -466,7 +463,7 @@
   }
 
   window.addEventListener('hashchange', () => {
-    const id = decodeURIComponent(location.hash.slice(1));
+    const id = hashId();
     if (id && id !== selected) toggle(id);
   });
   showSignedIn();
