@@ -161,6 +161,35 @@
     name: (a, b) => a.name.localeCompare(b.name),
   };
 
+  // ---------------------------------------------------------------- pages
+  // Each long list shows one page at a time, newest (or first sorted) first,
+  // with Newer/Older above and below it. A new filter or sort goes back to
+  // the first page.
+  const PAGE_SIZE = { exchanges: 50, recipes: 50, plans: 20 };
+  const pages = { exchanges: 0, recipes: 0, plans: 0 };
+  const pageFilters = {};
+  function pager(id, view, count) {
+    const nav = $(id);
+    nav.hidden = count <= 1;
+    if (nav.hidden) return;
+    const go = (to) => { pages[view] = to; render(); if (id.endsWith('bottom')) $(`${view}-pager-top`).scrollIntoView({ block: 'start' }); };
+    const newer = el('button', { type: 'button', className: 'btn small-btn', textContent: view === 'recipes' && state.sort !== 'newest' ? '← Previous' : '← Newer', disabled: pages[view] === 0 });
+    const older = el('button', { type: 'button', className: 'btn small-btn', textContent: view === 'recipes' && state.sort !== 'newest' ? 'Next →' : 'Older →', disabled: pages[view] >= count - 1 });
+    newer.addEventListener('click', () => go(pages[view] - 1));
+    older.addEventListener('click', () => go(pages[view] + 1));
+    nav.replaceChildren(newer, el('span', { className: 'pager-at small muted', textContent: `Page ${pages[view] + 1} of ${count}` }), older);
+  }
+  function paginate(view, list, filters) {
+    if (pageFilters[view] !== filters) { pageFilters[view] = filters; pages[view] = 0; }
+    const size = PAGE_SIZE[view];
+    const count = Math.max(1, Math.ceil(list.length / size));
+    pages[view] = Math.min(pages[view], count - 1);
+    const from = pages[view] * size;
+    pager(`${view}-pager-top`, view, count);
+    pager(`${view}-pager-bottom`, view, count);
+    return { onPage: list.slice(from, from + size), from };
+  }
+
   function renderRecipes() {
     const priced = (r) => r.pricing?.status === 'priced';
     const shown = data.recipes.filter(
@@ -169,10 +198,12 @@
         && (!state.status || r.status === state.status)
         && (!state.price || (state.price === 'priced' ? priced(r) : state.price === 'estimated' ? priced(r) && r.pricing.estimated : !priced(r))),
     ).sort(SORTS[state.sort] || SORTS.newest);
-    keepState($('recipes'), () => $('recipes').replaceChildren(...shown.map(recipeRow)));
+    const { onPage, from } = paginate('recipes', shown, `${state.group}|${state.theme}|${state.status}|${state.price}|${state.sort}`);
+    keepState($('recipes'), () => $('recipes').replaceChildren(...onPage.map(recipeRow)));
     const fresh = data.recipes.filter((r) => r.status === 'new').length;
     const nPriced = data.recipes.filter(priced).length;
-    $('shown').textContent = `${shown.length} of ${data.recipes.length} recipes · ${nPriced} priced · ${fresh} new`;
+    const range = shown.length > onPage.length ? `${from + 1}–${from + onPage.length} of ${shown.length}` : `${shown.length}`;
+    $('shown').textContent = `${range}${shown.length === data.recipes.length ? '' : ` (of ${data.recipes.length})`} recipes · ${nPriced} priced · ${fresh} new`;
     document.querySelector('.db-head').hidden = !shown.length;
     return [shown.length, data.recipes.length ? 'No recipes match these filters.' : 'No recipes yet. They appear here as soon as a Scout Agent saves one.'];
   }
@@ -239,8 +270,10 @@
   function renderPlans() {
     const shown = data.plans.filter((p) => !state.group || p.group === state.group);
     const byId = new Map(data.recipes.map((r) => [r.id, r]));
-    keepState($('plans'), () => $('plans').replaceChildren(...shown.map((p) => planCard(p, byId))));
-    $('shown').textContent = `${shown.length} of ${data.plans.length} meal plans`;
+    const { onPage, from } = paginate('plans', shown, state.group);
+    keepState($('plans'), () => $('plans').replaceChildren(...onPage.map((p) => planCard(p, byId))));
+    const range = shown.length > onPage.length ? `${from + 1}–${from + onPage.length} of ${shown.length}` : `${shown.length}`;
+    $('shown').textContent = `${range}${shown.length === data.plans.length ? '' : ` (of ${data.plans.length})`} meal plans`;
     return [shown.length, data.plans.length ? 'No meal plans from this group yet.' : 'No meal plans yet. They appear here when a Meal Planner saves one.'];
   }
 
@@ -276,38 +309,16 @@
     return li;
   }
 
-  // Newest first, PAGE_SIZE to a page. A new filter goes back to the first page.
-  const PAGE_SIZE = 50;
-  let page = 0;
-  let pageFilters = '';
-  function pager(id, pages) {
-    const nav = $(id);
-    nav.hidden = pages <= 1;
-    if (nav.hidden) return;
-    const go = (to) => { page = to; render(); if (id === 'pager-bottom') $('pager-top').scrollIntoView({ block: 'start' }); };
-    const newer = el('button', { type: 'button', className: 'btn small-btn', textContent: '← Newer', disabled: page === 0 });
-    const older = el('button', { type: 'button', className: 'btn small-btn', textContent: 'Older →', disabled: page >= pages - 1 });
-    newer.addEventListener('click', () => go(page - 1));
-    older.addEventListener('click', () => go(page + 1));
-    nav.replaceChildren(newer, el('span', { className: 'pager-at small muted', textContent: `Page ${page + 1} of ${pages}` }), older);
-  }
   function renderExchanges() {
     const shown = data.exchanges.filter(
       (x) => (!state.group || x.group_name === state.group) && (!state.agent || x.agent === state.agent)
         && (!state.result || (state.result === 'accepted') === x.ok),
     );
-    const filters = `${state.group}|${state.agent}|${state.result}`;
-    if (filters !== pageFilters) { pageFilters = filters; page = 0; }
-    const pages = Math.max(1, Math.ceil(shown.length / PAGE_SIZE));
-    page = Math.min(page, pages - 1);
-    const from = page * PAGE_SIZE;
-    const onPage = shown.slice(from, from + PAGE_SIZE);
+    const { onPage, from } = paginate('exchanges', shown, `${state.group}|${state.agent}|${state.result}`);
     keepState($('exchanges'), () => $('exchanges').replaceChildren(...onPage.map(exchangeRow)));
-    pager('pager-top', pages);
-    pager('pager-bottom', pages);
     const rejected = data.exchanges.filter((x) => !x.ok).length;
     const latest = data.exchanges.length >= KEEP_EXCHANGES ? `the latest ${KEEP_EXCHANGES}` : `${data.exchanges.length}`;
-    $('shown').textContent = shown.length > PAGE_SIZE
+    $('shown').textContent = shown.length > onPage.length
       ? `${from + 1}–${from + onPage.length} of ${shown.length === data.exchanges.length ? latest : `${shown.length} (of ${latest})`} exchanges · ${rejected} rejected`
       : `${shown.length} of ${latest} exchanges · ${rejected} rejected`;
     return [shown.length, data.exchanges.length ? 'Nothing matches these filters.' : 'No exchanges yet. They appear here as soon as an agent talks to the coordinator.'];
@@ -438,7 +449,7 @@
       if (!fresh.length) return;
       data.exchanges = [...fresh, ...data.exchanges].slice(0, KEEP_EXCHANGES);
       // Someone reading an older page keeps their place: move the page along with the new rows.
-      if (page > 0) page += Math.floor(fresh.length / PAGE_SIZE);
+      if (pages.exchanges > 0) pages.exchanges += Math.floor(fresh.length / PAGE_SIZE.exchanges);
       render();
     } catch { /* the full refresh reports problems */ }
   }

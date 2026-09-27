@@ -84,21 +84,25 @@
 
   <section id="view-exchanges" role="tabpanel" aria-labelledby="tab-exchanges">
     <p class="small muted xch-intro">Each row is one request an agent sent to the coordinator over MCP (→) and the answer it got back (←). The Recipe Pricer’s saved prices appear too. New ones appear at the top within a few seconds, 50 to a page. Open a row to see exactly what was sent and returned.</p>
-    <nav class="pager" id="pager-top" aria-label="Exchange pages" hidden></nav>
+    <nav class="pager" id="exchanges-pager-top" aria-label="Exchange pages" hidden></nav>
     <ol class="xch-list" id="exchanges"></ol>
-    <nav class="pager" id="pager-bottom" aria-label="Exchange pages" hidden></nav>
+    <nav class="pager" id="exchanges-pager-bottom" aria-label="Exchange pages" hidden></nav>
   </section>
   <section id="view-recipes" role="tabpanel" aria-labelledby="tab-recipes" hidden>
+    <nav class="pager" id="recipes-pager-top" aria-label="Recipe pages" hidden></nav>
     <div class="db-list" role="table" aria-label="Recipes">
       <div class="db-row db-head" role="row">
         <span role="columnheader"></span><span role="columnheader">Recipe</span><span role="columnheader">Scouted by</span><span role="columnheader">Price</span><span role="columnheader">Meal Planner</span><span role="columnheader">Saved</span><span role="columnheader"></span>
       </div>
       <div id="recipes" role="rowgroup"></div>
     </div>
+    <nav class="pager" id="recipes-pager-bottom" aria-label="Recipe pages" hidden></nav>
     <p class="small muted">Recipe data and imagery: <a href="https://www.themealdb.com/" target="_blank" rel="noopener">TheMealDB</a></p>
   </section>
   <section id="view-plans" role="tabpanel" aria-labelledby="tab-plans" hidden>
+    <nav class="pager" id="plans-pager-top" aria-label="Meal plan pages" hidden></nav>
     <div class="plans" id="plans"></div>
+    <nav class="pager" id="plans-pager-bottom" aria-label="Meal plan pages" hidden></nav>
   </section>
   <section id="view-shopping" role="tabpanel" aria-labelledby="tab-shopping" hidden>
     <p class="small muted xch-intro">The meal plan the <a href="/shopper">Shopper Agent</a> chose for the class, and its shopping list: the Kroger cart the coordinator built from the Pricer Agent’s carts. There is one active shopping plan; each new Shopper run makes the previous one an earlier choice, kept below.</p>
