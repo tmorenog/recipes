@@ -200,6 +200,8 @@
     ).sort(SORTS[state.sort] || SORTS.newest);
     const { onPage, from } = paginate('recipes', shown, `${state.group}|${state.theme}|${state.status}|${state.price}|${state.sort}`);
     keepState($('recipes'), () => $('recipes').replaceChildren(...onPage.map(recipeRow)));
+    $('recipes-note').hidden = !data.recipesNote;
+    $('recipes-note').textContent = data.recipesNote || '';
     const fresh = data.recipes.filter((r) => r.status === 'new').length;
     const nPriced = data.recipes.filter(priced).length;
     const range = shown.length > onPage.length ? `${from + 1}–${from + onPage.length} of ${shown.length}` : `${shown.length}`;
@@ -394,6 +396,7 @@
         getJson('/api/meal-plans?choice=latest'),
       ]);
       data.recipes = r.recipes;
+      data.recipesNote = r.note || null; // e.g. pricing paused by the hourly limit
       data.plans = p.plans;
       data.exchanges = x.exchanges;
       data.shopping = { choice: s.choice, history: s.history || [] };

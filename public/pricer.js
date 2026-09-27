@@ -379,6 +379,8 @@
     if (selected) loadDetail().catch(() => {}); // the next refresh says so
   }
 
+  const clock = (iso) => new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+
   // What the agent is doing: a one-line summary, then its latest steps across recipes.
   function renderFeed() {
     const o = overview;
@@ -387,6 +389,7 @@
     const testRunning = test?.status === 'running';
     const line = now.length
       ? `Pricing ${now.map((p) => `${p.name} (${p.lines_done ?? 0} of ${p.lines ?? '?'} ingredients)`).join(' and ')}${waiting ? `; ${waiting} waiting` : ''}.`
+      : waiting && o.pause ? `${waiting} recipe${waiting === 1 ? '' : 's'} waiting. Paused by the instructor’s limit of ${o.pause.per_hour} recipes an hour: pricing starts again around ${clock(o.pause.resumes_at)}.`
       : waiting ? `${waiting} recipe${waiting === 1 ? '' : 's'} waiting; the agent starts within a minute.`
         : testRunning ? 'Running a test on the sample recipe (see it under Learn more).'
           : o.problem ? 'Stopped: see the message at the top of the page.' : 'Idle: nothing to price right now.';
@@ -439,7 +442,7 @@
       return `Priced ${ago(d.finished_at)} for ${d.people} people, ${d.prompt_current === false ? 'with an older version of the instructions' : 'with the current instructions'}.`;
     }
     if (d.status === 'pricing') return `Being priced now: ${done} of ${lines} ingredients done.`;
-    if (d.status === 'pending') return 'In the queue: the agent will price it within a few minutes.';
+    if (d.status === 'pending') return overview?.pause ? `In the queue. Pricing is paused by the instructor’s limit of ${overview.pause.per_hour} recipes an hour, and starts again around ${clock(overview.pause.resumes_at)}.` : 'In the queue: the agent will price it within a few minutes.';
     if (d.status === 'unpriced') return key ? 'Not priced. Press Price to add it to the queue.' : 'Not priced yet: the instructor has paused automatic pricing.';
     return `Couldn’t be priced: ${(d.error || 'unknown reason').replace(/\.$/, '')}.`;
   }

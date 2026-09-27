@@ -89,6 +89,8 @@
       </fieldset>
       <fieldset>
         <legend>The whole class</legend>
+        <label>Different recipes for the whole class, at most <input type="number" min="0" max="10000" step="1" name="max_recipes_total"></label>
+        <p class="small muted">Each new recipe is priced once by the Pricer Agent, so this caps its AI cost. Picking a recipe already saved still works.</p>
         <label>Save attempts for the whole class a minute, at most <input type="number" min="0" max="10000" step="1" name="max_class_saves_per_minute" value="120"></label>
         <label>Kroger searches for the whole class a minute, at most <input type="number" min="0" max="10000" step="1" name="max_class_kroger_per_minute" value="300"></label>
       </fieldset>
