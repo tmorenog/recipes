@@ -329,6 +329,7 @@
     $('counts').replaceChildren(...[['priced', 'priced'], ['pricing', 'being priced'], ['pending', 'waiting'], ['unpriced', 'not priced'], ['failed', 'couldn’t price']]
       .filter(([k]) => k !== 'unpriced' || c.unpriced)
       .map(([k, label]) => el('span', { className: `count-chip price-${k}` }, el('strong', { textContent: String(c[k] ?? 0) }), ` ${label}`)));
+    fillGroups();
     renderQueue();
     renderFeed();
   }
@@ -340,7 +341,12 @@
       $('queue').replaceChildren(el('p', { className: 'empty small', textContent: 'No recipes yet. They appear here as soon as a Scout Agent saves one.' }));
       return;
     }
-    keepState($('queue'), () => $('queue').replaceChildren(...o.pricings.map((p) => {
+    const shown = o.pricings.filter(byGroup);
+    if (!shown.length) {
+      $('queue').replaceChildren(el('p', { className: 'empty small', textContent: `No recipes scouted by ${group} yet.` }));
+      return;
+    }
+    keepState($('queue'), () => $('queue').replaceChildren(...shown.map((p) => {
       const img = safeUrl(p.image_url) ? el('img', { src: thumb(p.image_url), alt: '', loading: 'lazy' }) : el('span', { className: 'thumb-blank' });
       const per = p.status === 'priced' && p.people ? p.total_cost_usd / p.people : null;
       const price = p.status === 'priced'
@@ -379,6 +385,29 @@
     if (selected) loadDetail().catch(() => {}); // the next refresh says so
   }
 
+  // The group filter: only recipes a group scouted, in the list and in the feed; kept in the address.
+  let group = new URLSearchParams(location.search).get('group') || '';
+  const byGroup = (x) => !group || (x.groups || []).includes(group);
+  function fillGroups() {
+    const names = [...new Set((overview?.pricings || []).flatMap((p) => p.groups || []))].sort();
+    if (group && !names.includes(group)) names.push(group);
+    const sel = $('f-group');
+    const want = ['', ...names].join('|');
+    if (sel.dataset.options !== want) {
+      sel.replaceChildren(el('option', { value: '', textContent: 'All groups' }), ...names.map((n) => el('option', { value: n, textContent: n })));
+      sel.dataset.options = want;
+    }
+    sel.value = group;
+  }
+  $('f-group').addEventListener('change', (e) => {
+    group = e.target.value;
+    const u = new URL(location.href);
+    if (group) u.searchParams.set('group', group); else u.searchParams.delete('group');
+    history.replaceState(null, '', u);
+    renderQueue();
+    renderFeed();
+  });
+
   const clock = (iso) => new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 
   // What the agent is doing: a one-line summary, then its latest steps across recipes.
@@ -394,8 +423,12 @@
         : testRunning ? 'Running a test on the sample recipe (see it under Learn more).'
           : o.problem ? 'Stopped: see the message at the top of the page.' : 'Idle: nothing to price right now.';
     $('agent-now').replaceChildren(el('span', { className: `dot ${now.length || testRunning ? 'on' : ''}` }), line);
-    $('feed').replaceChildren(...(o.activity || []).map((s) => feedItem(s,
-      el('button', { type: 'button', className: 'linklike feed-recipe', textContent: s.name || s.meal_id, onclick: () => { if (selected !== s.meal_id) toggle(s.meal_id); } }))));
+    const steps = (o.activity || []).filter(byGroup);
+    $('feed').replaceChildren(...(steps.length ? steps.map((s) => feedItem(s,
+      el('span', { className: 'feed-recipe-line' },
+        el('button', { type: 'button', className: 'linklike feed-recipe', textContent: s.name || s.meal_id, onclick: () => { if (selected !== s.meal_id) toggle(s.meal_id); } }),
+        s.groups?.length ? el('span', { className: 'feed-groups small muted', textContent: ` · scouted by ${s.groups.join(', ')}` }) : null)))
+      : [el('li', { className: 'muted small', textContent: group ? `Nothing yet for recipes scouted by ${group}.` : 'Nothing yet.' })]));
     if (!(o.activity || []).length) $('feed').append(el('li', { className: 'muted small', textContent: 'No steps yet.' }));
   }
 

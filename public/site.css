@@ -882,3 +882,6 @@ body:has(.agent-tag.shopper) .per-person-note { border-left-color: var(--shopper
 /* Newer / Older pages of the Coordinator's exchange log. */
 .pager { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin: 0 0 10px; }
 .pager-at { font-variant-numeric: tabular-nums; }
+
+/* The Pricer page's group filter, beside the counts. */
+.carts-bar .pricer-group { min-width: 10em; }
