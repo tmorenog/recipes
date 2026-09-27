@@ -245,6 +245,7 @@
   }
 
   // ---------------------------------------------------------------- exchanges
+  const KEEP_EXCHANGES = 500; // the latest this many, 50 to a page
   const AGENT_NAME = { scout: 'Recipe Scout', planner: 'Meal Planner', pricer: 'Recipe Pricer', shopper: 'Shopper' };
   const pretty = (v) => (v == null ? '(nothing)' : JSON.stringify(v, null, 2));
 
@@ -275,14 +276,40 @@
     return li;
   }
 
+  // Newest first, PAGE_SIZE to a page. A new filter goes back to the first page.
+  const PAGE_SIZE = 50;
+  let page = 0;
+  let pageFilters = '';
+  function pager(id, pages) {
+    const nav = $(id);
+    nav.hidden = pages <= 1;
+    if (nav.hidden) return;
+    const go = (to) => { page = to; render(); if (id === 'pager-bottom') $('pager-top').scrollIntoView({ block: 'start' }); };
+    const newer = el('button', { type: 'button', className: 'btn small-btn', textContent: '← Newer', disabled: page === 0 });
+    const older = el('button', { type: 'button', className: 'btn small-btn', textContent: 'Older →', disabled: page >= pages - 1 });
+    newer.addEventListener('click', () => go(page - 1));
+    older.addEventListener('click', () => go(page + 1));
+    nav.replaceChildren(newer, el('span', { className: 'pager-at small muted', textContent: `Page ${page + 1} of ${pages}` }), older);
+  }
   function renderExchanges() {
     const shown = data.exchanges.filter(
       (x) => (!state.group || x.group_name === state.group) && (!state.agent || x.agent === state.agent)
         && (!state.result || (state.result === 'accepted') === x.ok),
     );
-    keepState($('exchanges'), () => $('exchanges').replaceChildren(...shown.map(exchangeRow)));
+    const filters = `${state.group}|${state.agent}|${state.result}`;
+    if (filters !== pageFilters) { pageFilters = filters; page = 0; }
+    const pages = Math.max(1, Math.ceil(shown.length / PAGE_SIZE));
+    page = Math.min(page, pages - 1);
+    const from = page * PAGE_SIZE;
+    const onPage = shown.slice(from, from + PAGE_SIZE);
+    keepState($('exchanges'), () => $('exchanges').replaceChildren(...onPage.map(exchangeRow)));
+    pager('pager-top', pages);
+    pager('pager-bottom', pages);
     const rejected = data.exchanges.filter((x) => !x.ok).length;
-    $('shown').textContent = `${shown.length} of the latest ${data.exchanges.length} exchanges · ${rejected} rejected`;
+    const latest = data.exchanges.length >= KEEP_EXCHANGES ? `the latest ${KEEP_EXCHANGES}` : `${data.exchanges.length}`;
+    $('shown').textContent = shown.length > PAGE_SIZE
+      ? `${from + 1}–${from + onPage.length} of ${shown.length === data.exchanges.length ? latest : `${shown.length} (of ${latest})`} exchanges · ${rejected} rejected`
+      : `${shown.length} of ${latest} exchanges · ${rejected} rejected`;
     return [shown.length, data.exchanges.length ? 'Nothing matches these filters.' : 'No exchanges yet. They appear here as soon as an agent talks to the coordinator.'];
   }
 
@@ -352,7 +379,7 @@
       const [r, p, x, s] = await Promise.all([
         getJson('/api/recipes?status=all&limit=500'),
         getJson('/api/meal-plans?limit=200'),
-        getJson('/api/exchanges?limit=300'),
+        getJson(`/api/exchanges?limit=${KEEP_EXCHANGES}`),
         getJson('/api/meal-plans?choice=latest'),
       ]);
       data.recipes = r.recipes;
@@ -409,7 +436,9 @@
       const known = new Set(data.exchanges.map((e) => e.id));
       const fresh = x.exchanges.filter((e) => !known.has(e.id));
       if (!fresh.length) return;
-      data.exchanges = [...fresh, ...data.exchanges].slice(0, 300);
+      data.exchanges = [...fresh, ...data.exchanges].slice(0, KEEP_EXCHANGES);
+      // Someone reading an older page keeps their place: move the page along with the new rows.
+      if (page > 0) page += Math.floor(fresh.length / PAGE_SIZE);
       render();
     } catch { /* the full refresh reports problems */ }
   }
