@@ -43,40 +43,40 @@
       <h3>Recipe Scout</h3>
       <p>Researches recipes on a real recipe database and proposes the ones that fit a theme.</p>
       <p class="sys-where">You build it in Lovable · start here</p>
-      <p class="sys-handoff">With the coordinator: saves recipes</p>
-      <a class="btn primary" href="/scout">Build the Recipe Scout</a>
+      <p class="sys-handoff"><span class="io save">↓ saves recipes</span></p>
+      <a class="btn" href="/scout">Build the Recipe Scout</a>
     </article>
-    <p class="sys-link scout" aria-hidden="true"><span>saves recipes</span></p>
+    <p class="sys-link scout" aria-hidden="true"><span class="io save">↓ saves recipes</span></p>
 
     <article class="sys-agent pricer">
       <span class="sys-num">2</span>
       <h3>Recipe Pricer</h3>
       <p>Calculates the cost of each recipe by building its shopping cart with real Kroger prices.</p>
       <p class="sys-where">Already built · runs by itself for every new recipe</p>
-      <p class="sys-handoff">With the coordinator: reads recipes, saves prices</p>
+      <p class="sys-handoff"><span class="io read">↑ reads recipes</span><span class="io save">↓ saves prices</span></p>
       <a class="btn" href="/pricer">Watch the Recipe Pricer</a>
     </article>
-    <p class="sys-link pricer" aria-hidden="true"><span>reads recipes, saves prices</span></p>
+    <p class="sys-link pricer" aria-hidden="true"><span class="io read">↑ reads recipes</span><span class="io save">↓ saves prices</span></p>
 
     <article class="sys-agent planner">
       <span class="sys-num">3</span>
       <h3>Meal Planner</h3>
       <p>Creates a five-day plan from the priced recipes, balancing variety and cost within a budget.</p>
       <p class="sys-where">You build it in Lovable · if there’s time</p>
-      <p class="sys-handoff">With the coordinator: reads priced recipes, saves the plan</p>
+      <p class="sys-handoff"><span class="io read">↑ reads priced recipes</span><span class="io save">↓ saves the plan</span></p>
       <a class="btn" href="/planner">Build the Meal Planner</a>
     </article>
-    <p class="sys-link planner" aria-hidden="true"><span>reads priced recipes, saves the plan</span></p>
+    <p class="sys-link planner" aria-hidden="true"><span class="io read">↑ reads priced recipes</span><span class="io save">↓ saves the plan</span></p>
 
     <article class="sys-agent shopper">
       <span class="sys-num">4</span>
       <h3>Shopper</h3>
       <p>Chooses the class’s best meal plan and builds its Kroger shopping cart for the week.</p>
       <p class="sys-where">Already built · runs on the site at the end</p>
-      <p class="sys-handoff">With the coordinator: reads the plans, saves the class’s choice</p>
+      <p class="sys-handoff"><span class="io read">↑ reads the plans</span><span class="io save">↓ saves the class’s choice</span></p>
       <a class="btn" href="/shopper">See the class’s plan</a>
     </article>
-    <p class="sys-link shopper" aria-hidden="true"><span>reads the plans, saves the choice</span></p>
+    <p class="sys-link shopper" aria-hidden="true"><span class="io read">↑ reads the plans</span><span class="io save">↓ saves the class’s choice</span></p>
 
     <article class="sys-hub">
       <div>

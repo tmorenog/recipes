@@ -651,23 +651,33 @@ details.trace > summary { cursor: pointer; padding: 8px 0; }
 /* The handoff between each agent and the coordinator: a two-way line with a label. */
 .sys-link { margin: 0; min-height: 64px; display: grid; place-items: center; position: relative; max-width: none; }
 .sys-link::before { content: ""; position: absolute; top: 0; bottom: 0; left: 50%; border-left: 2px solid var(--line); }
-.sys-link span { position: relative; padding: 3px 10px; border-radius: 999px; background: var(--ground); border: 1px solid var(--line); font: 500 12.5px/1.3 var(--mono); color: var(--muted); text-align: center; }
+.sys-link { --c: var(--accent); --c-soft: var(--scout-soft); align-content: center; gap: 6px; padding: 8px 0; }
+.sys-link.pricer, .sys-handoff.pricer { --c: var(--pricer); --c-soft: var(--pricer-soft); }
+.sys-link.planner { --c: var(--planner); --c-soft: var(--planner-soft); }
+.sys-link.shopper { --c: var(--shopper); --c-soft: var(--shopper-soft); }
+/* What each agent does with the coordinator: ↑ reads from it, ↓ saves to it. */
+.io { position: relative; display: inline-block; padding: 4px 12px; border-radius: 999px; font: 600 14px/1.3 var(--body); text-align: center; color: var(--c); background: var(--c-soft); border: 1px solid color-mix(in srgb, var(--c) 45%, transparent); }
+.io.save { background: var(--c); color: var(--surface); border-color: var(--c); }
 .sys-link.scout { grid-area: l1; } .sys-link.pricer { grid-area: l2; } .sys-link.planner { grid-area: l3; } .sys-link.shopper { grid-area: l4; }
 .sys-hub { grid-area: hub; display: flex; gap: 16px 28px; align-items: center; justify-content: space-between; padding: 20px 22px; border-radius: 12px; background: var(--hub); color: var(--hub-ink); border: 1px solid var(--line); border-top: 5px solid var(--hub-edge); box-shadow: var(--shadow); }
 .sys-hub h3 { margin: 0 0 6px; font-size: 22px; color: inherit; }
 .sys-hub p { margin: 0; color: color-mix(in srgb, var(--hub-ink) 82%, transparent); max-width: 78ch; }
 .sys-hub .btn { flex: none; }
 /* On a phone the cards stack, so each card names its own handoff instead of the lines. */
-.sys-handoff { display: none; font: 500 13px/1.4 var(--mono); color: var(--muted); }
+.sys-handoff { display: none; margin: 0; flex-wrap: wrap; gap: 6px; }
+.sys-agent { --c: var(--accent); --c-soft: var(--scout-soft); }
+.sys-agent.pricer { --c: var(--pricer); --c-soft: var(--pricer-soft); }
+.sys-agent.planner { --c: var(--planner); --c-soft: var(--planner-soft); }
+.sys-agent.shopper { --c: var(--shopper); --c-soft: var(--shopper-soft); }
 @media (max-width: 1000px) and (min-width: 801px) {
   .system { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; grid-template-areas: "a1 a2" "a3 a4" "hub hub"; }
   .sys-link { display: none; }
-  .sys-handoff { display: block; }
+  .sys-handoff { display: flex; }
 }
 @media (max-width: 800px) {
   .system { grid-template-columns: 1fr; gap: 14px; grid-template-areas: "a1" "a2" "a3" "a4" "hub"; }
   .sys-link { display: none; }
-  .sys-handoff { display: block; }
+  .sys-handoff { display: flex; }
   .sys-hub { flex-direction: column; align-items: flex-start; }
 }
 
